@@ -70,23 +70,21 @@ jedem Start lokal gebaut und nie hochgeladen. Es gibt keinen Server und kein Dat
 
 ### 2. Plugin installieren
 
-Öffne Claude Code (im Terminal `claude`, oder die Desktop-App) und gib nacheinander ein:
+Wähle den Weg, der zu dir passt. Am einfachsten ist Weg A.
 
-```
-/plugin marketplace add sign-u-p/plug-n-rag
-```
+**Weg A: über die Plugin-Seite (Desktop-App oder claude.ai)**
 
-```
-/plugin install plug-n-rag@plug-n-rag
-```
+1. In der Claude-Desktop-App die **Einstellungen** öffnen und **Plugins** wählen (auf claude.ai:
+   „Anpassen“ → „Plugins“). Diese Seite öffnet sich in der Desktop-App auch, wenn du `/plugin`
+   eingibst.
+2. Oben rechts auf **Hinzufügen** und dann **Marketplace hinzufügen** klicken.
+3. `sign-u-p/plug-n-rag` eintragen und bestätigen.
+4. Unter **Entdecken** (oder in der Liste des neuen Marketplace) **plug-n-rag** suchen und
+   **Hinzufügen** klicken.
+5. Fertig. Das Plugin hängt jetzt an deinem Claude-Konto. Claude Code lädt es beim nächsten Start
+   einer Sitzung. In einer schon offenen Sitzung reicht die Eingabe `/reload-plugins`.
 
-Ab Claude Code 2.1.275 geht es auch in einem Schritt:
-
-```
-/plugin install plug-n-rag --marketplace sign-u-p/plug-n-rag
-```
-
-Alternativ im Terminal, außerhalb von Claude Code:
+**Weg B: Claude Code im Terminal**
 
 ```bash
 claude plugin marketplace add sign-u-p/plug-n-rag
@@ -95,6 +93,24 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 ```bash
 claude plugin install plug-n-rag@plug-n-rag
 ```
+
+Innerhalb einer Terminal-Sitzung geht dasselbe mit `/plugin marketplace add sign-u-p/plug-n-rag`
+und `/plugin install plug-n-rag@plug-n-rag`.
+
+**Weg C: Claude die Installation erledigen lassen**
+
+In einer Code-Sitzung (Desktop-App oder Terminal) einfach schreiben:
+
+```text
+Bitte führe aus:
+claude plugin marketplace add sign-u-p/plug-n-rag
+claude plugin install plug-n-rag@plug-n-rag
+```
+
+Danach eine neue Sitzung starten oder `/reload-plugins` eingeben.
+
+Für Cloud-Sitzungen (claude.ai/code im Browser) gibt es einen eigenen Weg, siehe
+[Cloud-Sitzungen](#cloud-sitzungen).
 
 ### 3. Vault einrichten
 
@@ -185,7 +201,7 @@ installieren.
    claude plugin marketplace add sign-u-p/plug-n-rag
    claude plugin install plug-n-rag@plug-n-rag
    Richte danach meine Vault mit /plug-n-rag:setup ein. Ist der Befehl in dieser Sitzung noch
-   nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/bin/plug-n-rag
+   nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
    und folge der Anleitung aus „plug-n-rag anleitung setup“.
    ```
 
@@ -221,7 +237,7 @@ zu deiner Vault.
      || claude plugin marketplace update plug-n-rag >/dev/null 2>&1 || true
    claude plugin install plug-n-rag@plug-n-rag >/dev/null 2>&1 || true
    P=$(ls -d "$HOME"/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ 2>/dev/null | sort -V | tail -1)
-   if [ -n "$P" ]; then "${P}bin/plug-n-rag" modell-laden --modell intfloat/multilingual-e5-small || true; fi
+   if [ -n "$P" ]; then "${P}scripts/plug-n-rag" modell-laden --modell intfloat/multilingual-e5-small || true; fi
    exit 0
    ```
 
@@ -310,7 +326,7 @@ Aufbau:
 
 ```
 .claude-plugin/       plugin.json, marketplace.json
-bin/plug-n-rag        Starter (uv, Umgebung im Nutzer-Cache)
+scripts/plug-n-rag    Starter (uv, Umgebung im Nutzer-Cache; der Sitzungsstart legt ihn auf den PATH)
 hooks/hooks.json      SessionStart, Stop
 skills/               suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
 agents/               transkription (Haiku)

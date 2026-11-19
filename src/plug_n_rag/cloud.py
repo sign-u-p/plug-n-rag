@@ -85,9 +85,9 @@ def setup_script(config: dict) -> str:
         'P=$(ls -d "$HOME"/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ 2>/dev/null | sort -V | tail -1)',
     ]
     if provider == "local":
-        lines.append(f'if [ -n "$P" ]; then "${{P}}bin/plug-n-rag" modell-laden --modell {model} || true; fi')
+        lines.append(f'if [ -n "$P" ]; then "${{P}}scripts/plug-n-rag" modell-laden --modell {model} || true; fi')
     else:
-        lines.append('if [ -n "$P" ]; then "${P}bin/plug-n-rag" --version || true; fi')
+        lines.append('if [ -n "$P" ]; then "${P}scripts/plug-n-rag" --version || true; fi')
     lines.append("exit 0")
     return "\n".join(lines) + "\n"
 

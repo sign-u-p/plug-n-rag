@@ -39,7 +39,7 @@ Stand: 19.11.2026, Sprint 1.
    `status`, `reindex`, `modell-wechseln` und `lernen-zuruecksetzen` sind mit
    `disable-model-invocation: true` markiert: Sie kosten so keinen Kontext in jeder Sitzung
    (gemessen: rund 430 Tokens weniger), Nutzer:innen rufen sie selbst auf.
-2. **Ausführbares Programm in `bin/`.** Claude Code legt `bin/` eines aktiven Plugins auf den PATH
+2. ~~**Ausführbares Programm in `bin/`.**~~ (ersetzt durch Punkt 26) Claude Code legt `bin/` eines aktiven Plugins auf den PATH
    des Bash-Werkzeugs, deshalb heißt der Aufruf überall einfach `plug-n-rag …`. Nachteil laut
    Dokumentation: claude.ai und Cowork installieren Plugins mit `bin/` nicht. Für den späteren
    Konnektor in der Claude-App ist ohnehin der MCP-Wrapper vorgesehen.
@@ -126,3 +126,15 @@ Stand: 19.11.2026, Sprint 1.
     API-Key-ähnlicher Inhalt verhindert den Commit. Der Skill verlangt die ausdrückliche
     Aufforderung im Chat; sie gilt als Erlaubnis für diesen einen Push.
 25. **Version 0.3.0.**
+
+## Nachtrag 19.11.2026: Installation über die Plugin-Seite
+
+26. **Starter in `scripts/` statt `bin/`.** claude.ai lehnt Plugins mit einem `bin/`-Ordner auf
+    oberster Ebene ab. Damit Nutzer:innen plug-n-rag über die Plugin-Seite der Desktop-App bzw.
+    von claude.ai hinzufügen können („Hinzufügen → Marketplace hinzufügen → sign-u-p/plug-n-rag“),
+    liegt der Starter jetzt in `scripts/plug-n-rag`. Der SessionStart-Hook schreibt
+    `export PATH="<plugin>/scripts:$PATH"` in `CLAUDE_ENV_FILE`, sodass `plug-n-rag …` im
+    Bash-Werkzeug weiter als einfacher Befehl funktioniert. Skills nennen zusätzlich den vollen Pfad
+    über `${CLAUDE_PLUGIN_ROOT}`. Weg A der README ist damit die Plugin-Seite; Terminal und
+    „Claude erledigt es“ bleiben als Wege B und C.
+27. **Version 0.4.0.**

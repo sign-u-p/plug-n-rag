@@ -7,7 +7,7 @@ allowed-tools: Bash(plug-n-rag *)
 # Suchen und Lesen in der Vault
 
 Die Vault ist mit plug-n-rag indexiert. Der Befehl `plug-n-rag` liegt auf dem PATH
-(Ersatz, falls nicht gefunden: `"${CLAUDE_PLUGIN_ROOT}/bin/plug-n-rag"`). Er arbeitet im
+(Ersatz, falls nicht gefunden: `"${CLAUDE_PLUGIN_ROOT}/scripts/plug-n-rag"`). Er arbeitet im
 aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl setzen.
 
 ## Ablauf: Karte → Suche → Gliederung → Abschnitt

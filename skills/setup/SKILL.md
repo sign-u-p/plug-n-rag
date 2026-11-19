@@ -14,7 +14,7 @@ Argument (optional): `$ARGUMENTS` – ein Ordner, der eingerichtet werden soll. 
 der aktuelle Projektordner.
 
 Der Befehl heißt `plug-n-rag` (Ersatz, falls nicht auf dem PATH:
-`"${CLAUDE_PLUGIN_ROOT}/bin/plug-n-rag"`).
+`"${CLAUDE_PLUGIN_ROOT}/scripts/plug-n-rag"`).
 
 ## Grundsätze
 
@@ -48,7 +48,7 @@ Rechner der Nutzer:in muss nichts passieren. Dann gilt:
 
 - **Plugin frisch installiert?** Ist `/plug-n-rag:setup` oder `plug-n-rag` in dieser Sitzung noch
   nicht verfügbar, den Starter über den vollen Pfad aufrufen:
-  `$(ls -d ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ | sort -V | tail -1)bin/plug-n-rag`.
+  `$(ls -d ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ | sort -V | tail -1)scripts/plug-n-rag`.
   Diese Anleitung gibt es dann mit `… anleitung setup`, die anderen mit `… anleitung cloud`
   bzw. `… anleitung nach-main`.
 - **Überspringen**: uv-Installation (ist vorinstalliert), Cloud-Sync-Ordner, Schritt 3 (Git lokal)

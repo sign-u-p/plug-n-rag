@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/bin/plug-n-rag session-start",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/plug-n-rag session-start",
             "timeout": 300
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/bin/plug-n-rag stop",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/plug-n-rag stop",
             "async": true,
             "timeout": 300
           }

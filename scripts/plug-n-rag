@@ -1,5 +1,5 @@
 #!/bin/sh
-# plug-n-rag launcher. Runs the Python core through uv. The virtual environment lives in
+# plug-n-rag launcher (scripts/plug-n-rag). Runs the Python core through uv. The virtual environment lives in
 # the user cache, never inside the plugin directory (which changes on every update).
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -26,6 +26,14 @@ case "$SUB" in
     if [ -n "$CLAUDE_PROJECT_DIR" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then cd "$CLAUDE_PROJECT_DIR" || exit 0; fi
     ;;
 esac
+
+# Put this launcher on the PATH of the session's Bash tool, so Claude can simply call
+# `plug-n-rag …`. (A top-level bin/ directory would do that too, but claude.ai rejects
+# plugins that contain one, and we want installation via the claude.ai plugin page.)
+if [ "$SUB" = "session-start" ] && [ -n "$CLAUDE_ENV_FILE" ]; then
+  LINE="export PATH=\"$ROOT/scripts:\$PATH\""
+  grep -qsF "$LINE" "$CLAUDE_ENV_FILE" 2>/dev/null || printf '%s\n' "$LINE" >> "$CLAUDE_ENV_FILE"
+fi
 
 if [ -z "$UV" ]; then
   case "$SUB" in

@@ -43,12 +43,21 @@ Stop-Hook durchlaufen. Offen ist:
   - [ ] Setup-Skript über die Umgebungswerkzeuge sichern; nächste Sitzung hat plug-n-rag.
 - [ ] **`/plug-n-rag:nach-main` aus einer Cloud-Sitzung**: Akzeptiert die Sitzung die Aufforderung
       im Chat als Erlaubnis für den Push nach `main`? Verhalten bei geschütztem `main` prüfen.
-- [ ] **Windows**: Launcher `bin/plug-n-rag` ist ein POSIX-Shell-Skript. Claude Code nutzt unter
+- [ ] **Windows**: Launcher `scripts/plug-n-rag` ist ein POSIX-Shell-Skript. Claude Code nutzt unter
       Windows meist Git Bash; ohne Git Bash ist ein `.cmd`-Gegenstück nötig.
 - [ ] **macOS mit Homebrew-Python**: Lässt sich sqlite-vec laden? (Sonst greift der NumPy-Fallback,
       `plug-n-rag status` zeigt es an.)
 - [ ] MCP-Wrapper als Server in Claude Code registrieren (siehe README) und prüfen, ob Claude die
       Werkzeuge den Bash-Aufrufen vorzieht.
+
+- [ ] **Installation über die Plugin-Seite** (Desktop-App → Einstellungen → Plugins → Hinzufügen →
+      Marketplace hinzufügen → `sign-u-p/plug-n-rag`):
+  - [ ] Nimmt claude.ai den Marketplace an (öffentliches Repo, Plugin-Quelle `./`)?
+  - [ ] Erscheint plug-n-rag danach in lokalen Claude-Code-Sitzungen (synced plugin), laufen die Hooks,
+        und landet `plug-n-rag` über `CLAUDE_ENV_FILE` auf dem PATH?
+  - [ ] Was passiert in Cowork (Hooks laufen dort ggf. ohne uv; sollte still bleiben)?
+  - [ ] Kommt ein über das Konto hinzugefügtes Plugin auch in Cloud-Sitzungen an? Falls ja, wird
+        das Setup-Skript für die Installation überflüssig (fürs Vorladen des Modells bleibt es sinnvoll).
 
 ## Nicht umgesetzt oder nur teilweise
 

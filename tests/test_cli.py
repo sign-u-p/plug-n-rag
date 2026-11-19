@@ -68,12 +68,12 @@ def test_init_sync_search_via_cli(tmp_path, capsys, monkeypatch):
 
 
 def test_launcher_script_runs_core(tmp_path):
-    """The bin/ launcher used by hooks and the Bash tool works end to end."""
+    """The scripts/ launcher used by hooks and the Bash tool works end to end."""
     root = copy_vault(tmp_path)
     env = dict(os.environ, XDG_CACHE_HOME=str(tmp_path / "c"), XDG_CONFIG_HOME=str(tmp_path / "cfg"),
                CLAUDE_PROJECT_DIR=str(root), PLUG_N_RAG_VENV=str(REPO / ".venv"))
     env.pop("UV_NATIVE_TLS", None)
-    out = subprocess.run([str(REPO / "bin" / "plug-n-rag"), "session-start"], capture_output=True, text=True,
+    out = subprocess.run([str(REPO / "scripts" / "plug-n-rag"), "session-start"], capture_output=True, text=True,
                          env=env, cwd=tmp_path, timeout=300)
     assert "noch nicht eingerichtet" in out.stdout, out.stderr
 
@@ -94,6 +94,25 @@ def test_anleitung_prints_skill_without_frontmatter(capsys, monkeypatch):
     main(["anleitung", "setup"])
     out = capsys.readouterr().out
     assert "Cloud-Weg" in out and "name: setup" not in out
-    assert "${CLAUDE_PLUGIN_ROOT}" not in out and str(REPO / "bin" / "plug-n-rag") in out
+    assert "${CLAUDE_PLUGIN_ROOT}" not in out and str(REPO / "scripts" / "plug-n-rag") in out
     main(["anleitung"])
     assert "nach-main" in capsys.readouterr().out
+
+
+def test_no_top_level_bin_dir_for_claude_ai():
+    """claude.ai rejects plugins with a top-level bin/ directory."""
+    assert not (REPO / "bin").exists()
+    hooks = (REPO / "hooks" / "hooks.json").read_text(encoding="utf-8")
+    assert "/scripts/plug-n-rag" in hooks and "/bin/" not in hooks
+
+
+def test_session_start_puts_launcher_on_path(tmp_path):
+    env_file = tmp_path / "env.sh"
+    env = dict(os.environ, CLAUDE_ENV_FILE=str(env_file), CLAUDE_PROJECT_DIR=str(tmp_path),
+               XDG_CACHE_HOME=str(tmp_path / "c"), PLUG_N_RAG_VENV=str(REPO / ".venv"))
+    env.pop("UV_NATIVE_TLS", None)
+    for _ in range(2):
+        subprocess.run([str(REPO / "scripts" / "plug-n-rag"), "session-start"], env=env, cwd=tmp_path,
+                       capture_output=True, timeout=300)
+    lines = env_file.read_text(encoding="utf-8").splitlines()
+    assert lines == [f'export PATH="{REPO}/scripts:$PATH"']

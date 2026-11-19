@@ -262,7 +262,7 @@ def write_launcher() -> Path:
     """A stable launcher in the user cache that points at the currently installed plugin."""
     root = os.environ.get("PLUG_N_RAG_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[2])
     path = user_cache_dir() / "plug-n-rag"
-    script = f'#!/bin/sh\nexec "{root}/bin/plug-n-rag" "$@"\n'
+    script = f'#!/bin/sh\nexec "{root}/scripts/plug-n-rag" "$@"\n'
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists() or path.read_text(encoding="utf-8") != script:
@@ -440,7 +440,7 @@ def cmd_anleitung(args):
     if text.startswith("---"):
         end = text.find("\n---", 3)
         text = text[end + 4:].lstrip("\n") if end > 0 else text
-    launcher = root / "bin" / "plug-n-rag"
+    launcher = root / "scripts" / "plug-n-rag"
     text = text.replace("${CLAUDE_PLUGIN_ROOT}", str(root)).replace("$ARGUMENTS", " ".join(args.argumente))
     _print(f"(Anleitung „{args.name}“ aus plug-n-rag. Ist `plug-n-rag` nicht auf dem PATH, "
            f"den vollen Pfad verwenden: {launcher})\n\n" + text)
