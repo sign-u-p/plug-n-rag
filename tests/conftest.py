@@ -19,6 +19,7 @@ def isolated_user_dirs(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg-cache"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg-config"))
     monkeypatch.delenv("PLUG_N_RAG_ROOT", raising=False)
+    monkeypatch.delenv("CLAUDE_CODE_REMOTE", raising=False)
     yield
 
 

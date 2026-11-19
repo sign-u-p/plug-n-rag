@@ -189,28 +189,20 @@ Jeweils einzeln anbieten:
 - Git-pre-commit-Hook anbieten: `plug-n-rag git-hook` (hält den Index im selben Commit wie die
   Notizen, verkettet bestehende Hooks).
 
-**b) Cloud-Sitzungen** (Claude Code im Browser/App mit dieser Vault):
-- In `.claude/settings.json` des Vault-Repos eintragen (bestehende Einträge erhalten):
-  ```json
-  {
-    "extraKnownMarketplaces": {
-      "plug-n-rag": {"source": {"source": "github", "repo": "sign-u-p/plug-n-rag"}}
-    },
-    "enabledPlugins": {"plug-n-rag@plug-n-rag": true}
-  }
-  ```
-- Netzfreigabe der Cloud-Umgebung erklären: lokales Modell braucht `huggingface.co` und die
-  Download-Server von Hugging Face (z. B. `us.aws.cdn.hf.co`, `cas-bridge.xethub.hf.co`);
-  Voyage braucht `api.voyageai.com`. Der Voyage-Key kommt als Secret der Cloud-Umgebung hinein,
-  nie ins Repo.
-- Die Index-Dateien liegen im Repo, deshalb ist eine frische Cloud-Sitzung ohne neues Embedding
-  sofort suchbereit. Nur Suchanfragen selbst brauchen das Modell.
+**b) Cloud-Sitzungen** (Claude Code im Browser oder in der App mit dieser Vault):
+Nur anbieten, wenn die Vault auf GitHub liegt. Dann `/plug-n-rag:cloud` ausführen bzw. dessen
+Ablauf folgen. Wichtig: Ein Eintrag in `.claude/settings.json` des Vault-Repos lädt das Plugin
+in Cloud-Sitzungen **nicht**; nötig sind ein Setup-Skript und eine Netzwerkfreigabe in der
+Cloud-Umgebung (`plug-n-rag cloud` gibt beides passend aus).
 
 **c) Lern-Datei** committen ja/nein: `plug-n-rag konfig --setzen tuning.commit_learning=true`
 (Standard: nur lokal).
 
 **d) CLAUDE.md**: kurzen Abschnitt anbieten (nur nach Zustimmung, nur anhängen):
-„Diese Vault ist mit plug-n-rag durchsuchbar. Für Inhalte zuerst `plug-n-rag suche` nutzen.“
+„Diese Vault ist mit plug-n-rag durchsuchbar. Für Inhalte zuerst `plug-n-rag suche` nutzen. Fehlt
+der Befehl in einer Cloud-Sitzung, braucht die Cloud-Umgebung ein Setup-Skript und eine
+Netzwerkfreigabe für Hugging Face; Anleitung: https://github.com/sign-u-p/plug-n-rag#cloud-sitzungen“
+Dieser Hinweis hilft Claude in einer Cloud-Sitzung, in der das Plugin (noch) fehlt.
 
 ## Schritt 12: Abschluss
 

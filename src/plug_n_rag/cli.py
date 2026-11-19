@@ -331,6 +331,11 @@ def cmd_session_start(args):
                          "Stichwortsuche funktioniert schon.")
         if r.embed_error:
             notes.append(f"Semantischer Index nicht aktualisierbar: {r.embed_error}")
+            from .cloud import in_cloud
+
+            if in_cloud():
+                notes.append("Cloud-Sitzung: `plug-n-rag cloud` zeigt, was die Cloud-Umgebung braucht "
+                             "(Netzwerkfreigabe, Setup-Skript).")
         if r.model_mismatch:
             notes.append("Index passt nicht zum Modell: nur Stichwortsuche. /plug-n-rag:reindex anbieten.")
         if r.errors:
@@ -373,6 +378,33 @@ def cmd_stop(args):
 
         if gitops.inside_repo(layout.root):
             gitops.commit_paths(layout.root, gitops.index_paths(layout), "plug-n-rag: Index aktualisiert")
+
+
+def cmd_cloud(args):
+    from .cloud import check, guide, setup_script
+
+    layout = _layout(args, require=False)
+    cfg = layout.config if layout and layout.configured else load_config(Path("/nonexistent"))
+    if args.skript:
+        sys.stdout.write(setup_script(cfg))
+    elif args.pruefen:
+        _print(check(layout, network=not args.offline))
+    else:
+        _print(guide(layout if layout and layout.configured else None, cfg))
+
+
+def cmd_modell_laden(args):
+    from .cloud import preload_model
+
+    layout = _layout(args, require=False)
+    model = args.modell
+    if not model:
+        emb = (layout.config if layout and layout.configured else {}).get("embedding", {})
+        if emb.get("provider", "local") != "local":
+            _print("Diese Vault nutzt Voyage AI, es gibt kein lokales Modell zu laden.")
+            return
+        model = emb.get("model", "intfloat/multilingual-e5-small")
+    _print(preload_model(model))
 
 
 def cmd_mcp(args):
@@ -476,6 +508,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("stop", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_stop)
+
+    s = sub.add_parser("cloud", help="Einrichtung für Cloud-Sitzungen: Anleitung, Setup-Skript, Prüfung")
+    s.add_argument("--skript", action="store_true", help="nur das Setup-Skript ausgeben")
+    s.add_argument("--pruefen", action="store_true", help="prüfen, ob alles für Cloud-Sitzungen bereit ist")
+    s.add_argument("--offline", action="store_true", help=argparse.SUPPRESS)
+    s.set_defaults(func=cmd_cloud)
+
+    s = sub.add_parser("modell-laden", help="Lokales Suchmodell herunterladen und prüfen")
+    s.add_argument("--modell")
+    s.set_defaults(func=cmd_modell_laden)
 
     s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
     s.set_defaults(func=cmd_mcp)

@@ -31,9 +31,16 @@ def api_key() -> str | None:
         return key.strip()
     path = user_config_dir() / "voyage_api_key"
     try:
-        return path.read_text(encoding="utf-8").strip() or None
+        key = path.read_text(encoding="utf-8").strip()
+        if key:
+            return key
     except OSError:
-        return None
+        pass
+    if os.environ.get("CLAUDE_CODE_REMOTE") == "true":
+        # Cloud session: the key is stored as a network secret and the agent proxy replaces
+        # this placeholder in the Authorization header. The real key never enters the session.
+        return "proxy-injected"
+    return None
 
 
 class VoyageEmbedder:

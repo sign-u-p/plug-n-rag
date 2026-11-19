@@ -82,3 +82,26 @@ Stand: 19.11.2026, Sprint 1.
 16. **Lernen läuft beim Sitzungsstart** (`tuning.learn`), höchstens ein Schritt pro Sitzung
     (gleitender Mittelwert mit α = 0,15, aufgerundet auf eine Einheit). Gelernte Werte gelten
     erst ab 5 Beobachtungen pro Zweck.
+
+## Nachtrag 19.11.2026: Cloud-Sitzungen
+
+17. **Cloud-Sitzungen über ein Setup-Skript der Cloud-Umgebung, nicht über das Vault-Repo.**
+    Laut Dokumentation installieren Cloud-Sitzungen keine Plugins aus `enabledPlugins` oder
+    `extraKnownMarketplaces` in `.claude/settings.json` eines Repos (die erste Fassung von README und
+    Setup-Skill hatte das falsch empfohlen). Stattdessen installiert ein Setup-Skript plug-n-rag
+    im Container mit `claude plugin install` (Nutzerebene) und lädt das Modell mit
+    `plug-n-rag modell-laden` vorab. Die Umgebung wird danach als Abbild gespeichert, sodass
+    Plugin, Python-Pakete und Modell in späteren Sitzungen schon da sind. Belegt in dieser
+    Cloud-Sitzung: Ein so installiertes Plugin wurde von der laufenden Sitzung geladen
+    (Skills und Agent erschienen).
+18. **Netzwerkfreigabe `huggingface.co` und `*.hf.co`.** Hugging Face leitet Downloads auf
+    wechselnde CDN-Hosts unter `hf.co` um (z. B. `us.aws.cdn.hf.co`); Cloud-Umgebungen erlauben
+    Platzhalter mit `*.`.
+19. **Voyage in der Cloud über ein Netzwerk-Secret.** Ist kein Key sichtbar und läuft plug-n-rag in
+    einer Cloud-Sitzung (`CLAUDE_CODE_REMOTE=true`), sendet es den Platzhalter `proxy-injected`;
+    der Netzwerk-Proxy setzt den echten Key ein. Der Key gelangt so nie in die Sitzung.
+20. **Neue Befehle** `plug-n-rag cloud` (Anleitung, `--skript`, `--pruefen`) und
+    `plug-n-rag modell-laden`, neuer Skill `/plug-n-rag:cloud`. Die Anleitung kommt aus dem Kern,
+    damit Hosts und Skript zur Konfiguration der Vault passen (lokal oder Voyage).
+21. **Version 0.2.0**: Die Version in `plugin.json` ist gesetzt, deshalb bekommen installierte
+    Plugins Änderungen erst mit einer neuen Versionsnummer.

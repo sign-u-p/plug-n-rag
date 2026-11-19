@@ -22,14 +22,19 @@ Stop-Hook durchlaufen. Offen ist:
         die Änderung.
   - [ ] Permission-Prompts: Wie oft fragt Claude Code bei `plug-n-rag …`? Ggf. im Setup die
         Regel `Bash(plug-n-rag *)` für `.claude/settings.json` anbieten.
-- [ ] **Cloud-Sitzung** (claude.ai/code) mit einem Vault-Repo:
-  - [ ] Lädt das Plugin über `extraKnownMarketplaces` + `enabledPlugins` in `.claude/settings.json`?
-  - [ ] Modell-Download hinter der Netzwerkfreigabe: welche Hosts genau? Getestet war hier
-        `huggingface.co` → Weiterleitung auf `us.aws.cdn.hf.co`. Je nach Region auch
-        `cas-bridge.xethub.hf.co` o. ä. Ohne Freigabe: Meldung + Stichwortsuche (getestet nur
-        als Unit-Test mit nicht erreichbarem Provider).
-  - [ ] Frische Sitzung sucht ohne neues Embedding (als Unit-Test mit Klon ohne Cache belegt).
-  - [ ] Dauer des ersten Starts inkl. `uv`-Installation der Abhängigkeiten und 470-MB-Download.
+- [ ] **Cloud-Sitzung** (claude.ai/code) mit einem Vault-Repo und einer Umgebung nach
+      `plug-n-rag cloud`:
+  - [ ] Läuft das Setup-Skript durch (Marketplace hinzufügen, Plugin installieren, Modell laden)?
+        Ist `claude` im Setup-Skript auf dem PATH? Reicht `*.hf.co` für alle Download-Hosts?
+  - [ ] Wird das Abbild gespeichert (unter etwa fünf Minuten) und startet die nächste Sitzung
+        ohne erneuten Download?
+  - [ ] Erreicht das Setup-Skript `github.com/sign-u-p/plug-n-rag`, falls das Repo privat ist?
+  - [ ] SessionStart-Hook liefert die Kurz-Karte; frische Sitzung sucht ohne neues Embedding
+        (als Unit-Test mit Klon ohne Cache belegt).
+  - [ ] Voyage mit Netzwerk-Secret: ersetzt der Proxy den Platzhalter `proxy-injected`?
+  - [ ] Kann Claude die Umgebung mit eigenen Werkzeugen vorschlagen (Skill `cloud`, Schritt 3)?
+  - Belegt: In einer Cloud-Sitzung lädt die laufende Sitzung ein per `claude plugin install`
+    installiertes Plugin (Skills und Agent erschienen).
 - [ ] **Windows**: Launcher `bin/plug-n-rag` ist ein POSIX-Shell-Skript. Claude Code nutzt unter
       Windows meist Git Bash; ohne Git Bash ist ein `.cmd`-Gegenstück nötig.
 - [ ] **macOS mit Homebrew-Python**: Lässt sich sqlite-vec laden? (Sonst greift der NumPy-Fallback,

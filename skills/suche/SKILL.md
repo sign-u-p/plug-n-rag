@@ -47,6 +47,8 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
   „zu ausführlich“ → `plug-n-rag lernen --knapper --zweck <zweck>`. Kurz bestätigen.
 - Meldet die Suche einen Modellkonflikt oder veralteten Index: Nutzer:in informieren und
   `/plug-n-rag:reindex` anbieten.
+- Kann in einer Cloud-Sitzung das Suchmodell nicht geladen werden („nur Stichwortsuche“, Hugging
+  Face nicht erreichbar): kurz erklären und `/plug-n-rag:cloud` anbieten.
 - Notizen nie ohne ausdrückliche Zustimmung ändern. Wenn du mit Zustimmung Notizen änderst und
   committest, `.plug-n-rag/index/` im selben Commit mitnehmen (vorher `plug-n-rag sync`).
 - Ausgaben an Nutzer:innen auf Deutsch, gendergerecht mit Doppelpunkt.

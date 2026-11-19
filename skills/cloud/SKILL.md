@@ -1,0 +1,64 @@
+---
+name: cloud
+description: Richtet plug-n-rag für Cloud-Sitzungen ein (Claude Code im Browser, in der Desktop- oder Handy-App mit einer Vault auf GitHub) und prüft, ob alles bereit ist. Verwenden, wenn jemand die Vault in Cloud-Sitzungen nutzen möchte, wenn in einer Cloud-Sitzung das Suchmodell nicht geladen werden kann oder wenn das Setup bei Schritt „Cloud-Sitzungen“ ankommt.
+allowed-tools: Bash(plug-n-rag cloud*) Bash(plug-n-rag modell-laden*) Bash(plug-n-rag status*)
+---
+
+# plug-n-rag in Cloud-Sitzungen
+
+Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ kennen; sag
+„Cloud-Umgebung“ (so heißt es in der App) und „Setup-Skript“.
+
+## Das Wichtigste vorweg
+
+- Cloud-Sitzungen installieren **keine** Plugins, die ein Repo in `.claude/settings.json` einträgt.
+  Ein solcher Eintrag hilft nur auf dem eigenen Rechner.
+- Was funktioniert: Die **Cloud-Umgebung** bekommt ein **Setup-Skript**, das plug-n-rag installiert
+  und das Suchmodell vorab lädt, plus eine **Netzwerkfreigabe** für Hugging Face (lokales Modell)
+  bzw. ein **Netzwerk-Secret** für Voyage. Die Umgebung wird danach als Abbild gespeichert; spätere
+  Sitzungen starten sofort suchbereit.
+- Die Index-Dateien kommen aus dem Vault-Repo. Deshalb müssen sie committet und gepusht sein.
+
+## Ablauf
+
+1. **Ausgangslage klären**
+   - Lokal (im Ordner der Vault): `plug-n-rag cloud --pruefen`. Fehlt ein GitHub-Repo oder sind die
+     Index-Dateien nicht gepusht, das zuerst erledigen (Commit „Vault-Index aktualisiert“, Push nur
+     nach Rückfrage, nie `--force`). Ist das Repo öffentlich: deutlich warnen und Hilfe anbieten,
+     es auf privat zu stellen.
+   - In einer Cloud-Sitzung, in der plug-n-rag schon läuft: ebenfalls `plug-n-rag cloud --pruefen`
+     und nur die ⚠-Punkte bearbeiten.
+2. **Anleitung erzeugen**: `plug-n-rag cloud`. Die Ausgabe enthält die Hosts für „Allowed domains“
+   und das Setup-Skript, passend zum Modell dieser Vault (`plug-n-rag cloud --skript` gibt nur das
+   Skript aus). Gib beides **unverändert** weiter, in Codeblöcken zum Kopieren.
+3. **Umgebung einrichten**
+   - Stehen dir in dieser Sitzung Werkzeuge zum Anlegen oder Bearbeiten von Cloud-Umgebungen zur
+     Verfügung, biete an, das selbst vorzuschlagen (Name z. B. „Vault“, Netzwerk „Limited“ mit
+     Paketquellen, die Hosts aus Schritt 2, das Setup-Skript). Die Nutzer:in bestätigt den
+     Vorschlag; ohne Bestätigung nichts ändern.
+   - Sonst Schritt für Schritt anleiten: In der Sitzungsleiste auf den Namen der Umgebung tippen,
+     „Bearbeiten“ (oder „Hinzufügen“ für eine eigene Vault-Umgebung). Dort:
+     **Network access** → „Limited“, „Allow package managers“ angehakt lassen, unter
+     **Allowed domains** die Hosts eintragen. **Setup script** → Skript einfügen. Speichern.
+     Doku: https://code.claude.com/docs/en/cloud-environments
+   - **Voyage**: Den Key als **Netzwerk-Secret** der Umgebung für den Host `api.voyageai.com`
+     hinterlegen lassen (nie als Umgebungsvariable, nie ins Repo, nie in den Chat). plug-n-rag
+     erkennt die Cloud-Sitzung und lässt den Key vom Netzwerk-Proxy einsetzen. Gibt es ein Werkzeug,
+     mit dem die Nutzer:in ein Secret sicher eingibt, nutze es.
+4. **Testen**: Eine neue Sitzung mit dem Vault-Repo in dieser Umgebung starten. Der erste Start
+   dauert einige Minuten (Modell etwa 470 MB). Dort `plug-n-rag cloud --pruefen` und eine
+   Testsuche, z. B. `plug-n-rag suche "<Thema aus der Vault>" --zweck frage`.
+5. **Erklären, was anders ist als lokal**
+   - Cloud-Sitzungen arbeiten auf einem eigenen Branch (`claude/…`). Änderungen an Notizen landen
+     erst nach dem Zusammenführen auf GitHub im Hauptstand und damit in Obsidian.
+   - Ein Update von plug-n-rag kommt in die Cloud-Umgebung, wenn sie neu gebaut wird (spätestens
+     nach etwa sieben Tagen oder nach einer Änderung am Setup-Skript).
+
+## Wenn etwas nicht klappt
+
+- **„Suchmodell konnte nicht geladen werden“ / Hugging Face blockiert**: Hosts aus `plug-n-rag cloud`
+  fehlen in „Allowed domains“. Bis dahin funktioniert die Stichwortsuche.
+- **plug-n-rag fehlt in der Cloud-Sitzung** (Befehl unbekannt, keine Kurz-Karte beim Start): Setup-Skript
+  fehlt oder ist fehlgeschlagen; die Sitzung lief in einer anderen Umgebung; oder das Repo
+  `sign-u-p/plug-n-rag` ist für die Umgebung nicht erreichbar.
+- **Alles wird neu berechnet**: Index-Dateien waren nicht gepusht.
