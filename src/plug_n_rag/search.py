@@ -204,7 +204,7 @@ def _parse_since(s: str | None) -> float | None:
 
 
 def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
-              embedder=None) -> tuple[list[NoteResult], bool, list[str]]:
+              embedder=None, relaxed: bool = False) -> tuple[list[NoteResult], bool, list[str]]:
     """Return (relevant notes ranked, keyword_only, notices)."""
     conn, has_vec = open_db(layout)
     notices: list[str] = []
@@ -265,8 +265,9 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
             if h.sim is not None:
                 lo = min_sim - 0.04
                 sem = float(np.clip((h.sim - lo) / max(strong - lo, 1e-6), 0, 1))
+            # research wants breadth: slightly lower bars than for a precise question
             lex_ok = h.coverage >= 0.5
-            h.relevant = lex_ok or (h.sim is not None and h.sim >= min_sim)
+            h.relevant = lex_ok or (h.sim is not None and h.sim >= min_sim - (0.01 if relaxed else 0.0))
             h.strength = max(sem, h.coverage) * 0.7 + min(sem, h.coverage) * 0.3
             if not h.relevant:
                 continue
@@ -288,17 +289,18 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         conn.close()
 
 
-def knee_cut(scores: list[float], max_notes: int) -> int:
-    """Number of notes to show: at the clearest score step, at most ``max_notes``."""
+def knee_cut(scores: list[float], max_notes: int, *, min_notes: int = 1, ratio: float = KNEE_RATIO) -> int:
+    """Number of notes to show: at the clearest score step, between ``min_notes`` and ``max_notes``."""
     if not scores:
         return 0
     n = min(len(scores), max_notes)
+    lo = min(max(1, min_notes), n)
     best_i, best_ratio = n, 1.0
-    for i in range(1, n):
-        ratio = scores[i] / scores[i - 1] if scores[i - 1] > 0 else 1.0
-        if ratio < best_ratio:
-            best_i, best_ratio = i, ratio
-    return best_i if best_ratio < KNEE_RATIO else n
+    for i in range(lo, n):
+        r = scores[i] / scores[i - 1] if scores[i - 1] > 0 else 1.0
+        if r < best_ratio:
+            best_i, best_ratio = i, r
+    return best_i if best_ratio < ratio else n
 
 
 def label(strength: float) -> str:
@@ -354,9 +356,11 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
             return _render_cached(layout, cached, params)
     if not query or not query.strip():
         return "Bitte eine Suchanfrage angeben."
-    notes, keyword_only, notices = run_query(layout, query, folder=folder, tag=tag, since=since, embedder=embedder)
+    relaxed = params["purpose"] == "recherche"
+    notes, keyword_only, notices = run_query(layout, query, folder=folder, tag=tag, since=since,
+                                             embedder=embedder, relaxed=relaxed)
     if not notes and (folder or tag or since):
-        notes, keyword_only, n2 = run_query(layout, query, embedder=embedder)
+        notes, keyword_only, n2 = run_query(layout, query, embedder=embedder, relaxed=relaxed)
         notices += [n for n in n2 if n not in notices]
         if notes:
             where = folder.strip("/") + "/" if folder else (f"Tag #{tag}" if tag else f"seit {since}")
@@ -365,7 +369,8 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
     pending = _pending_notice(layout)
     if pending:
         notices.append(pending)
-    n_show = knee_cut([n.score for n in notes], params["max_notes"])
+    n_show = knee_cut([n.score for n in notes], params["max_notes"], min_notes=params["min_notes"],
+                      ratio=params["knee_ratio"])
     data = {
         "key": _cache_key(query, folder, tag, since, purpose),
         "title": query,

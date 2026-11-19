@@ -1,5 +1,6 @@
 ---
 name: status
+disable-model-invocation: true
 description: Zeigt den Zustand von plug-n-rag für die aktuelle Vault oder Sammlung (Aktualität, Modell, Fehler, gelernte Werte, geschätzte Token-Ersparnis) und erklärt ihn verständlich.
 allowed-tools: Bash(plug-n-rag status*)
 ---

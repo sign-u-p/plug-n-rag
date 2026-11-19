@@ -1,5 +1,6 @@
 ---
 name: reindex
+disable-model-invocation: true
 description: Vollständige Neuindexierung der Vault oder Sammlung mit plug-n-rag, etwa nach einem Modellwechsel oder wenn der Index nicht zum Modell passt. Fragt vorher nach Zustimmung.
 allowed-tools: Bash(plug-n-rag reindex*) Bash(plug-n-rag status*)
 ---

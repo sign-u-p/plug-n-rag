@@ -1,5 +1,6 @@
 ---
 name: lernen-zuruecksetzen
+disable-model-invocation: true
 description: Setzt die gelernten Werte der Token-Steuerung von plug-n-rag auf die Startwerte zurück oder zeigt sie an. Verwenden, wenn die Suche dauerhaft zu viel oder zu wenig liefert oder die Nutzer:in neu anfangen möchte.
 allowed-tools: Bash(plug-n-rag lernen*)
 ---

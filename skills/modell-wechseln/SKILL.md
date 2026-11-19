@@ -1,5 +1,6 @@
 ---
 name: modell-wechseln
+disable-model-invocation: true
 description: Wechselt bei plug-n-rag den Embedding-Provider oder das Modell (lokal oder Voyage AI) mit Kostenvoranschlag und anschließender vollständiger Neuindexierung. Nur auf ausdrücklichen Wunsch der Nutzer:in.
 allowed-tools: Bash(plug-n-rag konfig*) Bash(plug-n-rag inventur*) Bash(plug-n-rag status*)
 ---

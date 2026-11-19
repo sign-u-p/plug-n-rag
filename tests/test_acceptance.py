@@ -133,3 +133,16 @@ def test_setup_and_sync_never_change_notes(tmp_path, real_embedder):
     search(layout, "Praxie", embedder=real_embedder)
     for p, data in notes.items():
         assert p.read_bytes() == data, f"{p} wurde verändert"
+
+
+def test_research_purpose_gives_breadth(real):
+    layout, emb = real
+    q = "Wie unterstütze ich ein Kind, das morgens beim Anziehen eskaliert?"
+    frage = search(layout, q, purpose="frage", embedder=emb)
+    recherche = search(layout, q, purpose="recherche", embedder=emb)
+    n_frage = int(frage.split()[0])
+    n_recherche = int(recherche.split()[0])
+    assert frage.splitlines()[2].startswith("1. gespraeche/2026-10-supervision.md")
+    assert n_recherche >= 3 and n_recherche >= n_frage
+    assert search(layout, "Wie lange dauert die Steuererklärung", purpose="recherche",
+                  embedder=emb).startswith("Nichts Passendes")

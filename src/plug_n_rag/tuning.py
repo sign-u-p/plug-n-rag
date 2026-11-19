@@ -25,6 +25,13 @@ START = {
     "recherche": {"max_notes": 8, "neighbors": 0, "chunks_per_note": 3},
     "erstellen": {"max_notes": 4, "neighbors": 1, "chunks_per_note": 3},
 }
+# Fixed per purpose (not learned): how many notes at least, and how deep a score step must be
+# to cut there. Research wants breadth, a question wants precision.
+CUT = {
+    "frage": {"min_notes": 1, "knee_ratio": 0.55},
+    "recherche": {"min_notes": 3, "knee_ratio": 0.35},
+    "erstellen": {"min_notes": 2, "knee_ratio": 0.45},
+}
 BOUNDS = {"max_notes": [1, 20], "neighbors": [0, 2], "chunks_per_note": [1, 3]}
 ALPHA = 0.15  # moving average weight of one learning step: one session moves values only a little
 MIN_OBS = 5  # observations per purpose before learned values are used
@@ -86,6 +93,7 @@ def params(layout: Layout, purpose: str) -> dict:
     for k in list(out):
         out[k] = _clamp(k, out[k], t.get("bounds", BOUNDS))
     out["purpose"] = purpose
+    out.update(CUT[purpose])
     return out
 
 
