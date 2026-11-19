@@ -29,10 +29,15 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
 
 ## Regeln
 
+- **Keine ganzen Dateien lesen** (kein `cat`, kein Read ohne Zeilenbereich), solange die Abschnitte
+  aus der Trefferliste reichen. Die Suche nennt am Ende den passenden `plug-n-rag lesen`-Befehl.
+  Mehrere Abschnitte nacheinander lesen ist günstiger als eine ganze Notiz.
+
 - Für Inhalte der Vault zuerst `plug-n-rag suche`, nicht grep. grep nur für exakte Zeichenketten
   (Dateinamen, Datumsangaben, wörtliche Zitate).
-- Jede Aussage aus der Vault mit Pfad und Zeilen (bzw. Seiten) belegen, z. B.
-  „(wissen/si-grundlagen.md, Z. 45–80)“.
+- Jede Aussage aus der Vault mit Pfad **und** Zeilen (bzw. Seiten) belegen, z. B.
+  „(wissen/si-grundlagen.md, Z. 45–80)“. Die Zeilen stehen in der Trefferliste und im Kopf
+  jeder `lesen`-Ausgabe.
 - Meldet die Suche „Nichts Passendes gefunden“, das offen sagen. Nicht aus Allgemeinwissen
   antworten, als käme es aus den Notizen. Allgemeinwissen nur klar gekennzeichnet ergänzen.
 - Relevanz steht in Worten (sehr passend, passend, am Rande). „Am Rande“ nur lesen, wenn nötig.

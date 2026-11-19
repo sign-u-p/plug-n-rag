@@ -1,0 +1,84 @@
+# Entscheidungen
+
+Entscheidungen, die SPEC.md offen ließ, und Abweichungen von SPEC.md, jeweils mit Begründung.
+Stand: 19.11.2026, Sprint 1.
+
+## Offene Punkte aus SPEC.md, jetzt entschieden
+
+| Thema | Entscheidung | Begründung |
+| --- | --- | --- |
+| Implementierungssprache | Python ≥ 3.10, ausgeführt über `uv` | Vorgabe des Auftrags, Empfehlung der SPEC. uv bringt bei Bedarf eine Python-Version mit. |
+| Lokales Standardmodell | `intfloat/multilingual-e5-small`, gepinnt auf Hugging-Face-Commit `614241f622f53c4eeff9890bdc4f31cfecc418b3`, ONNX-Datei `onnx/model.onnx` | Mehrsprachig mit gutem Deutsch, 384 Dimensionen, auf CPU schnell (18 Abschnitte in unter 1 s nach dem Laden). Ein Vergleichstest mit weiteren Kandidaten steht in OPEN.md. |
+| Laufzeit für das lokale Modell | `onnxruntime` + `tokenizers` + NumPy, eigene Mean-Pooling-Implementierung | Kein PyTorch (Gigabytes), keine `sentence-transformers`, läuft auf macOS (ARM/Intel), Linux und Windows. |
+| Modell-Download | Direkt per HTTPS von `huggingface.co/<modell>/resolve/<revision>/…` in `~/.cache/plug-n-rag/models` (überschreibbar mit `PLUG_N_RAG_MODEL_DIR`) | Kein `huggingface_hub` als Abhängigkeit; die Revision im Pfad garantiert, dass Gewichte nie unbemerkt wechseln. |
+| PDF-Extraktion | `pypdf` (BSD) | PyMuPDF steht unter AGPL und würde die Lizenz des Plugins beeinflussen. pypdf reicht für die Textebene. Rendering von Seitenbildern für die Transkription mit `pypdfium2` (optionales Extra `aufnahme`), Fallback `pdftoppm`. |
+| Formate in Version 1 | Markdown, Text, PDF mit Textebene | Empfehlung der SPEC. DOCX, HTML, EPUB später. |
+| OCR | Tesseract (falls installiert, Sprachen `deu+eng`), sonst Transkription durch Subagent nur mit Zustimmung | Kostenlos und offline; keine Pflichtabhängigkeit, weil Laien Tesseract selten installiert haben. |
+| Schwellen der Qualitätsprüfung | Tesseract-Konfidenz ≥ 70 und ≥ 60 % echte Wörter | Startwerte; an echten Scans zu bestimmen (OPEN.md). |
+| Schwellen der Relevanz | e5-small: semantisch relevant ab Kosinus 0,83, „sehr passend“ ab 0,87; Stichwortabdeckung ≥ 50 % | Kalibriert an der Test-Vault: passende Treffer 0,84–0,90, unpassende Fragen 0,80–0,82. Werte stehen pro Modell in `embed/local.py`. |
+| Knick-Erkennung | Schnitt am kleinsten Verhältnis aufeinanderfolgender Notiz-Scores, wenn es unter 0,55 (frage), 0,45 (erstellen) bzw. 0,35 (recherche) liegt; Mindestzahl 1/2/3 | `recherche` soll Breite liefern, `frage` Präzision. |
+| Lizenz | MIT | Wie die Referenzprojekte; Hinweise in `THIRD_PARTY_NOTICES.md`. |
+
+## Namensanpassungen (Arbeitsnamen mit `vault-`)
+
+| SPEC (Arbeitsname) | Umsetzung | Grund |
+| --- | --- | --- |
+| CLI `vault <befehl>` | `plug-n-rag <befehl>` (Unterbefehle deutsch wie in der SPEC, englische Aliase `search`, `outline`, `read`, `related`, `map`) | Eindeutig, kollidiert nicht mit anderen Programmen namens `vault` (z. B. HashiCorp Vault). |
+| `vault-plugin.yml` | `plug-n-rag.yml` im Wurzelordner | Sichtbar und selbsterklärend für Nutzer:innen. |
+| `.vault-index/` | `.plug-n-rag/index/` | Ein einziger versteckter Ordner für alles, was plug-n-rag anlegt. |
+| `.vault-cache/` | `.plug-n-rag/cache/` | Wird über `.plug-n-rag/.gitignore` und einen Eintrag in `.gitignore` nie committet. |
+| `vault-tuning.json` | `.plug-n-rag/tuning.json` (mit `tuning.commit_learning: true`), sonst `.plug-n-rag/cache/tuning.json` | Siehe oben. |
+| Skill `vault-search` | Skill `suche` → `/plug-n-rag:suche` | Plugin-Komponenten werden automatisch mit `plug-n-rag:` benannt. |
+| `/vault-setup`, `/vault-status`, `/vault-reindex`, `/vault-aufnehmen`, `/vault-modell-wechseln`, `/vault-lernen-zuruecksetzen` | `/plug-n-rag:setup`, `:status`, `:reindex`, `:aufnehmen`, `:modell-wechseln`, `:lernen-zuruecksetzen` | Namensraum durch das Plugin. |
+| Sammlungs-Cache `~/.cache/<plugin>/<pfad-hash>/` | `~/.cache/plug-n-rag/collections/<ordnername>-<hash>/`, Zuordnung in `~/.config/plug-n-rag/collections.json` | Ordnername im Pfad hilft beim Wiederfinden. |
+
+## Abweichungen von SPEC.md
+
+1. **Slash-Befehle als Skills statt `commands/`.** Die aktuelle Plugin-Dokumentation empfiehlt
+   `skills/` für neue Plugins; Skills erscheinen ebenfalls als `/plug-n-rag:<name>`.
+   `status`, `reindex`, `modell-wechseln` und `lernen-zuruecksetzen` sind mit
+   `disable-model-invocation: true` markiert: Sie kosten so keinen Kontext in jeder Sitzung
+   (gemessen: rund 430 Tokens weniger), Nutzer:innen rufen sie selbst auf.
+2. **Ausführbares Programm in `bin/`.** Claude Code legt `bin/` eines aktiven Plugins auf den PATH
+   des Bash-Werkzeugs, deshalb heißt der Aufruf überall einfach `plug-n-rag …`. Nachteil laut
+   Dokumentation: claude.ai und Cowork installieren Plugins mit `bin/` nicht. Für den späteren
+   Konnektor in der Claude-App ist ohnehin der MCP-Wrapper vorgesehen.
+3. **Chunk-Hash ohne Dateinamen-Titel.** SPEC: Hash über „Titel + heading_path + Text“. Fällt der
+   Titel auf den Dateinamen zurück, würde Umbenennen neu einbetten. Deshalb geht nur ein
+   *ausdrücklicher* Titel (Frontmatter `title`/`titel` oder erste H1) in den Hash ein. Der
+   Breadcrumb im Embedding-Text enthält weiterhin den Dateinamen; nach einem Umbenennen bleibt
+   der alte Vektor (mit altem Namen im Breadcrumb) in Gebrauch. Das ist gewollt (Akzeptanzkriterium).
+4. **Hydrate liest Text durch erneutes Chunking**, nicht durch Ausschneiden von Zeilen. Die
+   Abschnitte werden deterministisch neu berechnet und über den Hash den Vektoren zugeordnet.
+   Vorteil: auch veraltete Index-Dateien liefern Vektoren für alle unveränderten Abschnitte, und
+   Dateien ohne Index-Datei sind trotzdem per Stichwort auffindbar.
+5. **PDF-Abschnitte überschreiten nie eine Seitengrenze**, damit Belege immer genau eine Seite
+   (oder einen Seitenbereich bei Lesezeichen) nennen.
+6. **Vault-Modus indexiert standardmäßig nur Markdown.** PDFs in einer Vault werden über
+   `/plug-n-rag:aufnehmen` zu Notizen (SPEC-Ablauf). Mit `formats: [markdown, pdf]` lassen sich
+   PDFs auch direkt indexieren.
+7. **Zusätzliche Git-Einstellung `git.auto_commit: off | index | all` und `git.auto_push`.** Die SPEC
+   beschreibt „Änderungen werden beim nächsten Start erfasst und committet“ für den Weg ohne
+   Obsidian Git. Standard ist `off`; das Setup fragt nach.
+8. **Stop-Hook läuft asynchron** (`async: true`). So blockiert er nie die nächste Eingabe, auch wenn
+   ein geänderter Text eingebettet werden muss.
+9. **SessionStart mit Zeitbudget** (6 s): Was nicht fertig wird, indexiert ein Hintergrundprozess
+   weiter; ist das Modell noch nicht heruntergeladen, wird im Hook gar nicht eingebettet. Die
+   Stichwortsuche funktioniert sofort.
+10. **Relevanz in Worten mit drei Stufen**: „sehr passend“, „passend“, „am Rande“.
+11. **Suchausgabe endet mit einem `Lesen:`-Hinweis** auf den besten Abschnitt. Im End-to-End-Test
+    hat Claude ohne diesen Hinweis ganze Dateien gelesen; mit ihm liest es gezielt Abschnitte.
+12. **MCP-Wrapper ist vorhanden, aber nicht automatisch registriert.** Ein automatisch gestarteter
+    MCP-Server würde in jedem Projekt (auch ohne Vault) starten und seine Abhängigkeiten
+    installieren. Aktivierung beschreibt die README. Die MCP-Werkzeuge liefern dieselben Texte
+    wie die CLI (kein eigenes JSON-Format).
+13. **Kein `vault --json`** für die Suche: Der MCP-Wrapper gibt Text zurück, wie die CLI.
+    `plug-n-rag inventur --json` gibt es für das Setup.
+14. **Voyage-Standardmodell `voyage-3.5-lite` mit 1.024 Dimensionen**, Key aus `VOYAGE_API_KEY` oder
+    `~/.config/plug-n-rag/voyage_api_key`. Voyage hat keine Revisionen; der Modellbezeichner ist
+    `voyage:<modell>@d<dimensionen>`.
+15. **Token-Schätzung** pauschal mit etwa 3,8 Zeichen pro Token. Nur für Größenangaben und die
+    Ersparnis-Schätzung, nie für harte Grenzen.
+16. **Lernen läuft beim Sitzungsstart** (`tuning.learn`), höchstens ein Schritt pro Sitzung
+    (gleitender Mittelwert mit α = 0,15, aufgerundet auf eine Einheit). Gelernte Werte gelten
+    erst ab 5 Beobachtungen pro Zweck.

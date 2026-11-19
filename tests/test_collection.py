@@ -41,7 +41,6 @@ def test_scanned_pdf_reports_error(tmp_path, fake):
     lib = tmp_path / "scans"
     lib.mkdir()
     # a PDF page without any text operator = no text layer
-    from tests.fixtures.make_pdf import PAGES, build  # noqa: F401
     import tests.fixtures.make_pdf as mp
 
     old = mp.PAGES

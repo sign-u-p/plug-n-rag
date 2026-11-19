@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from plug_n_rag.chunk import chunk_document
 from plug_n_rag.formats import load_document
 from plug_n_rag.formats.markdown import parse_markdown

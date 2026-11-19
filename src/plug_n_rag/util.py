@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import sys
 import tempfile
 import time
 from contextlib import contextmanager
@@ -129,8 +128,6 @@ def user_cache_dir() -> Path:
         return Path(base) / "plug-n-rag"
     if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
         return Path(os.environ["LOCALAPPDATA"]) / "plug-n-rag"
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Caches" / "plug-n-rag"
     return Path.home() / ".cache" / "plug-n-rag"
 
 

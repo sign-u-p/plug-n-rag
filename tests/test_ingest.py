@@ -1,13 +1,10 @@
 import json
-import shutil
 
 import tests.fixtures.make_pdf as mp
 from plug_n_rag.config import init_layout
 from plug_n_rag.ingest import complete, ingest, word_share
 from plug_n_rag.search import search
 from plug_n_rag.sync import sync
-
-from .conftest import FIXTURE
 
 
 def _scan_pdf(path, pages=2):

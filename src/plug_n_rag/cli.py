@@ -105,10 +105,7 @@ def cmd_sync(args):
     layout = _layout(args, require=not args.quiet)
     if layout is None or not layout.configured:
         return
-    progress = None
-    if args.fortschritt:
-        def progress(msg):  # noqa: E306
-            print("  " + msg, file=sys.stderr)
+    progress = (lambda msg: print("  " + msg, file=sys.stderr)) if args.fortschritt else None
     try:
         r = sync(layout, time_budget=args.budget, progress=progress, lock_wait=0 if args.quiet else 60)
     except LockBusy:

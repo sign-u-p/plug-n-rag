@@ -13,8 +13,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-import numpy as np
-
 from . import index_store as ix
 from .chunk import chunk_document
 from .config import Layout
@@ -297,6 +295,3 @@ def pending_count(layout: Layout) -> tuple[int, int]:
             todo += 1
     return todo, total
 
-
-def vec_matrix(records: list[dict]) -> np.ndarray:  # pragma: no cover - helper for tools
-    return np.stack([ix.decode_vec(c["vec"]) for r in records for c in r.get("chunks", [])])

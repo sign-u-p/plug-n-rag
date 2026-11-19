@@ -343,7 +343,6 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
            since=None, more: bool = False, embedder=None) -> str:
     params = tuning.params(layout, purpose)
     cache_path = layout.cache_dir / "last_search.json"
-    page = 0
     fallback = None
     notices: list[str] = []
     if more:
@@ -452,6 +451,10 @@ def _render(layout: Layout, data: dict, offset: int, count: int, params: dict) -
     else:
         while lines and not lines[-1]:
             lines.pop()
+    best = shown[0]
+    h0 = best["hits"][0]
+    anchor = f"#{h0['heading'].split(' > ')[-1]}" if h0["heading"] else f":{h0['start']}-{h0['end']}"
+    lines.append(f'Lesen: plug-n-rag lesen "{best["path"]}{anchor}" (nur passende Abschnitte, nicht ganze Dateien)')
     return "\n".join(lines)
 
 
