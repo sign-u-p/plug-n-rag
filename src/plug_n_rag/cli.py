@@ -385,7 +385,11 @@ def cmd_cloud(args):
 
     layout = _layout(args, require=False)
     cfg = layout.config if layout and layout.configured else load_config(Path("/nonexistent"))
-    if args.skript:
+    if args.hosts:
+        from .cloud import resolve_hosts
+
+        _print("\n".join(resolve_hosts(cfg)))
+    elif args.skript:
         sys.stdout.write(setup_script(cfg))
     elif args.pruefen:
         _print(check(layout, network=not args.offline))
@@ -405,6 +409,19 @@ def cmd_modell_laden(args):
             return
         model = emb.get("model", "intfloat/multilingual-e5-small")
     _print(preload_model(model))
+
+
+def cmd_nach_main(args):
+    from . import gitops
+    from .sync import sync
+
+    layout = _layout(args)
+    if layout.location != "inside" or not gitops.inside_repo(layout.root):
+        _print("Diese Vault ist kein Git-Repo, es gibt nichts nach main zu übernehmen.")
+        return
+    sync(layout)
+    msg = args.nachricht or "Notizen und Suchindex übernommen (plug-n-rag)"
+    _print(gitops.publish_to_main(layout, msg, resync=lambda: sync(layout)))
 
 
 def cmd_mcp(args):
@@ -512,12 +529,17 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("cloud", help="Einrichtung für Cloud-Sitzungen: Anleitung, Setup-Skript, Prüfung")
     s.add_argument("--skript", action="store_true", help="nur das Setup-Skript ausgeben")
     s.add_argument("--pruefen", action="store_true", help="prüfen, ob alles für Cloud-Sitzungen bereit ist")
+    s.add_argument("--hosts", action="store_true", help="tatsächlich nötige Download-Hosts ermitteln")
     s.add_argument("--offline", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_cloud)
 
     s = sub.add_parser("modell-laden", help="Lokales Suchmodell herunterladen und prüfen")
     s.add_argument("--modell")
     s.set_defaults(func=cmd_modell_laden)
+
+    s = sub.add_parser("nach-main", help="Alle Änderungen (Notizen und Index) sicher nach main übernehmen")
+    s.add_argument("--nachricht", "-m", help="Commit-Nachricht")
+    s.set_defaults(func=cmd_nach_main)
 
     s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
     s.set_defaults(func=cmd_mcp)

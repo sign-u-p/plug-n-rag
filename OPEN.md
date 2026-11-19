@@ -34,7 +34,15 @@ Stop-Hook durchlaufen. Offen ist:
   - [ ] Voyage mit Netzwerk-Secret: ersetzt der Proxy den Platzhalter `proxy-injected`?
   - [ ] Kann Claude die Umgebung mit eigenen Werkzeugen vorschlagen (Skill `cloud`, Schritt 3)?
   - Belegt: In einer Cloud-Sitzung lädt die laufende Sitzung ein per `claude plugin install`
-    installiertes Plugin (Skills und Agent erschienen).
+    installiertes Plugin (Skills, Agent und `plug-n-rag` auf dem PATH erschienen).
+- [ ] **Einrichtung direkt in der Cloud** mit dem Startsatz aus der README in einer frischen
+      Sitzung auf einem Vault-Repo ohne plug-n-rag:
+  - [ ] Installiert Claude das Plugin auf den Startsatz hin ohne Rückfragen-Schleife, und findet es
+        `/plug-n-rag:setup` im selben oder nächsten Zug?
+  - [ ] Netzwerkfreigabe über die Umgebungswerkzeuge mit Hosts aus `plug-n-rag cloud --hosts`.
+  - [ ] Setup-Skript über die Umgebungswerkzeuge sichern; nächste Sitzung hat plug-n-rag.
+- [ ] **`/plug-n-rag:nach-main` aus einer Cloud-Sitzung**: Akzeptiert die Sitzung die Aufforderung
+      im Chat als Erlaubnis für den Push nach `main`? Verhalten bei geschütztem `main` prüfen.
 - [ ] **Windows**: Launcher `bin/plug-n-rag` ist ein POSIX-Shell-Skript. Claude Code nutzt unter
       Windows meist Git Bash; ohne Git Bash ist ein `.cmd`-Gegenstück nötig.
 - [ ] **macOS mit Homebrew-Python**: Lässt sich sqlite-vec laden? (Sonst greift der NumPy-Fallback,

@@ -51,4 +51,5 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
   Face nicht erreichbar): kurz erklären und `/plug-n-rag:cloud` anbieten.
 - Notizen nie ohne ausdrückliche Zustimmung ändern. Wenn du mit Zustimmung Notizen änderst und
   committest, `.plug-n-rag/index/` im selben Commit mitnehmen (vorher `plug-n-rag sync`).
+  Soll es in den Hauptstand („nach main“, „damit ich es in Obsidian sehe“): `/plug-n-rag:nach-main`.
 - Ausgaben an Nutzer:innen auf Deutsch, gendergerecht mit Doppelpunkt.

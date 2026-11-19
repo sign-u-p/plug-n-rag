@@ -105,3 +105,24 @@ Stand: 19.11.2026, Sprint 1.
     damit Hosts und Skript zur Konfiguration der Vault passen (lokal oder Voyage).
 21. **Version 0.2.0**: Die Version in `plugin.json` ist gesetzt, deshalb bekommen installierte
     Plugins Änderungen erst mit einer neuen Versionsnummer.
+
+## Nachtrag 19.11.2026: Einrichtung in der Cloud, Übernahme nach main
+
+22. **Einrichtung komplett in einer Cloud-Sitzung.** Claude installiert das Plugin auf Wunsch der
+    Nutzer:in mit `claude plugin marketplace add` / `install` in der laufenden Sitzung. Belegt in
+    dieser Cloud-Sitzung: Skills, Agent und der Befehl `plug-n-rag` (über `bin/` auf dem PATH)
+    standen danach sofort bereit. Die README gibt einen Startsatz zum Kopieren vor; der
+    Setup-Leitfaden hat einen eigenen Abschnitt „Cloud-Weg“ (lokale Schritte überspringen,
+    Netzwerkfreigabe vor der Indexierung, Setup-Skript für künftige Sitzungen sichern).
+23. **`plug-n-rag cloud --hosts`** ermittelt die exakten Download-Hosts (Weiterleitung von
+    huggingface.co). Werkzeuge zum Ändern der Cloud-Umgebung akzeptieren oft keine Platzhalter
+    wie `*.hf.co`; von Hand eingetragen ist `*.hf.co` robuster, weil der CDN-Host je nach Region
+    wechselt.
+24. **`plug-n-rag nach-main` und Skill `/plug-n-rag:nach-main`.** Cloud-Sitzungen arbeiten auf
+    eigenen Branches; die Nutzer:in soll trotzdem aus dem Chat heraus alles in den Hauptstand legen
+    können. Der Befehl committet Notizen und Index, holt `main`, **führt zusammen statt zu
+    rebasen**, pusht nach `main` (nie `--force`) und zusätzlich auf den Sitzungs-Branch.
+    Index-Konflikte werden neu berechnet, Notiz-Konflikte brechen ohne Änderung ab, ein
+    API-Key-ähnlicher Inhalt verhindert den Commit. Der Skill verlangt die ausdrückliche
+    Aufforderung im Chat; sie gilt als Erlaubnis für diesen einen Push.
+25. **Version 0.3.0.**

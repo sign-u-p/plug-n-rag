@@ -1,7 +1,7 @@
 {
   "name": "plug-n-rag",
   "displayName": "plug-n-rag",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Macht Obsidian-Vaults und auf Wunsch andere Ordner semantisch durchsuchbar, damit Claude gezielt statt vollständig liest und Tokens spart.",
   "author": {
     "name": "sign-u-p"

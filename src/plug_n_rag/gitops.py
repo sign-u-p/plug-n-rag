@@ -188,3 +188,91 @@ fi
     path.write_text(content, encoding="utf-8")
     path.chmod(0o755)
     return "Git-Hook installiert."
+
+
+SECRET_RE = re.compile(r"(pa-[A-Za-z0-9_\-]{30,}|sk-ant-[A-Za-z0-9_\-]{20,}|gh[pousr]_[A-Za-z0-9]{30,})")
+
+
+def default_branch(root: Path) -> str:
+    try:
+        r = git(root, "ls-remote", "--symref", "origin", "HEAD", timeout=30)
+        for line in r.stdout.splitlines():
+            if line.startswith("ref: refs/heads/"):
+                return line.split("refs/heads/", 1)[1].split()[0]
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return "main"
+
+
+def current_branch(root: Path) -> str:
+    return git(root, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+
+
+def staged_secrets(root: Path) -> list[str]:
+    diff = git(root, "diff", "--cached", "-U0").stdout
+    hits = []
+    current = None
+    for line in diff.splitlines():
+        if line.startswith("+++ b/"):
+            current = line[6:]
+        elif line.startswith("+") and SECRET_RE.search(line):
+            hits.append(current or "?")
+    return sorted(set(hits))
+
+
+def publish_to_main(layout: Layout, message: str, resync=None) -> str:
+    """Commit everything, bring in the newest main, push to main. Never force, never rewrite.
+
+    ``resync`` is called to recompute index files when only those conflict.
+    """
+    root = layout.root
+    if not remote_url(root):
+        return "Kein GitHub-Repo verbunden, nichts zu übernehmen."
+    if unmerged(root):
+        return "Es gibt ungelöste Konflikte. Bitte zuerst gemeinsam klären."
+    target = default_branch(root)
+    branch = current_branch(root)
+    lines = []
+    if status_porcelain(root):
+        git(root, "add", "-A")
+        secrets = staged_secrets(root)
+        if secrets:
+            git(root, "reset", "-q")
+            return ("Abgebrochen: In " + ", ".join(secrets) + " steht etwas, das wie ein API-Key aussieht. "
+                    "Bitte entfernen; Keys gehören nie ins Repo.")
+        if git(root, "commit", "--quiet", "-m", message).returncode == 0:
+            lines.append(f"Commit: „{message}“")
+    for attempt in range(2):
+        f = git(root, "fetch", "--quiet", "origin", target, timeout=60)
+        if f.returncode != 0:
+            return "\n".join(lines + [f"Neuester Stand von {target} konnte nicht geholt werden (offline?)."])
+        m = git(root, "merge", "--no-edit", "--quiet", f"origin/{target}", timeout=60)
+        if m.returncode != 0:
+            conflicted = unmerged(root)
+            if conflicted and all(p.startswith(".plug-n-rag/index/") for p in conflicted):
+                for p in conflicted:
+                    git(root, "checkout", "--theirs", "--", p)
+                if resync is not None:
+                    resync()
+                git(root, "add", "-A", "--", ".plug-n-rag")
+                git(root, "commit", "--quiet", "--no-edit")
+                lines.append(f"{len(conflicted)} Index-Dateien mit Konflikt neu berechnet.")
+            else:
+                git(root, "merge", "--abort")
+                names = ", ".join(conflicted[:8]) or "unbekannt"
+                return "\n".join(lines + [
+                    f"Nicht übernommen: Diese Notizen wurden hier und auf {target} unterschiedlich geändert: "
+                    f"{names}. Bitte gemeinsam entscheiden, welche Fassung gilt. Es wurde nichts verändert."])
+        p = git(root, "push", "--quiet", "origin", f"HEAD:{target}", timeout=90)
+        if p.returncode == 0:
+            if branch not in (target, "HEAD"):
+                git(root, "push", "--quiet", "origin", f"HEAD:{branch}", timeout=90)
+            lines.append(f"Auf {target} übernommen" + (f" (vom Branch {branch})" if branch != target else "") + ".")
+            return "\n".join(lines)
+        if attempt == 0:
+            continue
+        err = (p.stderr or "").strip().splitlines()[-1:] or ["unbekannter Fehler"]
+        hint = " Vermutlich ist der Branch geschützt; dann über einen Pull Request zusammenführen." \
+            if "protected" in (p.stderr or "").lower() else ""
+        return "\n".join(lines + [f"Push nach {target} abgelehnt: {err[0]}.{hint}"])
+    return "\n".join(lines)

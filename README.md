@@ -135,6 +135,7 @@ Claude nutzt dafür automatisch die Suche von plug-n-rag und nennt die Quellen m
 | `/plug-n-rag:setup` | Geführte Einrichtung (auch zum Fortsetzen oder Prüfen) |
 | `/plug-n-rag:status` | Ist alles aktuell? Fehler? Wie viel wurde gespart? |
 | `/plug-n-rag:cloud` | Vault in Cloud-Sitzungen nutzen: Einrichtung und Prüfung |
+| `/plug-n-rag:nach-main` | Änderungen aus dem Chat in den Hauptstand übernehmen |
 | `/plug-n-rag:aufnehmen` | PDFs in durchsuchbaren Text umwandeln |
 | `/plug-n-rag:reindex` | Alles neu aufbauen, z. B. nach einem Modellwechsel |
 | `/plug-n-rag:modell-wechseln` | Lokales Modell oder Voyage AI wählen |
@@ -170,14 +171,35 @@ Claude selbst verwendet im Hintergrund `plug-n-rag suche`, `gliederung`, `lesen`
 ## Cloud-Sitzungen
 
 Liegt deine Vault in einem privaten GitHub-Repo, kannst du plug-n-rag auch in Cloud-Sitzungen
-nutzen (Claude Code im Browser unter claude.ai/code, in der Desktop- oder Handy-App).
+nutzen: Claude Code im Browser unter claude.ai/code oder in der Desktop- oder Handy-App. Du
+kannst sogar **alles direkt in der Cloud einrichten**, ohne vorher etwas auf deinem Rechner zu
+installieren.
 
-**Wichtig:** Cloud-Sitzungen installieren keine Plugins, die ein Repo in `.claude/settings.json`
-einträgt. Stattdessen bekommt die **Cloud-Umgebung** ein **Setup-Skript**. Am einfachsten:
-Frag Claude in einer Sitzung mit plug-n-rag nach `/plug-n-rag:cloud`. Claude erzeugt dann
-Netzwerkfreigabe und Setup-Skript passend zu deiner Vault und führt dich durch die Einrichtung.
+### Einrichtung direkt in der Cloud
 
-Von Hand geht es so:
+1. Starte unter claude.ai/code (oder in der App) eine Sitzung mit deinem **Vault-Repo**.
+2. Schreib als erste Nachricht:
+
+   ```text
+   Bitte installiere das Plugin plug-n-rag mit
+   claude plugin marketplace add sign-u-p/plug-n-rag
+   und claude plugin install plug-n-rag@plug-n-rag
+   und richte danach meine Vault mit /plug-n-rag:setup ein.
+   ```
+
+   Falls Claude den Setup-Befehl nicht sofort findet, schreib einfach „weiter“.
+3. Claude führt dich durch die Einrichtung (Datenschutz, private Ordner, Indexierung, Karte,
+   Testsuche). Für das Suchmodell braucht die Cloud-Umgebung eine Netzwerkfreigabe für Hugging Face.
+   Claude schlägt sie vor oder erklärt, wo du sie einträgst.
+4. Zum Schluss sorgt Claude mit einem **Setup-Skript** in der Cloud-Umgebung dafür, dass künftige
+   Sitzungen plug-n-rag automatisch haben, und legt auf Wunsch alles nach `main` (siehe unten).
+
+**Warum nicht über das Repo?** Cloud-Sitzungen installieren keine Plugins, die ein Repo in
+`.claude/settings.json` einträgt. Deshalb bekommt die **Cloud-Umgebung** ein Setup-Skript.
+In einer Sitzung mit plug-n-rag erzeugt `/plug-n-rag:cloud` Netzwerkfreigabe und Setup-Skript passend
+zu deiner Vault.
+
+### Cloud-Umgebung von Hand einrichten
 
 1. In der Sitzungsleiste auf den Namen der Cloud-Umgebung tippen, dann „Bearbeiten“ (oder eine
    eigene Umgebung „Hinzufügen“, z. B. „Vault“).
@@ -211,13 +233,28 @@ Gut zu wissen:
 
 - Die Index-Dateien (`.plug-n-rag/index/`) müssen committet und gepusht sein. Dann berechnet die
   Cloud-Sitzung nichts neu.
-- Cloud-Sitzungen arbeiten auf einem eigenen Branch (`claude/…`). Was Claude dort an Notizen ändert,
-  erscheint in Obsidian erst, wenn du es auf GitHub zusammenführst.
+- Cloud-Sitzungen arbeiten auf einem eigenen Branch (`claude/…`). Sag Claude einfach
+  „leg das nach main“, dann übernimmt plug-n-rag Notizen und Index in den Hauptstand (siehe unten).
 - **Voyage AI** statt lokalem Modell: keine Hugging-Face-Freigabe nötig. Den Voyage-Key trägst du als
   **Netzwerk-Secret** der Umgebung für den Host `api.voyageai.com` ein, nie als Umgebungsvariable
   und nie ins Repo. plug-n-rag lässt den Key dann vom Netzwerk-Proxy einsetzen.
 - Updates von plug-n-rag kommen in die Cloud-Umgebung, wenn sie neu gebaut wird (spätestens nach
   etwa sieben Tagen oder nach einer Änderung am Setup-Skript).
+
+## Aus dem Chat nach main
+
+Ob lokal oder in der Cloud: Sag Claude „leg das nach main“ (oder `/plug-n-rag:nach-main`).
+plug-n-rag übernimmt dann neue und geänderte Notizen zusammen mit dem Suchindex in den Hauptstand
+deines Repos. Danach siehst du die Änderungen auch in Obsidian.
+
+Dabei gilt:
+
+- Es wird nichts überschrieben. Hat sich `main` inzwischen geändert (z. B. durch Obsidian Git),
+  wird der neueste Stand zuerst zusammengeführt.
+- Haben Claude und du **dieselbe Notiz** unterschiedlich geändert, bricht plug-n-rag ab und Claude
+  fragt dich, welche Fassung gelten soll.
+- Sieht etwas wie ein API-Key aus, wird nichts übernommen.
+- Ist `main` auf GitHub geschützt, bietet Claude stattdessen einen Pull Request an.
 
 ## Andere Ordner (Sammlungs-Modus)
 
@@ -274,7 +311,7 @@ Aufbau:
 .claude-plugin/       plugin.json, marketplace.json
 bin/plug-n-rag        Starter (uv, Umgebung im Nutzer-Cache)
 hooks/hooks.json      SessionStart, Stop
-skills/               suche, setup, cloud, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
+skills/               suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
 agents/               transkription (Haiku)
 src/plug_n_rag/       Kern: formats, chunk, index_store, sync, db, search, navigate, mapview,
                       status, tuning, ingest, inventory, gitops, cloud, embed/, mcp_server, cli

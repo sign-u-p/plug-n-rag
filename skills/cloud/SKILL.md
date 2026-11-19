@@ -19,6 +19,15 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
   Sitzungen starten sofort suchbereit.
 - Die Index-Dateien kommen aus dem Vault-Repo. Deshalb müssen sie committet und gepusht sein.
 
+## Zwei Ausgangslagen
+
+- **Lokal eingerichtet, jetzt auch in der Cloud**: Ablauf unten ab Schritt 1.
+- **Alles direkt in der Cloud**: Die Nutzer:in hat eine Cloud-Sitzung mit ihrem Vault-Repo
+  gestartet und plug-n-rag darin installieren lassen (`claude plugin marketplace add
+  sign-u-p/plug-n-rag`, `claude plugin install plug-n-rag@plug-n-rag`). Dann zuerst
+  `/plug-n-rag:setup` (Abschnitt „Cloud-Weg“), danach Schritt 3 unten, damit künftige Sitzungen
+  das Plugin automatisch haben.
+
 ## Ablauf
 
 1. **Ausgangslage klären**
@@ -34,8 +43,11 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
 3. **Umgebung einrichten**
    - Stehen dir in dieser Sitzung Werkzeuge zum Anlegen oder Bearbeiten von Cloud-Umgebungen zur
      Verfügung, biete an, das selbst vorzuschlagen (Name z. B. „Vault“, Netzwerk „Limited“ mit
-     Paketquellen, die Hosts aus Schritt 2, das Setup-Skript). Die Nutzer:in bestätigt den
-     Vorschlag; ohne Bestätigung nichts ändern.
+     Paketquellen, die Hosts, das Setup-Skript). Die Nutzer:in bestätigt den Vorschlag; ohne
+     Bestätigung nichts ändern. Erlauben die Werkzeuge keine Platzhalter wie `*.hf.co`, nimm die
+     exakten Hosts aus `plug-n-rag cloud --hosts`. Verlangen sie, dass ein Setup-Skript vorher in
+     der Sitzung lief, führe `plug-n-rag cloud --skript > /tmp/pnr-setup.sh && bash /tmp/pnr-setup.sh`
+     aus und prüfe das Ergebnis, bevor du es vorschlägst.
    - Sonst Schritt für Schritt anleiten: In der Sitzungsleiste auf den Namen der Umgebung tippen,
      „Bearbeiten“ (oder „Hinzufügen“ für eine eigene Vault-Umgebung). Dort:
      **Network access** → „Limited“, „Allow package managers“ angehakt lassen, unter

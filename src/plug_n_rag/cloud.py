@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import gitops
@@ -35,6 +36,40 @@ def _provider(config: dict) -> tuple[str, str]:
 def allowed_domains(config: dict) -> list[str]:
     provider, _ = _provider(config)
     return list(HF_HOSTS) if provider == "local" else []
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):  # noqa: D401 - keep the 30x response
+        return None
+
+
+def resolve_hosts(config: dict) -> list[str]:
+    """Exact hosts the model download needs (for tools that do not accept ``*.`` patterns).
+
+    Asks Hugging Face where the files redirect to. If huggingface.co itself is blocked, only
+    ``huggingface.co`` is returned; call again after allowing it to learn the CDN host.
+    """
+    provider, model = _provider(config)
+    if provider == "voyage":
+        return [VOYAGE_HOST]
+    if provider != "local" or model not in LOCAL_MODELS:
+        return []
+    spec = LOCAL_MODELS[model]
+    hosts = ["huggingface.co"]
+    opener = urllib.request.build_opener(_NoRedirect)
+    for key in ("tokenizer", "onnx"):
+        url = f"https://huggingface.co/{model}/resolve/{spec['revision']}/{spec[key]}"
+        req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "plug-n-rag"})
+        try:
+            opener.open(req, timeout=10)
+        except urllib.error.HTTPError as exc:
+            loc = exc.headers.get("Location", "") if exc.headers else ""
+            host = urllib.parse.urlparse(loc).hostname
+            if host and host not in hosts:
+                hosts.append(host)
+        except (urllib.error.URLError, OSError, TimeoutError):
+            break
+    return hosts
 
 
 def setup_script(config: dict) -> str:

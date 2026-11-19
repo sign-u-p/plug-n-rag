@@ -40,6 +40,33 @@ Der Befehl heißt `plug-n-rag` (Ersatz, falls nicht auf dem PATH:
 - Hooks von plug-n-rag können beim ersten Ausführen eine Freigabe in Claude Code verlangen.
   Kündige das vorher an.
 
+## Cloud-Weg: Einrichtung direkt in einer Cloud-Sitzung
+
+Läuft die Sitzung in der Cloud (`plug-n-rag cloud --pruefen` meldet „Läuft in einer
+Cloud-Sitzung“, oder `CLAUDE_CODE_REMOTE=true`), ist die Vault schon ein GitHub-Repo und auf dem
+Rechner der Nutzer:in muss nichts passieren. Dann gilt:
+
+- **Überspringen**: uv-Installation (ist vorinstalliert), Cloud-Sync-Ordner, Schritt 3 (Git lokal)
+  und Schritt 4 (GitHub). Sichtbarkeit trotzdem prüfen; ein öffentliches Vault-Repo deutlich ansprechen.
+- **Netzwerk vor der Indexierung** (nach Schritt 6, nur beim lokalen Modell): `plug-n-rag cloud --pruefen`.
+  Ist Hugging Face blockiert, die Freigabe einholen:
+  - Hast du Werkzeuge, um die Cloud-Umgebung zu ändern, schlage die Freigabe damit vor. Diese
+    Werkzeuge erlauben oft nur exakte Hostnamen: `plug-n-rag cloud --hosts` nennt sie (erst
+    `huggingface.co`; ist der freigegeben, ein zweiter Aufruf, der den Download-Server ergänzt).
+    Die Nutzer:in bestätigt. Laufende Sitzungen übernehmen die Freigabe nach etwa einer Minute.
+  - Sonst anleiten: Umgebung bearbeiten, „Allowed domains“: `huggingface.co` und `*.hf.co`.
+  - Bis dahin geht die Einrichtung mit Stichwortsuche weiter; die semantische Indexierung folgt
+    mit `plug-n-rag sync`, sobald das Modell erreichbar ist.
+- **Für künftige Cloud-Sitzungen sichern** (vor dem Abschluss): Das Plugin ist bisher nur in dieser
+  Sitzung installiert. Die Umgebung braucht das Setup-Skript aus `plug-n-rag cloud --skript`
+  (siehe `/plug-n-rag:cloud`). Mit Umgebungswerkzeugen vorschlagen, sonst anleiten.
+- **Abschluss**: Commit wie in Schritt 12. Die Sitzung arbeitet auf einem eigenen Branch. Frage, ob
+  alles nach `main` soll; wenn ja: `plug-n-rag nach-main -m "Vault-Index angelegt (N Notizen)"`
+  (siehe `/plug-n-rag:nach-main`). Erst dann sehen Obsidian und spätere Sitzungen den Index.
+- Obsidian Git (Schritt 11a) lässt sich auch aus der Cloud vorbereiten (Dateien in `.obsidian/`
+  ablegen, nach `main` übernehmen). Den eingeschränkten Modus schaltet die Nutzer:in später in
+  Obsidian auf ihrem Gerät aus.
+
 ## Schritt 0: Welcher Modus?
 
 - **Vault-Modus** (Standard): Der Ordner enthält `.obsidian/`. Markdown-Notizen, Index im Repo.
@@ -207,9 +234,11 @@ Dieser Hinweis hilft Claude in einer Cloud-Sitzung, in der das Plugin (noch) feh
 ## Schritt 12: Abschluss
 
 - Prüfen, dass kein API-Key in einer Datei steht (`git grep -n -I -E "pa-[A-Za-z0-9_-]{20,}|VOYAGE_API_KEY="`).
-- Ein Commit: `git add .plug-n-rag plug-n-rag.yml .gitignore` (plus ggf. `.claude/settings.json`,
+- Ein Commit: `git add .plug-n-rag plug-n-rag.yml .gitignore` (plus ggf.
   `.obsidian/plugins/obsidian-git`, `.obsidian/community-plugins.json`) und
   `git commit -m "Vault-Index angelegt (N Notizen)"`. Push nur, wenn ein Remote eingerichtet ist.
+  Arbeitet die Sitzung auf einem Neben-Branch (z. B. in der Cloud), fragen, ob alles nach `main` soll,
+  und dann `plug-n-rag nach-main` verwenden.
 - Zusammenfassung in einfachen Worten: was ab jetzt automatisch passiert (beim Start: neuester
   Stand, Abgleich, Kurz-Karte; nach jeder Antwort: kurzer Abgleich im Hintergrund) und die
   wichtigsten Befehle: `/plug-n-rag:status`, `/plug-n-rag:reindex`, `/plug-n-rag:aufnehmen`.
