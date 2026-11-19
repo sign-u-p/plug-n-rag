@@ -121,7 +121,12 @@ def chunk_document(doc: Document, limit: int = TARGET_TOKENS) -> list[Chunk]:
     for section in doc.sections:
         if not section.blocks:
             continue
-        for gi, group in enumerate(_group_blocks(section.blocks, limit)):
+        if doc.unit == "pages":
+            # never merge pages: citations stay exact (one chunk per page, big pages split)
+            groups = [g for b in section.blocks for g in _group_blocks([b], limit)]
+        else:
+            groups = _group_blocks(section.blocks, limit)
+        for gi, group in enumerate(groups):
             text = sep.join(b.text for b in group)
             crumb = breadcrumb(doc.stem, doc.title, section.heading_path)
             chunks.append(

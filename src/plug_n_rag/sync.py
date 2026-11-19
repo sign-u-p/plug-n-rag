@@ -286,14 +286,16 @@ def pending_count(layout: Layout) -> tuple[int, int]:
     records = _load_records(layout, dict(state))
     private_cache = state.get("private", {})
     todo = 0
+    total = 0
     for f in sr.files:
         h = hashes.get(f.rel)
         if h is None or private_cache.get(f.rel) == h:
             continue
+        total += 1
         _, head = records.get(f.rel, (None, None))
         if not (head and ix.record_is_current(head, h, meta, f.fmt)):
             todo += 1
-    return todo, len(sr.files)
+    return todo, total
 
 
 def vec_matrix(records: list[dict]) -> np.ndarray:  # pragma: no cover - helper for tools

@@ -9,6 +9,7 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import json
+import math
 import re
 import sqlite3
 from dataclasses import dataclass, field
@@ -117,7 +118,7 @@ def _lexical(conn: sqlite3.Connection, terms: list[str], k: int) -> tuple[list[i
             words_ids = []
         long_terms = [t for t in terms if len(t) >= 4]
         if long_terms:
-            q3 = " OR ".join(_fts_quote(t) for t in long_terms)
+            q3 = " OR ".join(_fts_quote(_variants(t)[-1]) for t in long_terms)
             try:
                 tri_ids = [r[0] for r in conn.execute(
                     "SELECT rowid FROM chunks_trigram WHERE chunks_trigram MATCH ? ORDER BY rank LIMIT ?",
@@ -127,22 +128,54 @@ def _lexical(conn: sqlite3.Connection, terms: list[str], k: int) -> tuple[list[i
     return words_ids, tri_ids
 
 
-def _fold(s: str) -> str:
-    return s.lower()
+GERMAN_ENDINGS = ("en", "er", "es", "e", "n", "s")
 
 
-def _coverage(terms: list[str], text: str) -> float:
+def _variants(term: str) -> list[str]:
+    """The term plus a light German/English plural stem ('assessments' -> 'assessment')."""
+    out = [term]
+    if len(term) >= 6:
+        for end in GERMAN_ENDINGS:
+            if term.endswith(end) and len(term) - len(end) >= 5:
+                out.append(term[: -len(end)])
+                break
+    return out
+
+
+def term_weights(conn: sqlite3.Connection, terms: list[str]) -> dict[str, float]:
+    """Weight = length x inverse document frequency: long, rare words (compounds) carry the topic."""
+    try:
+        n = conn.execute("SELECT count(*) FROM chunks").fetchone()[0] or 1
+    except sqlite3.Error:
+        n = 1
+    weights = {}
+    for t in terms:
+        df = 0
+        if len(t) >= 3:
+            try:
+                df = conn.execute("SELECT count(*) FROM chunks_trigram WHERE chunks_trigram MATCH ?",
+                                  (_fts_quote(_variants(t)[-1]),)).fetchone()[0]
+            except sqlite3.Error:
+                df = 0
+        idf = math.log(1 + n / (1 + df))
+        weights[t] = len(t) * max(idf, 0.1)
+    return weights
+
+
+def _coverage(terms: list[str], text: str, weights: dict[str, float] | None = None) -> float:
     if not terms:
         return 0.0
-    t = _fold(text)
-    hit = 0
+    low = text.lower()
+    total = hit = 0.0
     for term in terms:
-        if len(term) >= 4:
-            ok = term in t
-        else:
-            ok = re.search(r"\b" + re.escape(term), t) is not None
-        hit += 1 if ok else 0
-    return hit / len(terms)
+        w = (weights or {}).get(term, float(len(term)))
+        total += w
+        for v in _variants(term):
+            ok = (v in low) if len(v) >= 4 else re.search(r"\b" + re.escape(v), low) is not None
+            if ok:
+                hit += w
+                break
+    return hit / total if total else 0.0
 
 
 def _filter_sql(folder: str | None, tag: str | None, since: float | None) -> tuple[str, list]:
@@ -180,6 +213,7 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         filtered = bool(folder or tag or since)
         k = CANDIDATES * (4 if filtered else 1)
         lists: list[list[int]] = list(_lexical(conn, terms, k))
+        weights = term_weights(conn, terms)
         meta = read_meta(layout.index_dir) or {}
         keyword_only = False
         qvec = None
@@ -226,12 +260,12 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         for r in rows:
             h = Hit(r["id"], r["note_id"], r["path"], r["heading_path"], r["start"], r["end"],
                     r["tokens"], r["body"], rrf=scores[r["id"]], sim=sims.get(r["id"]))
-            h.coverage = _coverage(terms, f"{r['title']} {r['heading_path']} {r['body']}")
+            h.coverage = _coverage(terms, f"{r['title']} {r['tags']} {r['heading_path']} {r['body']}", weights)
             sem = 0.0
             if h.sim is not None:
                 lo = min_sim - 0.04
                 sem = float(np.clip((h.sim - lo) / max(strong - lo, 1e-6), 0, 1))
-            lex_ok = h.coverage >= 0.5 or (len(terms) <= 2 and h.coverage > 0)
+            lex_ok = h.coverage >= 0.5
             h.relevant = lex_ok or (h.sim is not None and h.sim >= min_sim)
             h.strength = max(sem, h.coverage) * 0.7 + min(sem, h.coverage) * 0.3
             if not h.relevant:

@@ -1,0 +1,13 @@
+{
+  "name": "plug-n-rag",
+  "displayName": "plug-n-rag",
+  "version": "0.1.0",
+  "description": "Macht Obsidian-Vaults und auf Wunsch andere Ordner semantisch durchsuchbar, damit Claude gezielt statt vollständig liest und Tokens spart.",
+  "author": {
+    "name": "sign-u-p"
+  },
+  "homepage": "https://github.com/sign-u-p/plug-n-rag",
+  "repository": "https://github.com/sign-u-p/plug-n-rag",
+  "license": "MIT",
+  "keywords": ["obsidian", "rag", "suche", "embeddings", "vault", "deutsch"]
+}

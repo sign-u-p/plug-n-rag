@@ -29,8 +29,8 @@ LOCAL_MODELS: dict[str, dict] = {
         "max_length": 512,
         "size_mb": 470,
         # e5 similarities are compressed into a high band; calibrated on the test vault.
-        "min_similarity": 0.80,
-        "strong_similarity": 0.86,
+        "min_similarity": 0.83,
+        "strong_similarity": 0.87,
     },
 }
 
