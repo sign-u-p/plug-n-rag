@@ -1,0 +1,54 @@
+#!/bin/sh
+# plug-n-rag launcher. Runs the Python core through uv. The virtual environment lives in
+# the user cache, never inside the plugin directory (which changes on every update).
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+UV=""
+if command -v uv >/dev/null 2>&1; then
+  UV="uv"
+else
+  for c in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv" /opt/homebrew/bin/uv /usr/local/bin/uv; do
+    if [ -x "$c" ]; then UV="$c"; break; fi
+  done
+fi
+
+# First non-option argument is the subcommand (options like --ordner may come first).
+SUB=""
+for a in "$@"; do
+  case "$a" in -*) ;; *) if [ -z "$SUB" ]; then SUB="$a"; fi ;; esac
+done
+# --ordner takes a value; if it came first, the value is not the subcommand.
+if [ "$1" = "--ordner" ]; then SUB="$3"; fi
+
+case "$SUB" in
+  session-start|stop)
+    # Hooks run in the project directory.
+    if [ -n "$CLAUDE_PROJECT_DIR" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then cd "$CLAUDE_PROJECT_DIR" || exit 0; fi
+    ;;
+esac
+
+if [ -z "$UV" ]; then
+  case "$SUB" in
+    stop) exit 0 ;;
+    session-start)
+      if [ -f plug-n-rag.yml ] || [ -d .obsidian ]; then
+        echo "plug-n-rag: Das Hilfsprogramm „uv“ fehlt, deshalb ist die Vault-Suche aus. Claude kann es nach Rückfrage installieren (https://docs.astral.sh/uv/)."
+      fi
+      exit 0 ;;
+  esac
+  echo "plug-n-rag braucht das Programm „uv“. Installation: https://docs.astral.sh/uv/getting-started/installation/" >&2
+  exit 3
+fi
+
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/plug-n-rag"
+KEY=$(printf '%s' "$ROOT" | cksum | cut -d' ' -f1)
+export UV_PROJECT_ENVIRONMENT="${PLUG_N_RAG_VENV:-$CACHE/venv-$KEY}"
+export PLUG_N_RAG_PLUGIN_ROOT="$ROOT"
+
+EXTRA=""
+case "$SUB" in
+  mcp) EXTRA="--extra mcp" ;;
+  aufnehmen|ingest) EXTRA="--extra aufnahme" ;;
+esac
+# shellcheck disable=SC2086
+exec "$UV" run --quiet --frozen --no-dev $EXTRA --project "$ROOT" plug-n-rag "$@"

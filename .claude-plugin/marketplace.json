@@ -1,0 +1,14 @@
+{
+  "name": "plug-n-rag",
+  "description": "Marketplace für plug-n-rag: semantische Suche für Obsidian-Vaults in Claude Code",
+  "owner": {
+    "name": "sign-u-p"
+  },
+  "plugins": [
+    {
+      "name": "plug-n-rag",
+      "source": "./",
+      "description": "Semantische Suche für Obsidian-Vaults und Dokumentensammlungen, mit versioniertem Index im eigenen Repo"
+    }
+  ]
+}
