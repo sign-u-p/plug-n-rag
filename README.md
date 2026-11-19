@@ -181,13 +181,14 @@ installieren.
 2. Schreib als erste Nachricht:
 
    ```text
-   Bitte installiere das Plugin plug-n-rag mit
+   Bitte installiere das Claude-Code-Plugin plug-n-rag:
    claude plugin marketplace add sign-u-p/plug-n-rag
-   und claude plugin install plug-n-rag@plug-n-rag
-   und richte danach meine Vault mit /plug-n-rag:setup ein.
+   claude plugin install plug-n-rag@plug-n-rag
+   Richte danach meine Vault mit /plug-n-rag:setup ein. Ist der Befehl in dieser Sitzung noch
+   nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/bin/plug-n-rag
+   und folge der Anleitung aus „plug-n-rag anleitung setup“.
    ```
 
-   Falls Claude den Setup-Befehl nicht sofort findet, schreib einfach „weiter“.
 3. Claude führt dich durch die Einrichtung (Datenschutz, private Ordner, Indexierung, Karte,
    Testsuche). Für das Suchmodell braucht die Cloud-Umgebung eine Netzwerkfreigabe für Hugging Face.
    Claude schlägt sie vor oder erklärt, wo du sie einträgst.

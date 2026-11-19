@@ -46,6 +46,11 @@ Läuft die Sitzung in der Cloud (`plug-n-rag cloud --pruefen` meldet „Läuft i
 Cloud-Sitzung“, oder `CLAUDE_CODE_REMOTE=true`), ist die Vault schon ein GitHub-Repo und auf dem
 Rechner der Nutzer:in muss nichts passieren. Dann gilt:
 
+- **Plugin frisch installiert?** Ist `/plug-n-rag:setup` oder `plug-n-rag` in dieser Sitzung noch
+  nicht verfügbar, den Starter über den vollen Pfad aufrufen:
+  `$(ls -d ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ | sort -V | tail -1)bin/plug-n-rag`.
+  Diese Anleitung gibt es dann mit `… anleitung setup`, die anderen mit `… anleitung cloud`
+  bzw. `… anleitung nach-main`.
 - **Überspringen**: uv-Installation (ist vorinstalliert), Cloud-Sync-Ordner, Schritt 3 (Git lokal)
   und Schritt 4 (GitHub). Sichtbarkeit trotzdem prüfen; ein öffentliches Vault-Repo deutlich ansprechen.
 - **Netzwerk vor der Indexierung** (nach Schritt 6, nur beim lokalen Modell): `plug-n-rag cloud --pruefen`.

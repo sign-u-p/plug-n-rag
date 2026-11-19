@@ -424,6 +424,28 @@ def cmd_nach_main(args):
     _print(gitops.publish_to_main(layout, msg, resync=lambda: sync(layout)))
 
 
+def plugin_root() -> Path:
+    return Path(os.environ.get("PLUG_N_RAG_PLUGIN_ROOT") or Path(__file__).resolve().parents[2])
+
+
+def cmd_anleitung(args):
+    """Print a skill's instructions, for sessions where the freshly installed plugin is not loaded yet."""
+    root = plugin_root()
+    skills = root / "skills"
+    names = sorted(p.name for p in skills.iterdir() if (p / "SKILL.md").is_file()) if skills.is_dir() else []
+    if not args.name or args.name not in names:
+        _print("Verfügbare Anleitungen: " + ", ".join(names))
+        return
+    text = (skills / args.name / "SKILL.md").read_text(encoding="utf-8")
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        text = text[end + 4:].lstrip("\n") if end > 0 else text
+    launcher = root / "bin" / "plug-n-rag"
+    text = text.replace("${CLAUDE_PLUGIN_ROOT}", str(root)).replace("$ARGUMENTS", " ".join(args.argumente))
+    _print(f"(Anleitung „{args.name}“ aus plug-n-rag. Ist `plug-n-rag` nicht auf dem PATH, "
+           f"den vollen Pfad verwenden: {launcher})\n\n" + text)
+
+
 def cmd_mcp(args):
     from .mcp_server import main as mcp_main
 
@@ -540,6 +562,11 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("nach-main", help="Alle Änderungen (Notizen und Index) sicher nach main übernehmen")
     s.add_argument("--nachricht", "-m", help="Commit-Nachricht")
     s.set_defaults(func=cmd_nach_main)
+
+    s = sub.add_parser("anleitung", help="Leitfaden eines Skills ausgeben (z. B. setup, cloud, nach-main)")
+    s.add_argument("name", nargs="?")
+    s.add_argument("argumente", nargs="*")
+    s.set_defaults(func=cmd_anleitung)
 
     s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
     s.set_defaults(func=cmd_mcp)

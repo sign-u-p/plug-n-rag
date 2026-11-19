@@ -87,3 +87,13 @@ def test_plugin_manifest_and_hooks_are_valid_json():
     for skill in (REPO / "skills").iterdir():
         text = (skill / "SKILL.md").read_text(encoding="utf-8")
         assert text.startswith("---\nname: ") and "description:" in text
+
+
+def test_anleitung_prints_skill_without_frontmatter(capsys, monkeypatch):
+    monkeypatch.setenv("PLUG_N_RAG_PLUGIN_ROOT", str(REPO))
+    main(["anleitung", "setup"])
+    out = capsys.readouterr().out
+    assert "Cloud-Weg" in out and "name: setup" not in out
+    assert "${CLAUDE_PLUGIN_ROOT}" not in out and str(REPO / "bin" / "plug-n-rag") in out
+    main(["anleitung"])
+    assert "nach-main" in capsys.readouterr().out
