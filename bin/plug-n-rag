@@ -12,7 +12,15 @@ else
   done
 fi
 
-case "$1" in
+# First non-option argument is the subcommand (options like --ordner may come first).
+SUB=""
+for a in "$@"; do
+  case "$a" in -*) ;; *) if [ -z "$SUB" ]; then SUB="$a"; fi ;; esac
+done
+# --ordner takes a value; if it came first, the value is not the subcommand.
+if [ "$1" = "--ordner" ]; then SUB="$3"; fi
+
+case "$SUB" in
   session-start|stop)
     # Hooks run in the project directory.
     if [ -n "$CLAUDE_PROJECT_DIR" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then cd "$CLAUDE_PROJECT_DIR" || exit 0; fi
@@ -20,7 +28,7 @@ case "$1" in
 esac
 
 if [ -z "$UV" ]; then
-  case "$1" in
+  case "$SUB" in
     stop) exit 0 ;;
     session-start)
       if [ -f plug-n-rag.yml ] || [ -d .obsidian ]; then
@@ -38,6 +46,9 @@ export UV_PROJECT_ENVIRONMENT="${PLUG_N_RAG_VENV:-$CACHE/venv-$KEY}"
 export PLUG_N_RAG_PLUGIN_ROOT="$ROOT"
 
 EXTRA=""
-if [ "$1" = "mcp" ]; then EXTRA="--extra mcp"; fi
+case "$SUB" in
+  mcp) EXTRA="--extra mcp" ;;
+  aufnehmen|ingest) EXTRA="--extra aufnahme" ;;
+esac
 # shellcheck disable=SC2086
 exec "$UV" run --quiet --frozen --no-dev $EXTRA --project "$ROOT" plug-n-rag "$@"

@@ -66,6 +66,8 @@ class LockBusy(RuntimeError):
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
+    if os.name == "nt":  # os.kill(pid, 0) would send CTRL_C_EVENT on Windows; rely on lock age
+        return True
     try:
         os.kill(pid, 0)
     except ProcessLookupError:

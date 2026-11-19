@@ -16,6 +16,9 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
+aufnahme = [
+    "pypdfium2>=4.30",
+]
 
 [project.scripts]
 plug-n-rag = "plug_n_rag.cli:main"

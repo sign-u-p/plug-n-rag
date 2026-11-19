@@ -241,10 +241,17 @@ def cmd_lernen(args):
 
 
 def cmd_aufnehmen(args):
-    from .ingest import ingest
+    from .ingest import complete, ingest
 
-    _print(ingest(_layout(args), [Path(p) for p in args.dateien], transcribe=args.transkription,
-                  write_pages=args.seiten_text))
+    layout = _layout(args)
+    files = [Path(p) for p in args.dateien]
+    if args.abschliessen:
+        _print(complete(layout, files, args.abschliessen))
+    else:
+        mode = args.transkription
+        if mode == "fragen":  # a permanent choice in the config counts as consent / refusal
+            mode = {"allow": "erlaubt", "local_only": "lokal"}.get(str(layout.config.get("transcription")), "fragen")
+        _print(ingest(layout, files, transcribe=mode))
 
 
 def cmd_githook(args):
@@ -306,8 +313,17 @@ def cmd_session_start(args):
         msg = gitops.pull(layout.root)
         if msg:
             notes.append(msg)
+    budget = args.budget
+    emb_cfg = layout.config.get("embedding", {})
+    if emb_cfg.get("provider", "local") == "local":
+        from .embed.local import is_model_cached
+
+        if not is_model_cached(emb_cfg.get("model", ""), emb_cfg.get("revision")):
+            budget = 0  # never download ~470 MB inside the hook: the background sync does it
+            notes.append("Das Suchmodell wird einmalig im Hintergrund geladen (etwa 470 MB). "
+                         "Bis dahin funktioniert die Stichwortsuche.")
     try:
-        r = sync(layout, time_budget=args.budget, lock_wait=5)
+        r = sync(layout, time_budget=budget, lock_wait=5)
     except LockBusy:
         r = None
         notes.append("Ein Abgleich läuft bereits im Hintergrund.")
@@ -451,7 +467,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("aufnehmen", aliases=["ingest"], help="PDFs in Text umwandeln (Kaskade)")
     s.add_argument("dateien", nargs="+")
     s.add_argument("--transkription", choices=["fragen", "lokal", "erlaubt"], default="fragen")
-    s.add_argument("--seiten-text", action="store_true", help=argparse.SUPPRESS)
+    s.add_argument("--abschliessen", choices=["haiku", "sonnet"], help="Transkription übernehmen und ablegen")
     s.set_defaults(func=cmd_aufnehmen)
 
     s = sub.add_parser("git-hook", help="Git-pre-commit-Hook installieren")

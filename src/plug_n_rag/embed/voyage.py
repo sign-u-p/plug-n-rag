@@ -17,7 +17,7 @@ import numpy as np
 from ..util import user_config_dir
 from . import EmbeddingUnavailable, normalize
 
-API_URL = os.environ.get("PLUG_N_RAG_VOYAGE_URL", "https://api.voyageai.com/v1/embeddings")
+API_URL = "https://api.voyageai.com/v1/embeddings"
 DEFAULT_DIMS = 1024
 
 
@@ -48,7 +48,7 @@ class VoyageEmbedder:
     def _post(self, payload: dict, key: str) -> dict:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            API_URL,
+            os.environ.get("PLUG_N_RAG_VOYAGE_URL", API_URL),
             data=data,
             headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         )
