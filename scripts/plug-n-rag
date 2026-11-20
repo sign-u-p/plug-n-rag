@@ -35,6 +35,31 @@ if [ "$SUB" = "session-start" ] && [ -n "$CLAUDE_ENV_FILE" ]; then
   grep -qsF "$LINE" "$CLAUDE_ENV_FILE" 2>/dev/null || printf '%s\n' "$LINE" >> "$CLAUDE_ENV_FILE"
 fi
 
+# Hooks in a project without a vault or collection: leave at once, without starting Python.
+# (Looks for .obsidian/, .plug-n-rag/plug-n-rag.yml or the old plug-n-rag.yml here and above,
+# and in the list of centrally stored collections.)
+relevant_here() {
+  [ -n "$PLUG_N_RAG_ROOT" ] && return 0
+  dir=$(pwd)
+  reg="${XDG_CONFIG_HOME:-$HOME/.config}/plug-n-rag/collections.json"
+  if [ -n "$APPDATA" ] && [ -f "$APPDATA/plug-n-rag/collections.json" ]; then
+    return 0  # Windows: paths in the list are spelled differently; let Python decide
+  fi
+  while :; do
+    if [ -d "$dir/.obsidian" ] || [ -f "$dir/.plug-n-rag/plug-n-rag.yml" ] || [ -f "$dir/plug-n-rag.yml" ]; then
+      return 0
+    fi
+    if [ -f "$reg" ] && grep -qsF "\"$dir\"" "$reg"; then
+      return 0
+    fi
+    [ "$dir" = "/" ] || [ -z "$dir" ] && return 1
+    dir=$(dirname "$dir")
+  done
+}
+case "$SUB" in
+  session-start|stop) relevant_here || exit 0 ;;
+esac
+
 if [ -z "$UV" ]; then
   case "$SUB" in
     stop) exit 0 ;;

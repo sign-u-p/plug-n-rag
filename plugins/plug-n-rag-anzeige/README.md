@@ -56,4 +56,7 @@ Netzzugriff. Für die Seitenleiste ruft er lokal `plug-n-rag anzeige-daten` auf 
 wartende Scans, Ersparnis; keine Notizinhalte, keine Suchanfragen). Prüfen kannst du das selbst:
 `claude plugin validate` listet alles auf, was ein Zusatz aufruft.
 
+In Projekten ohne Vault oder eingerichteten Ordner tut der Zusatz nichts: Er fragt keine Daten ab
+und zeichnet nichts.
+
 Abschalten: in `/plugin` deaktivieren oder deinstallieren.

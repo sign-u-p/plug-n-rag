@@ -118,3 +118,36 @@ def test_session_start_puts_launcher_on_path(tmp_path):
                        capture_output=True, timeout=300)
     lines = env_file.read_text(encoding="utf-8").splitlines()
     assert lines == [f'export PATH="{REPO}/scripts:$PATH"']
+
+
+def test_launcher_does_not_start_python_outside_vaults(tmp_path):
+    """Hooks in an unrelated project must cost nothing: no uv, no Python."""
+    fakebin = tmp_path / "bin"
+    fakebin.mkdir()
+    marker = tmp_path / "uv-was-started"
+    (fakebin / "uv").write_text(f'#!/bin/sh\necho "$@" >> "{marker}"\n', encoding="utf-8")
+    (fakebin / "uv").chmod(0o755)
+    env = {"PATH": f"{fakebin}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+           "XDG_CONFIG_HOME": str(tmp_path / "cfg"), "XDG_CACHE_HOME": str(tmp_path / "cache")}
+    other = tmp_path / "anderes-projekt"
+    (other / "src").mkdir(parents=True)
+    for hook in ("session-start", "stop"):
+        r = subprocess.run([str(REPO / "scripts" / "plug-n-rag"), hook], cwd=other, capture_output=True,
+                           text=True, env={**env, "CLAUDE_PROJECT_DIR": str(other)}, timeout=30)
+        assert r.returncode == 0 and r.stdout == ""
+    assert not marker.exists()
+    # inside a vault (also from a subfolder) the hook does run
+    vault = copy_vault(tmp_path)
+    subprocess.run([str(REPO / "scripts" / "plug-n-rag"), "session-start"], cwd=vault, capture_output=True,
+                   env={**env, "CLAUDE_PROJECT_DIR": str(vault / "wissen")}, timeout=30)
+    assert marker.exists()
+    marker.unlink()
+    # a centrally stored collection is found through the list in the user config
+    lib = tmp_path / "Sammlung"
+    lib.mkdir()
+    (tmp_path / "cfg" / "plug-n-rag").mkdir(parents=True)
+    (tmp_path / "cfg" / "plug-n-rag" / "collections.json").write_text(
+        json.dumps({str(lib): "/irgendwo"}), encoding="utf-8")
+    subprocess.run([str(REPO / "scripts" / "plug-n-rag"), "stop"], cwd=lib, capture_output=True,
+                   env={**env, "CLAUDE_PROJECT_DIR": str(lib)}, timeout=30)
+    assert marker.exists()

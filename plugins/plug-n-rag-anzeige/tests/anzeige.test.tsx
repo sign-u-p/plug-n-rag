@@ -113,7 +113,7 @@ const SNAPSHOT = {
 
 test('band only when something waits; its button only fills the prompt box', async ($, on) => {
   const filled: string[] = []
-  on('fs.exists', () => ({ value: false }))
+  on('fs.exists', (_, e) => ({ value: e.path === '/vault/.obsidian' }))
   on('command.register', () => ({ value: { command: 'pnr' } }))
   on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(SNAPSHOT), stderr: '' } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -137,7 +137,7 @@ test('band only when something waits; its button only fills the prompt box', asy
 })
 
 test('the side pane lists this session and the savings', async ($, on) => {
-  on('fs.exists', () => ({ value: false }))
+  on('fs.exists', (_, e) => ({ value: e.path === '/vault/.obsidian' }))
   on('command.register', () => ({ value: { command: 'pnr' } }))
   on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(SNAPSHOT), stderr: '' } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -159,4 +159,38 @@ test('the side pane lists this session and the savings', async ($, on) => {
   expect((await ui.find({ type: 'Text', text: /Tokens gelesen statt/ }))?.text).toContain('statt 1.466 für alle Trefferdateien ganz')
   expect((await ui.find({ type: 'Text', text: /^4 Suchen/ }))?.text).toBe('4 Suchen: 900 statt 6.000 Tokens (−85 %)')
   await ui.unmount()
+})
+
+
+test('in an unrelated project the display asks plug-n-rag for nothing', async ($, on) => {
+  let runs = 0
+  on('fs.exists', () => ({ value: false }))
+  on('command.register', () => ({ value: { command: 'pnr' } }))
+  on('process.run', () => {
+    runs += 1
+    return { value: { exitCode: 0, stdout: '{"configured": false}', stderr: '' } }
+  })
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/home/ich/projekt', surface: 'desktop', isInteractive: true })
+  expect(runs).toBe(0)
+})
+
+test('in a subfolder of a vault it does ask', async ($, on) => {
+  let runs = 0
+  const asked: string[] = []
+  on('fs.exists', (_, e) => {
+    asked.push(JSON.stringify(e))
+    return { value: JSON.stringify(e).includes('/home/ich/vault/.obsidian') }
+  })
+  on('command.register', () => ({ value: { command: 'pnr' } }))
+  on('process.run', () => {
+    runs += 1
+    return { value: { exitCode: 0, stdout: '{"configured": false, "vault_detected": true}', stderr: '' } }
+  })
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/home/ich/vault/wissen', surface: 'desktop', isInteractive: true })
+  // the data request runs in the background on purpose: give it a moment
+  for (let i = 0; i < 50 && runs === 0; i++) await new Promise(r => setTimeout(r, 10))
+  expect(asked[3]).toBe('{"path":"/home/ich/vault/.obsidian"}')
+  expect(runs).toBe(1)
 })

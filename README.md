@@ -172,7 +172,8 @@ Claude sieht davon nichts, es kostet also keine Tokens.
 /plugin install plug-n-rag-anzeige@plug-n-rag
 ```
 
-Die Anzeige läuft in der Desktop-App (Code-Tab), im Terminal und in VS Code; in der Handy-App als
+In Projekten ohne Vault starten weder plug-n-rag noch die Anzeige etwas; dort sieht Claude aus wie
+immer. Die Anzeige läuft in der Desktop-App (Code-Tab), im Terminal und in VS Code; in der Handy-App als
 eine ruhige Zeile. In Cloud-Sitzungen wird nichts gezeichnet; dort beendet Claude Antworten aus der
 Vault mit einer kurzen Quellenzeile (abschaltbar mit `anzeige: aus` in der Konfiguration).
 Mehr in [plugins/plug-n-rag-anzeige/README.md](plugins/plug-n-rag-anzeige/README.md).

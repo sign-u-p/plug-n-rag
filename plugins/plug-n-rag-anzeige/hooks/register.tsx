@@ -83,6 +83,39 @@ async function findLauncher($: Engine): Promise<string[]> {
   return (launcher = ['plug-n-rag'])
 }
 
+// Is there a vault or an indexed folder here or above? Checked before asking plug-n-rag for data,
+// so a session in an unrelated project starts nothing at all.
+async function isRelevant($: Engine, start: string): Promise<boolean> {
+  if (!start) return false
+  const norm = (p: string) => p.replace(/\\/g, '/').replace(/\/+$/, '')
+  let dir = norm(start)
+  for (let i = 0; i < 40 && dir; i++) {
+    for (const marker of ['.obsidian', '.plug-n-rag/plug-n-rag.yml', 'plug-n-rag.yml']) {
+      try {
+        if (await $.fs.exists(`${dir}/${marker}`)) return true
+      } catch {
+        // unreadable: treat as absent
+      }
+    }
+    const parent = dir.replace(/\/[^/]*$/, '')
+    if (parent === dir) break
+    dir = parent
+  }
+  // centrally stored collections are listed in the user's config folder
+  const home = norm($.plugin.root).split('/.claude/')[0]
+  for (const reg of [`${home}/.config/plug-n-rag/collections.json`, `${home}/AppData/Roaming/plug-n-rag/collections.json`]) {
+    try {
+      if (!(await $.fs.exists(reg))) continue
+      const roots = Object.keys(JSON.parse(String(await $.fs.read(reg))) as Record<string, string>).map(norm)
+      const here = norm(start)
+      if (roots.some(r => here === r || here.startsWith(r + '/'))) return true
+    } catch {
+      // a broken list only means: not found
+    }
+  }
+  return false
+}
+
 async function refresh($: Engine): Promise<void> {
   try {
     const argv = await findLauncher($)
@@ -174,7 +207,7 @@ export const register: Register = on => {
     cwd = e.cwd
     await $.command.register({ name: 'pnr', description: 'plug-n-rag: Verlauf, Vault und Ersparnis anzeigen' })
     const started = await next(e)
-    void refresh($)
+    if (await isRelevant($, cwd)) void refresh($)
     return started
   })
 

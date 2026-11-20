@@ -222,3 +222,15 @@ Stand: 19.11.2026, Sprint 1.
 50. **Cloud-Sitzungen** zeichnen nichts. Dort bittet der Sitzungsstart Claude um eine Quellenzeile
     unter Antworten aus der Vault (`anzeige: kompakt`, abschaltbar mit `aus`).
 51. **Version 0.7.0** (plug-n-rag), **0.1.0** (plug-n-rag-anzeige).
+
+## Nachtrag 20.11.2026: Nichts tun, wo nichts zu tun ist (0.7.1 / Anzeige 0.1.1)
+
+52. **Der Starter prüft selbst, ob ein Hook gebraucht wird.** Bei `session-start` und `stop` sucht
+    er im Projektordner und darüber nach `.obsidian/`, `.plug-n-rag/plug-n-rag.yml` oder dem alten
+    `plug-n-rag.yml` und in der Liste zentral gespeicherter Sammlungen. Ohne Treffer endet er sofort,
+    ohne uv oder Python zu starten. Das spart in fremden Projekten den Programmstart und vor allem
+    den einmaligen Paket-Download beim ersten Start nach der Installation. Unter Windows entscheidet
+    bei vorhandener Sammlungsliste weiterhin Python (Pfade sind dort anders geschrieben).
+53. **Der Anzeige-Mod fragt beim Sitzungsstart nur in der Nähe einer Vault oder Sammlung Daten ab**
+    (gleiche Merkmale, über `$.fs.exists` und die Sammlungsliste). Nach jedem tatsächlichen
+    plug-n-rag-Aufruf und bei `/pnr` fragt er weiterhin.

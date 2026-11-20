@@ -1,7 +1,7 @@
 {
   "name": "plug-n-rag-anzeige",
   "displayName": "plug-n-rag Anzeige",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Zeigt unaufdringlich im Chat, was plug-n-rag tut: Suchen, gelesene Abschnitte, Abgleich, Indexierung und geschätzte Ersparnis, mit Seitenleiste auf Klick.",
   "author": { "name": "sign-u-p" },
   "homepage": "https://github.com/sign-u-p/plug-n-rag",
