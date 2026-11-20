@@ -50,7 +50,7 @@ def test_render_failure_is_reported_not_swallowed(tmp_path, monkeypatch):
 def test_inventory_counts_pdf_text_in_collections(tmp_path):
     lib = tmp_path / "Fachliteratur"
     lib.mkdir()
-    (lib / "Leitlinie.pdf").write_bytes((FIXTURE / "quellen" / "Leitlinie Ergotherapie.pdf").read_bytes())
+    (lib / "Leitfaden.pdf").write_bytes((FIXTURE / "quellen" / "Leitfaden Sanierung.pdf").read_bytes())
     (lib / "notizen.txt").write_text("Wort " * 400, encoding="utf-8")
     inv = inventory(lib)
     assert inv["pdf_tokens"] > 50 and inv["text_tokens"] > 300
@@ -66,20 +66,19 @@ def test_pypdf_warnings_are_silenced():
     assert logging.getLogger("pypdf").getEffectiveLevel() >= logging.ERROR
 
 
-BIB = """Ayres, A. J. (1972). Sensory integration and learning disorders. Los Angeles: Western
-Psychological Services.
-Fisher, A. G. (2009). Occupational Therapy Intervention Process Model. Fort Collins: Three Star Press.
-Law, M., Baptiste, S. & Carswell, A. (2015). COPM. 5. Aufl. Ottawa: CAOT. ISBN 978-1-895437-00-0.
-Polatajko, H. J. & Mandich, A. (2004). Enabling occupation in children: The CO-OP approach. Ottawa: CAOT.
-Schaaf, R. C. (2014). Efficacy of occupational therapy using Ayres Sensory Integration. Am J Occup Ther,
-68(5), S. 1–10. doi:10.5014/ajot.2014.012345"""
+BIB = """Berger, A. (2012). Bauphysik im Altbau. 3. Aufl. Stuttgart: Fraunhofer IRB Verlag.
+Keller, M. (2009). Feuchte und Schimmel in Wohnräumen. Berlin: Beuth.
+Lang, S., Roth, P. & Weber, T. (2015). Energieberatung. 5. Aufl. Köln: Rudolf Müller. ISBN 978-3-481-00000-0.
+Novak, H. J. & Brandt, E. (2004). Lüften im Wohnungsbau. Kassel: Bauverlag.
+Sommer, R. C. (2014). Wirksamkeit von Dachdämmungen im Bestand. Bauphysik,
+36(5), S. 1–10. doi:10.1002/bapi.2014.012345"""
 
 
 def test_reference_list_detection():
     assert is_reference_list("", BIB)
     assert is_reference_list("Buch > Literaturverzeichnis", "kurz")
-    prose = ("Die Gruppe plant gemeinsam, welche Betätigungen im Mittelpunkt stehen. Nach Fisher (2009) "
-             "lohnt die Beobachtung in der gewohnten Umgebung. Die Leitung achtet auf Rollen, Ziele und "
+    prose = ("Die Gruppe plant gemeinsam, welche Aufgaben im Mittelpunkt stehen. Nach Keller (2009) "
+             "lohnt die Begehung in der gewohnten Umgebung. Die Leitung achtet auf Rollen, Ziele und "
              "Zeitrahmen, damit alle Teilnehmenden aktiv werden können und Erfolge erleben.")
     assert not is_reference_list("Gruppenplanung", prose)
 
@@ -87,11 +86,11 @@ def test_reference_list_detection():
 def test_reference_list_is_demoted_in_search(layout, fake):
     (layout.root / "wissen" / "Literatur.md").write_text("# Literatur\n\n" + BIB, encoding="utf-8")
     sync(layout, embedder=fake)
-    out = search(layout, "Sensory integration occupational therapy Ayres", purpose="recherche", embedder=fake)
+    out = search(layout, "Bauphysik Altbau Dämmung Berger", purpose="recherche", embedder=fake)
     if "wissen/Literatur.md" in out:
         assert "Literaturliste" in out
         assert out.index("wissen/Literatur.md") > out.index("1.")
-    explicit = search(layout, "Literatur zu Ayres", embedder=fake)
+    explicit = search(layout, "Literatur zu Berger", embedder=fake)
     assert "Literaturliste" not in explicit
 
 

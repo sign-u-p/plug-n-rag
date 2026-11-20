@@ -32,7 +32,7 @@ def test_precommit_hook_keeps_index_in_same_commit(tmp_path, monkeypatch, capsys
     assert "plug-n-rag pre-commit" in hook
     g(root, "add", "-A")
     g(root, "commit", "-q", "-m", "Vault")
-    (root / "themen" / "Neu.md").write_text("# Neu\n\nErgotherapie in der Frühförderung.", encoding="utf-8")
+    (root / "themen" / "Neu.md").write_text("# Neu\n\nNotizen zur Fahrradreparatur.", encoding="utf-8")
     g(root, "add", "themen/Neu.md")
     g(root, "commit", "-q", "-m", "Neue Notiz")
     files = g(root, "show", "--name-only", "--format=", "HEAD").split()
@@ -54,7 +54,7 @@ def test_pull_is_skipped_with_local_changes(tmp_path):
     g(root, "remote", "add", "origin", str(origin))
     g(root, "push", "-q", "-u", "origin", "main")
     assert gitops.pull(root) is None  # clean: pulls silently
-    (root / "wissen" / "COPM.md").write_text("geändert", encoding="utf-8")
+    (root / "wissen" / "NPS.md").write_text("geändert", encoding="utf-8")
     msg = gitops.pull(root)
     assert msg and "ungesicherte Änderungen" in msg
-    assert (root / "wissen" / "COPM.md").read_text(encoding="utf-8") == "geändert"
+    assert (root / "wissen" / "NPS.md").read_text(encoding="utf-8") == "geändert"

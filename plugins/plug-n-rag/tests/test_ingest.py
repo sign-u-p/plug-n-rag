@@ -23,16 +23,16 @@ def test_word_share():
 
 def test_text_layer_pdf_becomes_new_note_in_vault(layout, fake):
     layout.config["abschriften"] = {"ort": "neben_original"}
-    pdf = layout.root / "quellen" / "Leitlinie Ergotherapie.pdf"
+    pdf = layout.root / "quellen" / "Leitfaden Sanierung.pdf"
     before = sorted(p.name for p in pdf.parent.iterdir())
     out = ingest(layout, [pdf])
     assert "Textebene 2" in out and "offen 0" in out
-    note = layout.root / "quellen" / "Leitlinie Ergotherapie.md"
+    note = layout.root / "quellen" / "Leitfaden Sanierung.md"
     text = note.read_text(encoding="utf-8")
-    assert text.startswith('---\nquelle: "quellen/Leitlinie Ergotherapie.pdf"\ndatei_hash: "sha256:')
+    assert text.startswith('---\nquelle: "quellen/Leitfaden Sanierung.pdf"\ndatei_hash: "sha256:')
     assert "\ntranskription: text\n" in text
-    assert "<!-- Seite 2 -->" in text and "Hilfsmittelversorgung" in text
-    assert sorted(p.name for p in pdf.parent.iterdir()) == sorted(before + ["Leitlinie Ergotherapie.md"])
+    assert "<!-- Seite 2 -->" in text and "Fördermittelberatung" in text
+    assert sorted(p.name for p in pdf.parent.iterdir()) == sorted(before + ["Leitfaden Sanierung.md"])
     # a second run never overwrites
     again = ingest(layout, [pdf])
     assert "nichts überschrieben" in again or "Transkription).md" in again
@@ -56,7 +56,7 @@ def test_scanned_pdf_asks_first_then_uses_subagent_pages(layout, fake):
     pages = Path(plan["pages_dir"])
     pages.mkdir(parents=True, exist_ok=True)
     (pages / "0001.md").write_text("<!-- Seite 1 -->\nHandschriftlicher Befund: Feinmotorik [unleserlich].", encoding="utf-8")
-    (pages / "0002.md").write_text("<!-- Seite 2 -->\nEmpfehlung: Ergotherapie zweimal wöchentlich.", encoding="utf-8")
+    (pages / "0002.md").write_text("<!-- Seite 2 -->\nEmpfehlung: zuerst das Dach dämmen.", encoding="utf-8")
     out = complete(layout, [pdf], "haiku")
     assert "2 transkribierte Seiten" in out
     note = (layout.root / "quellen" / "Scan.md").read_text(encoding="utf-8")

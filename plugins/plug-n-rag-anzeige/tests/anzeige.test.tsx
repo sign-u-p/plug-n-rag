@@ -3,26 +3,26 @@ import { expect, test } from 'claude-code/testing'
 import { detectLang, parseCommand, parseSearch, setLang, summarize } from '../hooks/parse'
 
 // Real output of `plug-n-rag suche` (0.6.0).
-const SEARCH = `3 Notizen zu „Wie unterstütze ich ein Kind, das morgens beim Anziehen eskaliert?“
+const SEARCH = `3 Notizen zu „Das Dachgeschoss ist kalt und feucht: was hilft?“
 
-1. gespraeche/2026-10-supervision.md (118 Tokens)
-   › Fall K., Z. 7–11 (sehr passend)
-   „…iner Reizverarbeitungsstörung: morgens beim Anziehen eskaliert es fast täglich…“
+1. besprechungen/2026-10-hausversammlung.md (118 Tokens)
+   › Dachgeschoss, Z. 7–11 (sehr passend)
+   „…melden dringenden Dachsanierungsbedarf: morgens sind es im Schlafzimmer oft nur 15 Grad…“
 
-2. themen/Handlungsplanung.md (1.018 Tokens)
-   › Intervention, Z. 24–34 (passend)
-   › Praxie, Z. 6–12 (am Rande)
+2. themen/Projektplanung.md (1.018 Tokens)
+   › Methoden, Z. 24–34 (passend)
+   › Kritischer Pfad, Z. 6–12 (am Rande)
 
-3. wissen/Sensorische Integration.md (330 Tokens)
+3. wissen/Gesundes Raumklima.md (330 Tokens)
    › Alltagsstrategien, Z. 24–32 (passend)
 
 [--weiter: 2 weitere Notizen]
-Lesen: plug-n-rag lesen "gespraeche/2026-10-supervision.md#Fall K." (nur passende Abschnitte, nicht ganze Dateien)`
+Lesen: plug-n-rag lesen "besprechungen/2026-10-hausversammlung.md#Dachgeschoss" (nur passende Abschnitte, nicht ganze Dateien)`
 
 const NOTHING = `Nichts Passendes gefunden zu „Rezept für Apfelkuchen“.
 Bitte nicht aus Allgemeinwissen antworten, als stünde es in den Notizen.`
 
-const CMD = 'plug-n-rag suche "Wie unterstütze ich ein Kind?" --zweck recherche'
+const CMD = 'plug-n-rag suche "Was hilft gegen Kälte?" --zweck recherche'
 
 test('recognises plug-n-rag in many spellings, but not its hooks', async () => {
   expect(parseCommand(CMD)?.kind).toBe('suche')
@@ -37,9 +37,9 @@ test('recognises plug-n-rag in many spellings, but not its hooks', async () => {
 
 test('reads a search result and says it in one calm line', async () => {
   const s = parseSearch(SEARCH)
-  expect(s.query).toBe('Wie unterstütze ich ein Kind, das morgens beim Anziehen eskaliert?')
+  expect(s.query).toBe('Das Dachgeschoss ist kalt und feucht: was hilft?')
   expect(s.hits.map(h => h.path)).toEqual([
-    'gespraeche/2026-10-supervision.md', 'themen/Handlungsplanung.md', 'wissen/Sensorische Integration.md'])
+    'besprechungen/2026-10-hausversammlung.md', 'themen/Projektplanung.md', 'wissen/Gesundes Raumklima.md'])
   expect(s.hits[1]?.tokens).toBe(1018)
   expect(s.hits[1]?.sections.map(x => x.relevance)).toEqual(['passend', 'am Rande'])
   expect(s.more).toBe(2)
@@ -68,11 +68,11 @@ test('a plug-n-rag call becomes one compact row that opens on demand', async ($,
     const ui = await $.ui.mount({ ...row({}), surface } as any)
     expect((await ui.find({ type: 'Text', text: /Gesucht: 3 Notizen/ }))?.text).toBe('Gesucht: 3 Notizen · beste sehr passend · 2 weitere')
     expect(await ui.find({ type: 'Text', text: /engine row/ })).toBeUndefined()
-    expect(await ui.find({ type: 'Text', text: /Handlungsplanung/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /Projektplanung/ })).toBeUndefined()
     await ui.press({ key: 't1'.replace(/^/, 'toggle-') })
-    expect((await ui.find({ type: 'Text', text: /2\. themen\/Handlungsplanung\.md/ }))?.text)
-      .toBe('2. themen/Handlungsplanung.md  (1.018 Tokens)')
-    expect((await ui.find({ type: 'Text', text: /am Rande · Praxie/ }))?.text).toContain('●○○ am Rande · Praxie, Z. 6–12')
+    expect((await ui.find({ type: 'Text', text: /2\. themen\/Projektplanung\.md/ }))?.text)
+      .toBe('2. themen/Projektplanung.md  (1.018 Tokens)')
+    expect((await ui.find({ type: 'Text', text: /am Rande · Kritischer Pfad/ }))?.text).toContain('●○○ am Rande · Kritischer Pfad, Z. 6–12')
     expect(await ui.find({ type: 'Text', text: /2 weitere unter dem Schnitt/ })).toBeDefined()
     await ui.press({ key: 'toggle-t1' })
     await ui.unmount()

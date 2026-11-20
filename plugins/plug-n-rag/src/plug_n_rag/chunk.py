@@ -1,7 +1,7 @@
 """Split a Document into chunks for embedding and full-text search.
 
 Rules (SPEC "Chunking"):
-* split at headings; ``heading_path`` such as ``Grundlagen > Modulation``
+* split at headings; ``heading_path`` such as ``Grundlagen > Luftfeuchtigkeit``
 * sections longer than ~512 tokens are split at paragraphs with ~15 % overlap
 * documents without text get a stub chunk made of title and headings
 * embedding input: ``<file name> > <title> > <heading_path>`` + blank line + text

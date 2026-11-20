@@ -11,7 +11,7 @@ from .conftest import copy_vault
 
 def test_snapshot_for_the_display_mod(layout, fake, capsys, monkeypatch):
     sync(layout, embedder=fake)
-    search(layout, "Reizverarbeitung", embedder=fake)
+    search(layout, "Dachsanierung", embedder=fake)
     monkeypatch.chdir(layout.root)
     main(["anzeige-daten"])
     data = json.loads(capsys.readouterr().out)
@@ -19,7 +19,7 @@ def test_snapshot_for_the_display_mod(layout, fake, capsys, monkeypatch):
     assert data["files"] == 7 and data["indexed"] == 7 and data["pending"] == 0
     assert data["indexing"] == {"running": False}
     assert data["savings"]["searches"] == 1
-    assert "Reizverarbeitung" not in json.dumps(data)  # never the query text
+    assert "Dachsanierung" not in json.dumps(data)  # never the query text
 
 
 def test_snapshot_unconfigured_vault(tmp_path):

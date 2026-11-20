@@ -22,7 +22,7 @@ def test_mcp_tools_return_cli_text(layout, fake, monkeypatch):
     server = build_server()
     tools = {t.name for t in asyncio.run(server.list_tools())}
     assert tools == {"karte", "suche", "gliederung", "lesen", "verwandt", "status"}
-    assert "## Ablauf" in _text(asyncio.run(server.call_tool("gliederung", {"notiz": "COPM"})))
+    assert "## Ablauf" in _text(asyncio.run(server.call_tool("gliederung", {"notiz": "NPS"})))
     assert _text(asyncio.run(server.call_tool("karte", {"kurz": True}))).startswith("Vault:")
 
 

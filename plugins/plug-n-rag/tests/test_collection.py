@@ -15,10 +15,10 @@ def _snapshot(root):
 def test_collection_external_writes_nothing_into_folder(tmp_path, fake):
     lib = tmp_path / "Fachliteratur"
     lib.mkdir()
-    shutil.copy(FIXTURE / "quellen" / "Leitlinie Ergotherapie.pdf", lib / "Leitlinie.pdf")
-    (lib / "notizen.txt").write_text("Hilfsmittelberatung im Sanitätshaus.\n\nZweiter Absatz zur Sitzschale.",
+    shutil.copy(FIXTURE / "quellen" / "Leitfaden Sanierung.pdf", lib / "Leitfaden.pdf")
+    (lib / "notizen.txt").write_text("Energieberatung im Rathaus.\n\nZweiter Absatz zur Dachdämmung.",
                                      encoding="utf-8")
-    (lib / "kapitel.md").write_text("# Kapitel\n\nDie Handlungsplanung bei Dyspraxie.", encoding="utf-8")
+    (lib / "kapitel.md").write_text("# Kapitel\n\nDie Projektplanung mit Pufferzeiten.", encoding="utf-8")
     before = _snapshot(lib)
     layout = init_layout(lib, mode="collection", location="external", provider="fake")
     assert layout.location == "external" and not str(layout.state_dir).startswith(str(lib))
@@ -28,12 +28,12 @@ def test_collection_external_writes_nothing_into_folder(tmp_path, fake):
     # found again via registry
     again = find_layout(lib)
     assert again and again.location == "external" and again.mode == "collection"
-    out = search(again, "Sitzschale", embedder=fake)
+    out = search(again, "Dachdämmung", embedder=fake)
     assert "notizen.txt" in out and "Z. 1–3" in out
-    out = search(again, "Hilfsmittelversorgung", embedder=fake)
-    assert "Leitlinie.pdf" in out and "S. 2" in out
-    pdf = read(again, "Leitlinie.pdf:2")
-    assert "Hilfsmittelversorgung" in pdf
+    out = search(again, "Fördermittelberatung", embedder=fake)
+    assert "Leitfaden.pdf" in out and "S. 2" in out
+    pdf = read(again, "Leitfaden.pdf:2")
+    assert "Fördermittelberatung" in pdf
     assert _snapshot(lib) == before
 
 

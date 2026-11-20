@@ -49,7 +49,7 @@ def test_old_layout_is_still_recognised(tmp_path, fake):
     layout = find_layout(root)
     assert layout.configured and layout.legacy
     sync(layout, embedder=fake)
-    assert (root / ".plug-n-rag" / "index" / "wissen" / "COPM.md.json").exists()
+    assert (root / ".plug-n-rag" / "index" / "wissen" / "NPS.md.json").exists()
 
 
 def test_collection_location_defaults(tmp_path, capsys, monkeypatch):
@@ -107,11 +107,11 @@ def test_collection_transcript_travels_with_folder(tmp_path, fake):
     layout = init_layout(lib, mode="collection", location="inside", provider="fake",
                          extra={"abschriften": {"ort": "ordner"}})
     out = ingest(layout, [lib / "alt.pdf"], transcribe="erlaubt")
-    _fake_transcribe(out, "Hilfsmittelberatung im Pflegeheim, handschriftlich ergänzt.")
+    _fake_transcribe(out, "Energieberatung im Mehrfamilienhaus, handschriftlich ergänzt.")
     msg = complete(layout, [lib / "alt.pdf"], "haiku")
     assert "als lesbare Abschrift .plug-n-rag/abschriften/alt.pdf.md" in msg
     sync(layout, embedder=fake)
-    assert "alt.pdf" in search(layout, "Hilfsmittelberatung Pflegeheim", embedder=fake)
+    assert "alt.pdf" in search(layout, "Energieberatung Mehrfamilienhaus", embedder=fake)
     # a colleague gets a copy of the folder: no cache, no new transcription needed
     copy = tmp_path / "Kopie"
     shutil.copytree(lib, copy)
@@ -121,7 +121,7 @@ def test_collection_transcript_travels_with_folder(tmp_path, fake):
     r = sync(other, embedder=fake)
     assert not r.awaiting and not r.errors
     assert fake.texts_embedded == before  # index travelled with the folder: nothing re-embedded
-    assert "alt.pdf" in search(other, "Hilfsmittelberatung Pflegeheim", embedder=fake)
+    assert "alt.pdf" in search(other, "Energieberatung Mehrfamilienhaus", embedder=fake)
 
 
 def _old_vault(tmp_path, fake):
@@ -201,7 +201,7 @@ def test_old_central_collection_in_cache_dir(tmp_path, fake, capsys, monkeypatch
     lib = tmp_path / "Fachliteratur"
     lib.mkdir()
     _scan(lib / "scan.pdf")
-    (lib / "text.txt").write_text("Gruppenplanung in der Ergotherapie.", encoding="utf-8")
+    (lib / "text.txt").write_text("Gruppenplanung im Sportverein.", encoding="utf-8")
     old_state = user_cache_dir() / "collections" / "Fachliteratur-alt"
     (old_state / "index").mkdir(parents=True)
     save_config(old_state / "plug-n-rag.yml", {"mode": "collection", "index_location": "external",

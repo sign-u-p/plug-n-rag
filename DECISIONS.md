@@ -287,3 +287,9 @@ Stand: 19.11.2026, Sprint 1.
     Sprache der Vault zuerst. Vorher wurde immer `deu+eng` verlangt; fehlte ein Paket, lief die
     Erkennung ohne Sprachangabe (nur Englisch) neu, und deutsche Scans wurden schlechter erkannt.
     Fehlt ein Paket, sagt `aufnehmen` das, und der Skill bietet die Nachinstallation an.
+66. **Neutrale Beispiel-Vault für die Tests** (Wohnen, Sanierung, Projekte, Umfragen) vor der
+    Veröffentlichung. Sie bildet nach, was die alte Vault prüfte: eine Wortzusammensetzung, die nur
+    als Teil vorkommt („Dachsanierung“ in „Dachsanierungsbedarf“), einen langen Abschnitt, der
+    geteilt wird, Links und Backlinks, Umlaute in Dateinamen, eine private Notiz, einen privaten
+    Ordner, eine Vorlage und ein PDF mit zwei Seiten. Die Relevanzschwellen bestehen auch an der
+    neuen Vault (Umschreibungen treffen, Fremdthemen ergeben „Nichts Passendes gefunden“).

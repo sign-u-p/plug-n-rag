@@ -25,7 +25,7 @@ class Block:
 class Section:
     heading: str  # "" for text before the first heading
     level: int  # 0 for the preamble
-    heading_path: str  # "Grundlagen > Modulation"
+    heading_path: str  # "Grundlagen > Luftfeuchtigkeit"
     start: int  # position of the heading itself (or first block)
     end: int  # last position of the section's own text (excluding sub-sections)
     blocks: list[Block] = field(default_factory=list)

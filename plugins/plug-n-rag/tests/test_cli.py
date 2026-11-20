@@ -48,22 +48,22 @@ def test_init_sync_search_via_cli(tmp_path, capsys, monkeypatch):
     assert "nichts überschrieben" in out
     _, out = run(capsys, "session-start", "--budget", "30")
     assert out.startswith("Vault: 7 Dateien in 4 Bereichen")
-    _, out = run(capsys, "suche", "Reizverarbeitung", "--zweck", "frage")
-    assert "gespraeche/2026-10-supervision.md" in out
-    _, out = run(capsys, "gliederung", "COPM")
+    _, out = run(capsys, "suche", "Dachsanierung", "--zweck", "frage")
+    assert "besprechungen/2026-10-hausversammlung.md" in out
+    _, out = run(capsys, "gliederung", "NPS")
     assert "## Ablauf" in out
-    _, out = run(capsys, "lesen", "COPM#Auswertung")
-    assert "klinisch bedeutsam" in out
-    _, out = run(capsys, "verwandt", "COPM")
-    assert "Betätigungsanalyse" in out
+    _, out = run(capsys, "lesen", "NPS#Auswertung")
+    assert "deutlich spürbar" in out
+    _, out = run(capsys, "verwandt", "NPS")
+    assert "Bedürfnisanalyse" in out
     _, out = run(capsys, "status", "--schnell")
     assert "plug-n-rag · Vault" in out
     _, out = run(capsys, "lernen", "--tiefer", "--zweck", "recherche")
     assert "Recherche: bis zu 10 Notizen" in out
-    (root / "themen" / "Neue Notiz.md").write_text("# Neu\n\nErgotherapie im Seniorenheim.", encoding="utf-8")
+    (root / "themen" / "Neue Notiz.md").write_text("# Neu\n\nGartenarbeit im Kleingartenverein.", encoding="utf-8")
     _, out = run(capsys, "stop")
     assert out == ""
-    _, out = run(capsys, "suche", "Seniorenheim")
+    _, out = run(capsys, "suche", "Kleingartenverein")
     assert "themen/Neue Notiz.md" in out
     _, out = run(capsys, "konfig", "--setzen", "tuning.commit_learning=true")
     assert "commit_learning: true" in out

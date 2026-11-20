@@ -1,6 +1,6 @@
 # plug-n-rag – Technische Spezifikation
 
-Nov 18, 2026 · @Henrik
+Nov 18, 2026
 
 ## Zweck dieses Dokuments
 
@@ -8,7 +8,7 @@ Dieses Dokument ist die verbindliche Spezifikation für die Umsetzung von plug-n
 
 **Projekt:** plug-n-rag · Repository: [github.com/sign-u-p/plug-n-rag](https://github.com/sign-u-p/plug-n-rag). Dateinamen, Befehle und Pfade mit dem Präfix `vault-` in diesem Dokument sind Arbeitsnamen. Bei der Umsetzung dürfen sie an den Projektnamen angepasst werden, die Entscheidung kommt in DECISIONS.md.
 
-**Stand:** Konzept. Es existiert noch kein Code. Alle Entscheidungen hier wurden mit den Auftraggebenden (Henrik, Rike) abgestimmt. Abweichungen nur nach Rückfrage.
+**Stand:** Konzept. Es existiert noch kein Code. Alle Entscheidungen hier sind abgestimmt. Abweichungen nur nach Rückfrage.
 
 **Kurzfassung:** Ein Claude-Code-Plugin, das eine Obsidian-Vault in einem Git-Repo semantisch durchsuchbar macht, auf ausdrücklichen Wunsch auch andere lokale Ordner wie Dokumentensammlungen oder Bibliotheken. Embeddings werden pro Notiz als Datei im Repo versioniert. In jeder Sitzung wird daraus eine lokale SQLite-Datenbank (FTS5 + sqlite-vec) gebaut. Hooks halten Vault und Index per Hash-Abgleich synchron. Ein Skill steuert, wie Claude sucht und liest, mit dem Ziel, Tokens zu sparen.
 
@@ -144,12 +144,12 @@ Der Pfad spiegelt die Vault exakt: `Themen/Sensorik.md` → `.vault-index/Themen
 ```json
 {
   "schema": 1,
-  "source": "Themen/Sensorik.md",
+  "source": "wissen/Raumklima.md",
   "file_hash": "sha256:…",
   "model": "local:intfloat/multilingual-e5-small@<revision>",
-  "title": "Sensorische Integration",
-  "tags": ["paediatrie", "sensorik"],
-  "links": ["Modulationsstörungen", "Ayres"],
+  "title": "Gesundes Raumklima",
+  "tags": ["wohnen", "raumklima"],
+  "links": ["Schimmelvermeidung", "Pettenkofer"],
   "private": false,
   "tokens": 2410,
   "outline": [
@@ -158,7 +158,7 @@ Der Pfad spiegelt die Vault exakt: `Themen/Sensorik.md` → `.vault-index/Themen
   "chunks": [
     {
       "hash": "sha256:…",
-      "heading_path": "Grundlagen > Modulation",
+      "heading_path": "Grundlagen > Luftfeuchtigkeit",
       "lines": [45, 80],
       "tokens": 512,
       "vec": "<float16, base64>"
@@ -191,7 +191,7 @@ exclude: [".obsidian/**", "Vorlagen/**", "Archiv/**", ".trash/**"]
 private_folders: ["Tagebuch/**"]
 folders:                   # Beschreibungen für die Karte
   wissen/: "Fachtexte, konvertierte PDFs"
-  gespraeche/: "Supervisionen, Fallbesprechungen"
+  besprechungen/: "Hausversammlungen, Projekttreffen"
 tuning:
   commit_learning: false   # Lern-Datei nur mit Zustimmung committen
 ```
@@ -231,7 +231,7 @@ Umbenennen und Verschieben brauchen keine Sonderbehandlung. Die alte Index-Datei
 
 **Chunking**
 
-- Teilung an Markdown-Überschriften, `heading_path` als Pfad wie `Grundlagen > Modulation`.
+- Teilung an Markdown-Überschriften, `heading_path` als Pfad wie `Grundlagen > Luftfeuchtigkeit`.
 - Zu lange Abschnitte werden an Absätzen geteilt (Richtwert 512 Tokens, etwa 15 % Überlappung).
 - Notizen ohne Text erhalten einen Ersatz-Abschnitt aus Titel und Überschriften, damit sie auffindbar bleiben.
 - Frontmatter wird nicht embeddet, sondern als Metadaten gespeichert (Tags, `privat`, Typ).
@@ -339,21 +339,21 @@ Claude soll sich stufenweise herantasten: **Karte → Suche → Gliederung → A
 3. Gruppieren nach Notiz: maximal drei Abschnitte pro Notiz, Notiz-Score = bester Abschnitt plus kleiner Bonus für weitere Treffer.
 4. Adaptiver Schnitt statt festem k: an der deutlichsten Score-Stufe (Knick) abschneiden, innerhalb der Grenzen aus `vault-tuning.json`.
 5. Liegen alle Treffer unter der Mindestschwelle: „Nichts Passendes gefunden“, keine Liste schwacher Treffer.
-6. Ein Filter liefert nichts: automatisch ohne Filter wiederholen und das kennzeichnen („Außerhalb von gespraeche/ gefunden“).
+6. Ein Filter liefert nichts: automatisch ohne Filter wiederholen und das kennzeichnen („Außerhalb von besprechungen/ gefunden“).
 7. `--weiter` liefert die nächste Seite derselben Suche, ohne neu zu rechnen (Sitzungscache).
 
 **Ausgabeformat `suche`**
 
 ```
-3 Notizen zu „Hilfe bei Reizüberflutung im Alltag“
+3 Notizen zu „Was hilft gegen feuchte Wände?“
 
-1. wissen/si-grundlagen.md (2.400 Tokens)
-   › Modulationsstörungen, Z. 45–80 (sehr passend)
-   „…Überempfindlichkeit zeigt sich im Alltag oft…“
+1. wissen/Raumklima.md (2.400 Tokens)
+   › Luftfeuchtigkeit, Z. 45–80 (sehr passend)
+   „…zu feuchte Luft zeigt sich im Alltag oft…“
    › Alltagsstrategien, Z. 112–140 (passend)
 
-2. gespraeche/2026-10-supervision.md (900 Tokens)
-   › Fall K., Z. 12–30 (passend)
+2. besprechungen/2026-10-hausversammlung.md (900 Tokens)
+   › Dachgeschoss, Z. 12–30 (passend)
 
 [--weiter: 4 weitere Notizen]
 ```
@@ -362,7 +362,7 @@ Pflichtangaben: Pfad, Token-Größe der Notiz, Überschrift und Zeilen jedes Abs
 
 **Karte**
 
-- `--kurz` (SessionStart): zwei bis drei Zeilen, z. B. „Vault: 312 Notizen in 4 Bereichen (wissen, gespraeche, themen, quellen). `vault karte` für Details.“
+- `--kurz` (SessionStart): zwei bis drei Zeilen, z. B. „Vault: 312 Notizen in 4 Bereichen (wissen, besprechungen, themen, quellen). `vault karte` für Details.“
 - Voll: pro Ordner Anzahl, Beschreibung aus `vault-plugin.yml`, Schwerpunkte, Zeitraum; dazu die häufigsten Tags.
 - Schwerpunkte werden durch Clustern der Notiz-Vektoren pro Ordner ermittelt und mit häufigen Überschriften- oder Tag-Begriffen benannt. Sie werden beim Abgleich gecacht, nicht bei jedem Aufruf berechnet.
 
@@ -566,7 +566,7 @@ Beim Übernehmen von Code den MIT-Lizenzhinweis erhalten.
 
 1. **Kern ohne Plugin:** `scan`, `chunk`, Index-Dateien, `sync`, `hydrate`, `suche`, `gliederung`. Getestet an einer Beispiel-Vault mit deutschen Notizen, Komposita und Umbenennungen.
 2. **Modellvergleich:** drei lokale Kandidaten und Voyage, zehn typische Fragen, Trefferqualität und Laufzeit auf CPU dokumentieren.
-3. **Plugin-Hülle:** Skill, SessionStart- und Stop-Hook, `/vault-status`, `/vault-reindex`. Erster Einsatz in Rikes Repo.
+3. **Plugin-Hülle:** Skill, SessionStart- und Stop-Hook, `/vault-status`, `/vault-reindex`. Erster Einsatz in einer echten Vault.
 4. **Beobachten:** einige Wochen Alltagsnutzung, `log.jsonl` auswerten, Startwerte anpassen.
 5. **Setup-Assistent:** `/vault-setup` mit Inventur, Git/GitHub, Kostenvoranschlag, Karte, Obsidian Git.
 6. **Adaptive Steuerung:** `tuning.py`, Overrides, Leitplanken.
@@ -578,6 +578,6 @@ Beim Übernehmen von Code den MIT-Lizenzhinweis erhalten.
 - Umbenennen einer Notiz löst kein neues Embedding aus.
 - Löschen einer Notiz entfernt ihre Index-Datei beim nächsten Abgleich.
 - Eine frische Cloud-Sitzung ist nach dem Start ohne erneutes Embedding suchbereit.
-- „Reizverarbeitung“ findet eine Notiz, die nur „Reizverarbeitungsstörung“ enthält.
+- „Dachsanierung“ findet eine Notiz, die nur „Dachsanierungsbedarf“ enthält.
 - Bei einer Frage ohne passenden Inhalt meldet die Suche „Nichts Passendes gefunden“.
 - Kein Schritt des Setups verändert bestehende Notizen.

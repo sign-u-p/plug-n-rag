@@ -7,18 +7,18 @@ import sys
 
 PAGES = [
     [
-        "Leitlinie Ergotherapie bei Kindern",
-        "Kapitel 1: Betätigungsorientierte Befunderhebung",
-        "Die Befunderhebung beginnt mit einem Gespräch über die Betätigungen,",
-        "die dem Kind und der Familie wichtig sind. Standardisierte Tests ergänzen",
-        "die Beobachtung, ersetzen sie aber nicht.",
+        "Leitfaden energetische Sanierung",
+        "Kapitel 1: Bestandsaufnahme im Wohnhaus",
+        "Die Bestandsaufnahme beginnt mit einem Gespräch über die Wünsche,",
+        "die den Bewohner:innen wichtig sind. Messungen und Gutachten ergänzen",
+        "die Begehung, ersetzen sie aber nicht.",
     ],
     [
-        "Kapitel 2: Hilfsmittelversorgung",
-        "Bei der Hilfsmittelversorgung zählt, ob das Hilfsmittel im Alltag wirklich",
-        "genutzt wird. Ein Rollstuhl, eine Sitzschale oder ein angepasstes Besteck",
-        "werden gemeinsam mit der Familie erprobt. Die Hilfsmittelberatung umfasst",
-        "auch die Finanzierung durch die Krankenkasse.",
+        "Kapitel 2: Fördermittelberatung",
+        "Bei der Fördermittelberatung zählt, ob eine Maßnahme im Alltag wirklich",
+        "Energie spart. Eine Wärmepumpe, neue Fenster oder eine Dachdämmung",
+        "werden gemeinsam mit der Energieberatung geplant. Die Fördermittelberatung umfasst",
+        "auch die Finanzierung durch staatliche Zuschüsse.",
     ],
 ]
 
@@ -36,7 +36,7 @@ def build() -> bytes:
     kids = " ".join(f"{p} 0 R" for p in page_ids)
     objs.append(f"<< /Type /Pages /Kids [{kids}] /Count {n_pages} >>".encode())
     objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
-    objs.append(b"<< /Title (Leitlinie Ergotherapie) /Author (Testautorin) >>")
+    objs.append(b"<< /Title (Leitfaden Sanierung) /Author (Testautorin) >>")
     for i, lines in enumerate(PAGES):
         content = "BT /F1 12 Tf 72 760 Td 16 TL\n"
         for ln in lines:

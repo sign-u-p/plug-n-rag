@@ -133,7 +133,7 @@ def test_ingest_place_question_in_english(tmp_path, capsys, monkeypatch, english
     import shutil
     from pathlib import Path
 
-    pdf = Path(__file__).parent / "fixtures" / "vault" / "quellen" / "Leitlinie Ergotherapie.pdf"
+    pdf = Path(__file__).parent / "fixtures" / "vault" / "quellen" / "Leitfaden Sanierung.pdf"
     shutil.copy(pdf, root / "projects" / "Guide.pdf")
     monkeypatch.chdir(root)
     run(capsys, "init", "--provider", "fake", "--language", "en", "--formats", "markdown", "pdf")

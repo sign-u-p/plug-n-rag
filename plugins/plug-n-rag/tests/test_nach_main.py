@@ -45,7 +45,7 @@ def test_publish_from_claude_branch_to_main(setup_repos, fake, monkeypatch):
     layout = find_layout(cloud)
     (cloud / "themen" / "Neu aus der Cloud.md").write_text("# Neu\n\nSitzung im Wald: Balancieren.", encoding="utf-8")
     # meanwhile someone changes another note on main (e.g. Obsidian Git)
-    p = obsidian / "wissen" / "COPM.md"
+    p = obsidian / "wissen" / "NPS.md"
     p.write_text(p.read_text(encoding="utf-8") + "\nErgänzung aus Obsidian.\n", encoding="utf-8")
     g(obsidian, "commit", "-q", "-am", "Obsidian")
     g(obsidian, "push", "-q")
@@ -55,7 +55,7 @@ def test_publish_from_claude_branch_to_main(setup_repos, fake, monkeypatch):
     files = g(origin, "ls-tree", "-r", "--name-only", "main").split("\n")
     assert "themen/Neu aus der Cloud.md" in files
     assert ".plug-n-rag/index/themen/Neu aus der Cloud.md.json" in files
-    assert "Ergänzung aus Obsidian" in g(origin, "show", "main:wissen/COPM.md")
+    assert "Ergänzung aus Obsidian" in g(origin, "show", "main:wissen/NPS.md")
     assert not any(f.startswith(".plug-n-rag/cache") for f in files)
     # history kept: Obsidian's commit is an ancestor of main
     log = g(origin, "log", "--format=%s", "main")
@@ -65,15 +65,15 @@ def test_publish_from_claude_branch_to_main(setup_repos, fake, monkeypatch):
 def test_conflict_in_note_is_not_resolved_automatically(setup_repos, fake):
     origin, cloud, obsidian = setup_repos
     for clone, text in ((obsidian, "Fassung Obsidian"), (cloud, "Fassung Cloud")):
-        (clone / "wissen" / "COPM.md").write_text(text, encoding="utf-8")
+        (clone / "wissen" / "NPS.md").write_text(text, encoding="utf-8")
     g(obsidian, "commit", "-q", "-am", "Obsidian")
     g(obsidian, "push", "-q")
     layout = find_layout(cloud)
     before = g(origin, "rev-parse", "main")
     out = gitops.publish_to_main(layout, "Cloud", resync=lambda: sync(layout, embedder=fake))
-    assert "Nicht übernommen" in out and "wissen/COPM.md" in out
+    assert "Nicht übernommen" in out and "wissen/NPS.md" in out
     assert g(origin, "rev-parse", "main") == before
-    assert (cloud / "wissen" / "COPM.md").read_text(encoding="utf-8") == "Fassung Cloud"
+    assert (cloud / "wissen" / "NPS.md").read_text(encoding="utf-8") == "Fassung Cloud"
     assert not gitops.unmerged(cloud)
 
 

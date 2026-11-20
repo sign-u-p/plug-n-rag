@@ -66,8 +66,8 @@ def test_voyage_against_fake_api(tmp_path, fake_api, monkeypatch):
     call = fake_api.calls[0]
     assert call["model"] == "voyage-3.5-lite" and call["input_type"] == "document"
     assert call["output_dimension"] == 1024
-    out = search(layout, "Reizverarbeitung")
-    assert "gespraeche/2026-10-supervision.md" in out
+    out = search(layout, "Dachsanierung")
+    assert "besprechungen/2026-10-hausversammlung.md" in out
     assert fake_api.calls[-1]["input_type"] == "query"
     # the key never ends up in any file of the vault
     for p in root.rglob("*"):
@@ -81,7 +81,7 @@ def test_voyage_without_key_falls_back(tmp_path, fake_api, monkeypatch):
     layout = make_layout(root, provider="voyage")
     r = sync(layout)
     assert r.embed_error and "API-Key" in r.embed_error
-    assert "gespraeche/2026-10-supervision.md" in search(layout, "Reizverarbeitung")
+    assert "besprechungen/2026-10-hausversammlung.md" in search(layout, "Dachsanierung")
 
 
 def test_voyage_rejected_key(fake_api, monkeypatch):
@@ -99,5 +99,5 @@ def test_voyage_real_api(tmp_path, monkeypatch):
     layout = make_layout(root, provider="voyage")
     r = sync(layout)
     assert not r.embed_error
-    out = search(layout, "Kind kann sich morgens nicht anziehen")
-    assert "gespraeche/2026-10-supervision.md" in out
+    out = search(layout, "Unter dem Dach ist es morgens zu kalt")
+    assert "besprechungen/2026-10-hausversammlung.md" in out

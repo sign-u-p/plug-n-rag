@@ -20,16 +20,16 @@ def test_knee_cut():
 
 def test_compound_part_finds_compound(layout, fake):
     sync(layout, embedder=fake)
-    out = search(layout, "Reizverarbeitung", embedder=fake)
-    assert "gespraeche/2026-10-supervision.md" in out.splitlines()[2]
+    out = search(layout, "Dachsanierung", embedder=fake)
+    assert "besprechungen/2026-10-hausversammlung.md" in out.splitlines()[2]
 
 
 def test_output_format_mandatory_fields(layout, fake):
     sync(layout, embedder=fake)
-    out = search(layout, "Hilfsmittelversorgung Krankenkasse", purpose="frage", embedder=fake)
+    out = search(layout, "Fördermittelberatung Zuschüsse", purpose="frage", embedder=fake)
     lines = out.splitlines()
-    assert re.match(r"^\d+ Notiz(en)? zu „Hilfsmittelversorgung Krankenkasse“$", lines[0])
-    assert re.match(r"^1\. quellen/Leitlinie Ergotherapie\.pdf \([\d.]+ Tokens\)$", lines[2])
+    assert re.match(r"^\d+ Notiz(en)? zu „Fördermittelberatung Zuschüsse“$", lines[0])
+    assert re.match(r"^1\. quellen/Leitfaden Sanierung\.pdf \([\d.]+ Tokens\)$", lines[2])
     assert re.search(r"› .+, S\. \d(–\d)? \((sehr passend|passend|am Rande)\)", lines[3])
     assert lines[4].strip().startswith("„")  # snippet only for the best section
     assert out.count("„") == 2  # header + one snippet
@@ -37,7 +37,7 @@ def test_output_format_mandatory_fields(layout, fake):
 
 def test_more_pages_and_purpose(layout, fake):
     sync(layout, embedder=fake)
-    first = search(layout, "Kind Alltag Betätigung", purpose="frage", embedder=fake)
+    first = search(layout, "Projekt Alltag Planung", purpose="frage", embedder=fake)
     if "--weiter" in first:
         nxt = search(layout, None, more=True)
         assert "weiter ab Nr." in nxt or "Keine weiteren" in nxt
@@ -46,10 +46,10 @@ def test_more_pages_and_purpose(layout, fake):
 
 def test_filter_fallback_marks_outside(layout, fake):
     sync(layout, embedder=fake)
-    out = search(layout, "Reizverarbeitungsstörung", folder="wissen", embedder=fake)
+    out = search(layout, "Dachsanierungsbedarf", folder="wissen", embedder=fake)
     assert "Außerhalb von wissen/ gefunden" in out
-    assert "gespraeche/2026-10-supervision.md" in out
-    out2 = search(layout, "Reizverarbeitungsstörung", folder="gespraeche", embedder=fake)
+    assert "besprechungen/2026-10-hausversammlung.md" in out
+    out2 = search(layout, "Dachsanierungsbedarf", folder="besprechungen", embedder=fake)
     assert "Außerhalb" not in out2
 
 
@@ -61,43 +61,43 @@ def test_nothing_found(layout, fake):
 
 def test_outline_and_read_section(layout, fake):
     sync(layout, embedder=fake)
-    out = outline(layout, "Sensorische Integration")
-    assert "## Grundlagen · Z." in out and "### Modulation" in out
-    assert "Backlinks: wissen/Betätigungsanalyse.md" in out
-    sec = read(layout, "wissen/Sensorische Integration.md#Modulation")
-    assert sec.splitlines()[0].startswith("wissen/Sensorische Integration.md › Modulation, Z.")
-    assert "Überempfindlichkeit zeigt sich im Alltag" in sec
+    out = outline(layout, "Gesundes Raumklima")
+    assert "## Grundlagen · Z." in out and "### Luftfeuchtigkeit" in out
+    assert "Backlinks: wissen/Bedürfnisanalyse.md" in out
+    sec = read(layout, "wissen/Gesundes Raumklima.md#Luftfeuchtigkeit")
+    assert sec.splitlines()[0].startswith("wissen/Gesundes Raumklima.md › Luftfeuchtigkeit, Z.")
+    assert "Zu feuchte Luft zeigt sich im Alltag" in sec
     assert "Alltagsstrategien" not in sec
-    rng = read(layout, "wissen/COPM.md:1-3")
+    rng = read(layout, "wissen/NPS.md:1-3")
     assert "› Z. 1–3" in rng
-    pdf = read(layout, "quellen/Leitlinie Ergotherapie.pdf#S2")
-    assert "<!-- Seite 2 -->" in pdf and "Hilfsmittelversorgung" in pdf and "Seite 1 -->" not in pdf
-    assert "nicht gefunden" in read(layout, "wissen/COPM.md#Gibtsnicht")
+    pdf = read(layout, "quellen/Leitfaden Sanierung.pdf#S2")
+    assert "<!-- Seite 2 -->" in pdf and "Fördermittelberatung" in pdf and "Seite 1 -->" not in pdf
+    assert "nicht gefunden" in read(layout, "wissen/NPS.md#Gibtsnicht")
     assert "Keine Notiz" in read(layout, "gibt/es/nicht.md")
 
 
 def test_related_links_backlinks(layout, fake):
     sync(layout, embedder=fake)
-    out = related(layout, "wissen/Betätigungsanalyse.md")
-    assert "Verlinkt: " in out and "wissen/COPM.md" in out and "wissen/Sensorische Integration.md" in out
-    out2 = related(layout, "COPM")
-    assert "Verweist hierher: wissen/Betätigungsanalyse.md" in out2
-    out3 = related(layout, "Sensorische Integration")
-    assert "Links ohne Notiz:" in out3 and "ayres" in out3.lower()
+    out = related(layout, "wissen/Bedürfnisanalyse.md")
+    assert "Verlinkt: " in out and "wissen/NPS.md" in out and "wissen/Gesundes Raumklima.md" in out
+    out2 = related(layout, "NPS")
+    assert "Verweist hierher: wissen/Bedürfnisanalyse.md" in out2
+    out3 = related(layout, "Gesundes Raumklima")
+    assert "Links ohne Notiz:" in out3 and "pettenkofer" in out3.lower()
 
 
 def test_map_short_and_full(layout, fake):
     sync(layout, embedder=fake)
     layout.config["folders"] = {"wissen/": "Fachtexte"}
     short = karte(layout, short=True)
-    assert short.startswith("Vault: 7 Dateien in 4 Bereichen (gespraeche, quellen, themen, wissen)")
+    assert short.startswith("Vault: 7 Dateien in 4 Bereichen (besprechungen, quellen, themen, wissen)")
     full = karte(layout)
     assert "wissen/ · 3 Dateien" in full and "Fachtexte" in full and "Häufige Tags" in full
 
 
 def test_status_reports(layout, fake):
     sync(layout, embedder=fake)
-    search(layout, "Reizverarbeitung", embedder=fake)
+    search(layout, "Dachsanierung", embedder=fake)
     out = status(layout, check_remote=False)
     assert "7 durchsuchbar, davon 7 semantisch indexiert" in out
     assert "Test-Embedder" in out and "Fehler: keine" in out
@@ -106,9 +106,9 @@ def test_status_reports(layout, fake):
 
 def test_log_has_no_query_text(layout, fake):
     sync(layout, embedder=fake)
-    search(layout, "Reizverarbeitung Geheimfrage", embedder=fake)
+    search(layout, "Dachsanierung Geheimfrage", embedder=fake)
     raw = layout.log_path.read_text(encoding="utf-8")
-    assert "Geheimfrage" not in raw and "Reizverarbeitung" not in raw
+    assert "Geheimfrage" not in raw and "Dachsanierung" not in raw
 
 
 def test_tuning_overrides_and_learning(layout, fake):
