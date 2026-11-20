@@ -41,7 +41,9 @@ def test_init_sync_search_via_cli(tmp_path, capsys, monkeypatch):
     _, out = run(capsys, "init", "--provider", "fake", "--privat", "Tagebuch/**", "--formate", "markdown", "pdf")
     assert "Eingerichtet" in out and "Vorlagen/**" in out
     gi = (root / ".gitignore").read_text(encoding="utf-8")
-    assert ".plug-n-rag/cache/" in gi
+    assert ".obsidian/workspace*.json" in gi
+    # new layout: one folder with config and index; nothing volatile inside it
+    assert (root / ".plug-n-rag" / "plug-n-rag.yml").is_file() and not (root / "plug-n-rag.yml").exists()
     _, out = run(capsys, "init", "--provider", "fake")
     assert "nichts überschrieben" in out
     _, out = run(capsys, "session-start", "--budget", "30")

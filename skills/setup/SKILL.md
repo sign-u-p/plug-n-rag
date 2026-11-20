@@ -77,11 +77,46 @@ Rechner der Nutzer:in muss nichts passieren. Dann gilt:
 - **Vault-Modus** (Standard): Der Ordner enthält `.obsidian/`. Markdown-Notizen, Index im Repo.
 - **Sammlungs-Modus**: nur wenn die Nutzer:in ausdrücklich einen anderen Ordner durchsuchbar
   machen möchte (z. B. „Mach meinen Ordner Fachliteratur durchsuchbar“). Markdown, Text und PDF
-  mit Textebene. **Streng nur lesend**: In die Sammlung wird nichts geschrieben. Der Index liegt
-  außerhalb im Nutzer-Cache (`--extern`), außer der Ordner ist schon ein Git-Repo oder die
-  Nutzer:in stimmt einem Unterordner `.plug-n-rag/` ausdrücklich zu. GitHub nur auf Nachfrage
+  mit Textebene. **Bestehende Dateien werden nie verändert.** Wohin plug-n-rag seine eigenen
+  Dateien legt, entscheidet die Nutzer:in (siehe „Ablageort“ unten). GitHub nur auf Nachfrage
   (große Binärdateien, urheberrechtlich geschützte Werke, 100-MB-Grenze, nur privates Repo).
   Pro Ordner eine eigene Sammlung. Eine gemeinsame Suche über mehrere Sammlungen gibt es noch nicht.
+
+### Was plug-n-rag anlegt (zum Erklären)
+
+- **Ein Ordner `.plug-n-rag/`** mit Konfiguration (`plug-n-rag.yml`), Index und ggf. Abschriften.
+  Das ist alles, was geteilt werden soll. Ihn zu löschen entfernt plug-n-rag vollständig.
+- **Flüchtiges** (Suchdatenbank, Protokoll, Zwischenstände) liegt immer zentral im Cache des
+  Benutzers, nie im Ordner und nie im Repo. Dazu gibt es keine Frage.
+- **Vault:** `.plug-n-rag/` liegt immer in der Vault (nur so funktionieren mehrere Geräte und
+  Cloud-Sitzungen). Obsidian blendet den Ordner aus.
+
+### Ablageort bei Sammlungen (immer fragen)
+
+> Wo soll plug-n-rag seine Dateien ablegen?
+> **A) Im Ordner selbst**, in einem Unterordner `.plug-n-rag`. Der Index wandert dann mit, wenn du
+> den Ordner kopierst oder mit anderen teilst (z. B. Nextcloud, Netzlaufwerk). Sonst wird in deiner
+> Sammlung nichts verändert.
+> **B) Zentral auf diesem Rechner.** Im Ordner ändert sich gar nichts. Der Index gilt nur hier.
+
+Empfehlung: **A**, wenn der Ordner ein Git-Repo ist oder geteilt bzw. synchronisiert wird
+(Inventur: Cloud-Sync-Ordner, Netzlaufwerk, Git), sonst **B**. Ergebnis: `--ort ordner` oder
+`--ort zentral` bei `plug-n-rag init`. Wechsel später mit `plug-n-rag umziehen --nach ordner|zentral`.
+
+### Ablage von Abschriften (fragen, sobald PDFs da sind)
+
+Gibt es PDFs (vor allem Scans), einmal fragen und mit `--abschriften` bei `init` festlegen:
+- **Vault:** `neben_original` (Notiz neben dem PDF) oder `ordner` (eigener Ordner, Standard
+  „Abschriften/“, gleiche Unterordner wie die PDFs; Name mit `--abschriften-ordner`).
+- **Sammlung:** `ordner` (lesbare Markdown-Dateien in `.plug-n-rag/abschriften/`; sie wandern mit
+  dem Index und ersparen bei einer Kopie des Ordners das erneute Abschreiben) oder `intern`
+  (nur für die Suche, keine zusätzlichen Dateien).
+
+### Bestehende Einrichtung aus älterer Version
+
+Meldet der Sitzungsstart den aufgeräumten Ordneraufbau: kurz erklären und nach Zustimmung
+`plug-n-rag umziehen` ausführen. Es wird nichts neu berechnet; bereits bezahlte Abschriften bleiben
+erhalten.
 
 Prüfe außerdem, ob `uv` vorhanden ist (`command -v uv`). Fehlt es, anbieten, es zu installieren
 (macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`, Windows:
@@ -117,7 +152,7 @@ anleiten). Nicht ohne Zustimmung verschieben.
 ## Schritt 3: Git lokal
 
 Nur wenn noch kein Repo: `git init`, dann `.gitignore` ergänzen (nur anhängen, nie überschreiben)
-mit `.plug-n-rag/cache/`, `.obsidian/workspace*.json`, `.trash/`. `plug-n-rag init` ergänzt diese
+mit `.obsidian/workspace*.json`, `.trash/`. `plug-n-rag init` ergänzt diese
 Zeilen ebenfalls. Erster Commit: „Vault in Git aufgenommen“. Ist kein Git-Name gesetzt, nach Name
 und E-Mail fragen und nur lokal für dieses Repo setzen (`git config user.name ...`).
 
@@ -173,8 +208,8 @@ die Transkriptionsfrage stellen oder ausdrücklich auf später verschieben.
 **Erst nach Bestätigung** konfigurieren:
 
 ```
-plug-n-rag init <pfad> --modus vault|sammlung [--extern] --provider local|voyage \
-  --privat "Tagebuch/**" --ausschliessen "Archiv/**"
+plug-n-rag init <pfad> --modus vault|sammlung [--ort ordner|zentral] --provider local|voyage \
+  --privat "Tagebuch/**" --ausschliessen "Archiv/**" [--abschriften neben_original|ordner|intern]
 ```
 
 `init` überschreibt nie eine bestehende Konfiguration. Anpassungen später mit
@@ -239,7 +274,7 @@ Dieser Hinweis hilft Claude in einer Cloud-Sitzung, in der das Plugin (noch) feh
 ## Schritt 12: Abschluss
 
 - Prüfen, dass kein API-Key in einer Datei steht (`git grep -n -I -E "pa-[A-Za-z0-9_-]{20,}|VOYAGE_API_KEY="`).
-- Ein Commit: `git add .plug-n-rag plug-n-rag.yml .gitignore` (plus ggf.
+- Ein Commit: `git add .plug-n-rag .gitignore` (plus ggf.
   `.obsidian/plugins/obsidian-git`, `.obsidian/community-plugins.json`) und
   `git commit -m "Vault-Index angelegt (N Notizen)"`. Push nur, wenn ein Remote eingerichtet ist.
   Arbeitet die Sitzung auf einem Neben-Branch (z. B. in der Cloud), fragen, ob alles nach `main` soll,

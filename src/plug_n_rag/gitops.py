@@ -152,9 +152,9 @@ def push(root: Path) -> bool:
 
 
 def index_paths(layout: Layout) -> list[str]:
+    """Everything shareable plug-n-rag owns: the .plug-n-rag folder (plus the old root config)."""
     base = layout.state_dir.relative_to(layout.root).as_posix()
-    return [f"{base}/index", f"{base}/.gitignore", layout.config_path.name] + (
-        [f"{base}/tuning.json"] if layout.tuning_path.parent == layout.state_dir else [])
+    return [base] + ([layout.config_path.name] if layout.legacy else [])
 
 
 def install_precommit(root: Path, launcher: str) -> str:
@@ -168,7 +168,8 @@ def install_precommit(root: Path, launcher: str) -> str:
 PNR="{launcher}"
 if [ -x "$PNR" ]; then
   "$PNR" sync --quiet >/dev/null 2>&1 || true
-  git add -A -- .plug-n-rag/index >/dev/null 2>&1 || true
+  git add -A -- .plug-n-rag >/dev/null 2>&1 || true
+  if [ -f plug-n-rag.yml ]; then git add -- plug-n-rag.yml >/dev/null 2>&1 || true; fi
 fi
 """
     if path.exists():

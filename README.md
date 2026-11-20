@@ -172,17 +172,17 @@ Claude selbst verwendet im Hintergrund `plug-n-rag suche`, `gliederung`, `lesen`
   lokal auf deinem Gerät berechnet.
 - **Index-Dateien enthalten keinen Notiztext**, bilden aber Inhalte ab. Sie sind deshalb so
   schützenswert wie deine Notizen. Das Repo muss **privat** sein; Setup und Status prüfen das.
-- **Private Ordner und Notizen** (`private_folders` in `plug-n-rag.yml` oder `privat: true` im
+- **Private Ordner und Notizen** (`private_folders` in `.plug-n-rag/plug-n-rag.yml` oder `privat: true` im
   Frontmatter) werden vollständig ausgeschlossen. Wird eine Notiz nachträglich privat, löscht der
   nächste Abgleich ihren Index.
 - **Eingescannte Dokumente** werden nur nach ausdrücklicher Rückfrage von Claude abgeschrieben,
   weil dabei ganze Dokumente an Anthropic gehen.
-- **Das Nutzungsprotokoll** (`.plug-n-rag/cache/log.jsonl`, nie im Repo) speichert Pfade und
+- **Das Nutzungsprotokoll** (zentral im Cache auf deinem Rechner, nie im Ordner oder Repo) speichert Pfade und
   Zählwerte, aber keine Suchanfragen und keine Notizinhalte.
 - **API-Keys** (nur für Voyage AI) gehören in die Umgebungsvariable `VOYAGE_API_KEY`, nie in eine
   Datei im Repo.
-- plug-n-rag verändert **keine bestehenden Notizen**. Es legt nur `plug-n-rag.yml` und den Ordner
-  `.plug-n-rag/` an und ergänzt `.gitignore`.
+- plug-n-rag verändert **keine bestehenden Notizen**. In einer Vault legt es nur den Ordner
+  `.plug-n-rag/` an und ergänzt `.gitignore` um Obsidians gerätebezogene Dateien.
 
 ## Cloud-Sitzungen
 
@@ -276,9 +276,32 @@ Dabei gilt:
 ## Andere Ordner (Sammlungs-Modus)
 
 Sag zum Beispiel: „Mach meinen Ordner Fachliteratur durchsuchbar“ oder
-`/plug-n-rag:setup ~/Dokumente/Fachliteratur`. In diesem Modus schreibt plug-n-rag **nichts** in
-den Ordner. Der Index liegt in deinem Benutzer-Cache. Unterstützt werden Markdown, Text und PDF
-mit Textebene. Eingescannte PDFs lassen sich mit `/plug-n-rag:aufnehmen` erschließen.
+`/plug-n-rag:setup ~/Dokumente/Fachliteratur`. Unterstützt werden Markdown, Text und PDF mit
+Textebene. Deine Dateien werden nie verändert. Claude fragt dich, wo plug-n-rag seine eigenen
+Dateien ablegen soll:
+
+- **Im Ordner**, in einem Unterordner `.plug-n-rag`. Gut, wenn du den Ordner teilst oder
+  synchronisierst (Nextcloud, Netzlaufwerk, Git): Der Index wandert mit.
+- **Zentral auf deinem Rechner.** Im Ordner ändert sich gar nichts.
+
+Eingescannte PDFs lassen sich mit `/plug-n-rag:aufnehmen` erschließen. Die Abschriften kann
+plug-n-rag auf Wunsch als lesbare Dateien in `.plug-n-rag/abschriften/` ablegen. Dann muss bei
+einer Kopie des Ordners nichts erneut abgeschrieben werden.
+
+## Was plug-n-rag anlegt
+
+| Was | Wo |
+| --- | --- |
+| Konfiguration, Suchindex, ggf. Abschriften | ein Ordner `.plug-n-rag/` (in der Vault immer; bei Sammlungen nach Wahl im Ordner oder zentral) |
+| Suchdatenbank, Protokoll, Zwischenstände | immer zentral im Cache deines Benutzerkontos, nie im Ordner, nie im Repo |
+| Abschriften in einer Vault | als normale Notizen, neben dem PDF oder in einem Ordner „Abschriften/“ (deine Wahl) |
+
+plug-n-rag entfernen heißt: den Ordner `.plug-n-rag/` löschen.
+
+**Von einer älteren Version (bis 0.5)?** Früher lag `plug-n-rag.yml` im Hauptordner und der Cache
+in `.plug-n-rag/cache`. Das funktioniert weiter. `plug-n-rag umziehen` (oder Claude bitten, es zu
+tun) stellt auf den aufgeräumten Aufbau um, ohne etwas neu zu berechnen. Bereits abgeschriebene
+Seiten bleiben erhalten.
 
 ## Optional: MCP-Server
 

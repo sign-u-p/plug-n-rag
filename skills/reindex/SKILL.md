@@ -12,6 +12,6 @@ allowed-tools: Bash(plug-n-rag reindex*) Bash(plug-n-rag status*)
    voyageai.com/pricing nachsehen, nicht raten).
 3. Erst nach ausdrücklicher Zustimmung: `plug-n-rag reindex --ja --fortschritt`.
 4. Danach, wenn die Vault ein Git-Repo ist, die geänderten Index-Dateien in einem eigenen Commit
-   ablegen: `git add .plug-n-rag/index plug-n-rag.yml` und
+   ablegen: `git add .plug-n-rag` und
    `git commit -m "plug-n-rag: Index neu aufgebaut (<Modell>)"`. Kein Push ohne Rückfrage, nie `--force`.
 5. Zum Schluss `plug-n-rag status --schnell` und das Ergebnis in einem Satz zusammenfassen.

@@ -39,7 +39,7 @@ if [ -z "$UV" ]; then
   case "$SUB" in
     stop) exit 0 ;;
     session-start)
-      if [ -f plug-n-rag.yml ] || [ -d .obsidian ]; then
+      if [ -f .plug-n-rag/plug-n-rag.yml ] || [ -f plug-n-rag.yml ] || [ -d .obsidian ]; then
         echo "plug-n-rag: Das Hilfsprogramm „uv“ fehlt, deshalb ist die Vault-Suche aus. Claude kann es nach Rückfrage installieren (https://docs.astral.sh/uv/)."
       fi
       exit 0 ;;

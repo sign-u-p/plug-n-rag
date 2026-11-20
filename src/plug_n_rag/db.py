@@ -157,7 +157,7 @@ def _hydrate(conn, layout: Layout, has_vec: bool, model: str) -> dict:
             seen.add(f.rel)
             continue
         try:
-            doc, file_hash = load_document(f.abs, f.rel, f.fmt, layout.cache_dir)
+            doc, file_hash = load_document(f.abs, f.rel, f.fmt, layout.cache_dir, layout.transcripts_dir)
         except (ExtractionError, OSError):
             continue
         if doc.private:

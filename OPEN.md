@@ -65,6 +65,12 @@ Stop-Hook durchlaufen. Offen ist:
       Heuristik; bei Auszügen mit fehlenden Seiten kann der Versatz springen).
 - [ ] **Literaturlisten-Erkennung** an echten Fachbüchern prüfen (Schwelle 3,5 Jahreszahlen pro 100 Wörter).
 
+- [ ] **Umzug einer echten 0.4/0.5-Installation** (Windows, zentrale Sammlung mit Haiku-Abschriften):
+      Erscheinen nach dem Update keine Seiten als „wartet auf Aufnahme“? `plug-n-rag umziehen`
+      verschiebt den zentralen Index aus dem Cache- in den Datenordner (`%APPDATA%\plug-n-rag\data`).
+- [ ] **Sammlung im Ordner auf einem Netzlaufwerk/Nextcloud** mit zwei Rechnern: Index und Abschriften
+      werden übernommen, nichts wird neu berechnet (als Unit-Test mit Kopie des Ordners belegt).
+
 ## Nicht umgesetzt oder nur teilweise
 
 - **Modellvergleich** (SPEC Schritt 2): drei lokale Kandidaten (e5-small, EmbeddingGemma 300M,

@@ -22,13 +22,15 @@ def test_word_share():
 
 
 def test_text_layer_pdf_becomes_new_note_in_vault(layout, fake):
+    layout.config["abschriften"] = {"ort": "neben_original"}
     pdf = layout.root / "quellen" / "Leitlinie Ergotherapie.pdf"
     before = sorted(p.name for p in pdf.parent.iterdir())
     out = ingest(layout, [pdf])
     assert "Textebene 2" in out and "offen 0" in out
     note = layout.root / "quellen" / "Leitlinie Ergotherapie.md"
     text = note.read_text(encoding="utf-8")
-    assert text.startswith('---\nquelle: "quellen/Leitlinie Ergotherapie.pdf"\ntranskription: text')
+    assert text.startswith('---\nquelle: "quellen/Leitlinie Ergotherapie.pdf"\ndatei_hash: "sha256:')
+    assert "\ntranskription: text\n" in text
     assert "<!-- Seite 2 -->" in text and "Hilfsmittelversorgung" in text
     assert sorted(p.name for p in pdf.parent.iterdir()) == sorted(before + ["Leitlinie Ergotherapie.md"])
     # a second run never overwrites
@@ -37,6 +39,7 @@ def test_text_layer_pdf_becomes_new_note_in_vault(layout, fake):
 
 
 def test_scanned_pdf_asks_first_then_uses_subagent_pages(layout, fake):
+    layout.config["abschriften"] = {"ort": "neben_original"}
     pdf = layout.root / "quellen" / "Scan.pdf"
     _scan_pdf(pdf, pages=2)
     out = ingest(layout, [pdf])
@@ -66,7 +69,8 @@ def test_collection_transcription_stays_in_cache(tmp_path, fake):
     lib = tmp_path / "Bibliothek"
     lib.mkdir()
     _scan_pdf(lib / "alt.pdf", pages=1)
-    layout = init_layout(lib, mode="collection", location="external", provider="fake")
+    layout = init_layout(lib, mode="collection", location="external", provider="fake",
+                         extra={"abschriften": {"ort": "intern"}})
     out = ingest(layout, [lib / "alt.pdf"], transcribe="lokal")
     assert "im lokalen Cache" in out
     assert sorted(p.name for p in lib.iterdir()) == ["alt.pdf"]

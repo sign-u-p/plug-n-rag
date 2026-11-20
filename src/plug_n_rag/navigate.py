@@ -164,7 +164,8 @@ def read(layout: Layout, target: str) -> str:
             start, end = 1, 10 ** 9
             label = "ganze Notiz"
         try:
-            text = read_units(abs_path, note["format"], start, end, layout.cache_dir)
+            text = read_units(abs_path, note["format"], start, end, layout.cache_dir, layout.transcripts_dir,
+                              rel=note["path"])
         except OSError as exc:
             return f"Datei nicht lesbar: {exc}"
         tok = estimate_tokens(text)

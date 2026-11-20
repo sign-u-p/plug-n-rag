@@ -1,17 +1,21 @@
 """Locating a vault or collection and reading its configuration.
 
-Two storage layouts exist, chosen per folder:
+plug-n-rag separates what it creates by kind:
 
-* ``inside``: everything lives in the folder itself (vault mode, or a collection with git
-  or with explicit consent)::
+* **shareable** (configuration, index files, optional transcripts) lives in exactly one
+  folder, ``.plug-n-rag/``: inside the vault/collection (``inside``) or, if nothing may be
+  written into the folder, in the user's data directory (``external``)::
 
-      <root>/plug-n-rag.yml          configuration, committed
-      <root>/.plug-n-rag/index/      one index file per source file, committed
-      <root>/.plug-n-rag/cache/      search database, logs, extracts (ignored by git)
+      <root>/.plug-n-rag/plug-n-rag.yml   configuration
+      <root>/.plug-n-rag/index/           one index file per source file
+      <root>/.plug-n-rag/abschriften/     readable transcripts (collections, optional)
+      <root>/.plug-n-rag/tuning.json      learned values (only if committing them is wanted)
 
-* ``external``: nothing is written into the folder. Configuration, index and cache live in
-  ``<user cache>/collections/<hash of the folder path>/``. A small registry in the user
-  config directory remembers which folder belongs to which external state directory.
+* **volatile** (search database, logs, extracts, page images, state) always lives in the user
+  cache, ``<user cache>/state/<folder name>-<hash>/``. It is never synced or committed.
+
+Older installations (``plug-n-rag.yml`` in the root, cache in ``.plug-n-rag/cache``) are still
+recognised; ``plug-n-rag umziehen`` moves them to the current layout.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ from typing import Any
 
 import yaml
 
-from .util import atomic_write_json, atomic_write_text, read_json, user_cache_dir, user_config_dir
+from .util import atomic_write_json, atomic_write_text, read_json, user_cache_dir, user_config_dir, user_data_dir
 
 CONFIG_NAME = "plug-n-rag.yml"
 STATE_DIR_NAME = ".plug-n-rag"
@@ -49,6 +53,7 @@ DEFAULTS: dict[str, Any] = {
     "folders": {},
     "tuning": {"commit_learning": False},
     "transcription": "ask",
+    "abschriften": {"ort": None, "ordner": "Abschriften"},
     "git": {"auto_commit": "off", "auto_push": False},
 }
 
@@ -65,11 +70,16 @@ def _deep_merge(base: dict, extra: dict) -> dict:
     return out
 
 
+def _folder_key(root: Path) -> str:
+    digest = hashlib.sha256(str(root.resolve()).encode("utf-8")).hexdigest()[:16]
+    return f"{root.name}-{digest}"
+
+
 @dataclass
 class Layout:
     root: Path
     location: str  # "inside" | "external"
-    state_dir: Path
+    state_dir: Path  # the shareable folder (.plug-n-rag/ inside, or the central data folder)
     config_path: Path
     configured: bool = True
     config: dict = field(default_factory=dict)
@@ -79,8 +89,20 @@ class Layout:
         return self.state_dir / "index"
 
     @property
+    def transcripts_dir(self) -> Path:
+        return self.state_dir / "abschriften"
+
+    @property
+    def legacy(self) -> bool:
+        """Old layout: configuration in the root folder instead of inside .plug-n-rag/."""
+        return self.location == "inside" and self.config_path.parent == self.root
+
+    @property
     def cache_dir(self) -> Path:
-        return self.state_dir / "cache"
+        override = os.environ.get("PLUG_N_RAG_CACHE_DIR")
+        if override:
+            return Path(override)
+        return user_cache_dir() / "state" / _folder_key(self.root)
 
     @property
     def db_path(self) -> Path:
@@ -107,10 +129,10 @@ class Layout:
     def ensure_dirs(self) -> None:
         self.index_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        if self.location == "inside":
-            gi = self.state_dir / ".gitignore"
-            if not gi.exists():
-                atomic_write_text(gi, "# Lokaler Cache von plug-n-rag, wird nie committet\ncache/\n")
+        if (self.state_dir / "cache").is_dir():  # old layout: keep extracts and transcripts
+            from .migrate import carry_over_old_cache
+
+            carry_over_old_cache(self)
 
     def rel(self, path: Path) -> str:
         return path.resolve().relative_to(self.root.resolve()).as_posix()
@@ -149,8 +171,13 @@ def _registry() -> dict:
 
 
 def external_state_dir(root: Path) -> Path:
-    digest = hashlib.sha256(str(root.resolve()).encode("utf-8")).hexdigest()[:16]
-    return user_cache_dir() / "collections" / f"{root.name}-{digest}"
+    return user_data_dir() / "collections" / _folder_key(root)
+
+
+def unregister_external(root: Path) -> None:
+    reg = _registry()
+    if reg.pop(str(root.resolve()), None) is not None:
+        atomic_write_json(_registry_path(), reg)
 
 
 def register_external(root: Path, state_dir: Path) -> None:
@@ -173,7 +200,10 @@ def find_layout(start: Path | None = None) -> Layout | None:
     reg = _registry()
     candidates = [start, *start.parents]
     for d in candidates:
-        cfg = d / CONFIG_NAME
+        cfg = d / STATE_DIR_NAME / CONFIG_NAME
+        if cfg.is_file():
+            return Layout(d, "inside", d / STATE_DIR_NAME, cfg, True, load_config(cfg))
+        cfg = d / CONFIG_NAME  # old layout
         if cfg.is_file():
             return Layout(d, "inside", d / STATE_DIR_NAME, cfg, True, load_config(cfg))
         if str(d) in reg:
@@ -183,7 +213,7 @@ def find_layout(start: Path | None = None) -> Layout | None:
                 return Layout(d, "external", state, cfg, True, load_config(cfg))
     for d in candidates:
         if (d / ".obsidian").is_dir():
-            return Layout(d, "inside", d / STATE_DIR_NAME, d / CONFIG_NAME, False, dict(DEFAULTS))
+            return Layout(d, "inside", d / STATE_DIR_NAME, d / STATE_DIR_NAME / CONFIG_NAME, False, dict(DEFAULTS))
         if (d / ".git").exists():
             break
     return None
@@ -202,7 +232,9 @@ def init_layout(
     root = root.resolve()
     if location == "inside":
         state = root / STATE_DIR_NAME
-        cfg_path = root / CONFIG_NAME
+        cfg_path = state / CONFIG_NAME
+        if (root / CONFIG_NAME).exists():  # old layout: keep using it
+            cfg_path = root / CONFIG_NAME
     else:
         state = external_state_dir(root)
         cfg_path = state / CONFIG_NAME
@@ -226,6 +258,7 @@ def init_layout(
     cfg["folders"] = {}
     cfg["tuning"] = {"commit_learning": False}
     cfg["transcription"] = "ask"
+    cfg["abschriften"] = {"ort": None, "ordner": "Abschriften"}
     cfg["git"] = {"auto_commit": "off", "auto_push": False}
     if extra:
         cfg = _deep_merge(cfg, extra)

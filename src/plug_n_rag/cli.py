@@ -153,7 +153,14 @@ def cmd_init(args):
         _print(f"Ordner nicht gefunden: {root}")
         sys.exit(2)
     mode = "collection" if args.modus in ("sammlung", "collection") else "vault"
-    location = "external" if args.extern else "inside"
+    from . import gitops
+
+    if args.extern:
+        args.ort = "zentral"
+    if args.ort:
+        location = "external" if args.ort == "zentral" else "inside"
+    else:  # vaults always inside; collections inside only if they already are a git repo
+        location = "inside" if mode == "vault" or gitops.is_repo(root) else "external"
     extra: dict = {}
     if args.privat:
         extra["private_folders"] = args.privat
@@ -169,20 +176,28 @@ def cmd_init(args):
         extra["formats"] = args.formate
     elif mode == "collection":
         extra["formats"] = args.formate or list(COLLECTION_FORMATS)
-    existed = (root / "plug-n-rag.yml").exists()
+    if args.abschriften:
+        extra["abschriften"] = {"ort": args.abschriften}
+        if args.abschriften_ordner:
+            extra["abschriften"]["ordner"] = args.abschriften_ordner
+    from .config import CONFIG_NAME, STATE_DIR_NAME, external_state_dir
+
+    existed = ((root / STATE_DIR_NAME / CONFIG_NAME).exists() or (root / CONFIG_NAME).exists()
+               or (location == "external" and (external_state_dir(root) / CONFIG_NAME).exists()))
     layout = init_layout(root, mode=mode, location=location, provider=args.provider, model=args.modell, extra=extra)
     if location == "inside" and layout.mode == "vault":
         _ensure_gitignore(root)
     _print(("Konfiguration war schon vorhanden, nichts überschrieben: " if existed else "Eingerichtet: ")
            + str(layout.config_path))
-    _print(f"Index: {layout.index_dir}")
+    _print(f"Index: {layout.index_dir}" + (" (im Ordner)" if layout.location == "inside" else
+                                           " (zentral auf diesem Rechner, im Ordner wird nichts angelegt)"))
     _print(f"Ausgeschlossen: {', '.join(layout.config.get('exclude', []))}")
 
 
 def _ensure_gitignore(root: Path) -> None:
-    """Add the cache and Obsidian workspace files to .gitignore (append only, never rewrite)."""
+    """Add Obsidian's per-device files to .gitignore (append only, never rewrite)."""
     gi = root / ".gitignore"
-    wanted = [".plug-n-rag/cache/", ".obsidian/workspace*.json", ".trash/"]
+    wanted = [".obsidian/workspace*.json", ".trash/"]
     try:
         current = gi.read_text(encoding="utf-8") if gi.exists() else ""
     except OSError:
@@ -245,6 +260,17 @@ def cmd_aufnehmen(args):
 
     layout = _layout(args)
     files = [Path(p) for p in args.dateien]
+    if args.ablage:
+        from .ingest import PLACES
+
+        valid = PLACES["collection" if layout.mode == "collection" else "vault"]
+        if args.ablage not in valid:
+            _print(f"„{args.ablage}“ passt nicht zu diesem Modus. Möglich: {', '.join(valid)}")
+            return
+        cfg = load_config(layout.config_path)
+        cfg.setdefault("abschriften", {})["ort"] = args.ablage
+        save_config(layout.config_path, cfg)
+        layout.config = load_config(layout.config_path)
     if args.abschliessen:
         _print(complete(layout, files, args.abschliessen))
     else:
@@ -355,6 +381,11 @@ def cmd_session_start(args):
                 done = gitops.commit_paths(layout.root, gitops.index_paths(layout), "plug-n-rag: Index aktualisiert")
             if done and git_cfg.get("auto_push"):
                 gitops.push(layout.root)
+    from .migrate import needs_update
+
+    if needs_update(layout):
+        notes.append("plug-n-rag nutzt jetzt einen aufgeräumten Ordneraufbau. `plug-n-rag umziehen` stellt "
+                     "um, ohne etwas neu zu berechnen (vorher kurz bei der Nutzer:in nachfragen).")
     try:
         tuning.learn(layout)
     except Exception:  # noqa: BLE001 - learning must never break the session start
@@ -452,6 +483,24 @@ def cmd_anleitung(args):
            f"den vollen Pfad verwenden: {launcher})\n\n" + text)
 
 
+def cmd_umziehen(args):
+    from .migrate import move
+
+    layout = _layout(args)
+    if args.nach == "zentral" and layout.mode == "vault" and not args.trotzdem:
+        _print("Bei einer Vault gehört der Index in den Ordner .plug-n-rag/: nur dann funktionieren "
+               "Cloud-Sitzungen und mehrere Geräte. Wenn trotzdem zentral gewünscht: --trotzdem.")
+        return
+    for step in move(layout, args.nach):
+        _print(step)
+    from .sync import sync
+
+    new = find_layout(layout.root)
+    if new and new.configured:
+        r = sync(new)
+        _print(_report_text(r))
+
+
 def cmd_mcp(args):
     from .mcp_server import main as mcp_main
 
@@ -513,7 +562,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("init", help="Konfiguration anlegen (vom Setup genutzt)")
     s.add_argument("pfad", nargs="?")
     s.add_argument("--modus", choices=["vault", "sammlung", "collection"], default="vault")
-    s.add_argument("--extern", action="store_true", help="Index außerhalb des Ordners speichern")
+    s.add_argument("--ort", choices=["ordner", "zentral"],
+                   help="Dateien von plug-n-rag im Ordner (.plug-n-rag/) oder zentral auf diesem Rechner")
+    s.add_argument("--extern", action="store_true", help=argparse.SUPPRESS)  # old name for --ort zentral
+    s.add_argument("--abschriften", choices=["neben_original", "ordner", "intern"],
+                   help="Ablage von Abschriften aus /plug-n-rag:aufnehmen")
+    s.add_argument("--abschriften-ordner", help="Ordner für Abschriften in einer Vault (Standard: Abschriften)")
     s.add_argument("--provider", choices=["local", "voyage", "fake"], default="local")
     s.add_argument("--modell")
     s.add_argument("--privat", nargs="*", help="private Ordner, z. B. 'Tagebuch/**'")
@@ -542,6 +596,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("dateien", nargs="+")
     s.add_argument("--transkription", choices=["fragen", "lokal", "erlaubt"], default="fragen")
     s.add_argument("--abschliessen", choices=["haiku", "sonnet"], help="Transkription übernehmen und ablegen")
+    s.add_argument("--ablage", choices=["neben_original", "ordner", "intern"],
+                   help="Ablage der Abschriften festlegen (wird in der Konfiguration gemerkt)")
     s.set_defaults(func=cmd_aufnehmen)
 
     s = sub.add_parser("git-hook", help="Git-pre-commit-Hook installieren")
@@ -573,6 +629,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("name", nargs="?")
     s.add_argument("argumente", nargs="*")
     s.set_defaults(func=cmd_anleitung)
+
+    s = sub.add_parser("umziehen", help="Auf den aktuellen Ordneraufbau umstellen oder Ablageort wechseln")
+    s.add_argument("--nach", choices=["ordner", "zentral"], help="Ziel: im Ordner (.plug-n-rag/) oder zentral")
+    s.add_argument("--trotzdem", action="store_true", help=argparse.SUPPRESS)
+    s.set_defaults(func=cmd_umziehen)
 
     s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
     s.set_defaults(func=cmd_mcp)

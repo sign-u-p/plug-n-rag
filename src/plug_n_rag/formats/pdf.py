@@ -140,6 +140,10 @@ def load_extract(data: bytes, file_hash: str, cache_dir: Path | None) -> dict:
         if cached and cached.get("version") == EXTRACT_VERSION:
             return cached
     result = extract_pdf(data)
+    if cache_dir is not None and cached and cached.get("transcription") and cached.get("pages"):
+        # A newer extractor must never throw away paid transcriptions: keep their page texts.
+        result["pages"] = cached["pages"]
+        result["transcription"] = cached["transcription"]
     if cache_dir is not None:
         atomic_write_json(cpath, result, indent=None)
     return result

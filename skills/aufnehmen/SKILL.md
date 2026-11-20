@@ -10,6 +10,14 @@ allowed-tools: Bash(plug-n-rag aufnehmen*) Bash(plug-n-rag sync*)
 Dateien: `$ARGUMENTS` (ohne Angabe: nachfragen, welche PDFs gemeint sind; `plug-n-rag inventur`
 listet PDFs und Scans).
 
+0. **Ablage (einmalig):** Meldet der Befehl „Wohin sollen Abschriften von PDFs?“, diese Frage mit
+   den angezeigten Möglichkeiten stellen und dann mit `--ablage <wahl>` erneut ausführen; die Wahl
+   wird gemerkt. Möglichkeiten:
+   - Vault: `neben_original` (neue Notiz neben dem PDF) oder `ordner` (eigener Ordner „Abschriften/“,
+     gleiche Unterordner wie die PDFs).
+   - Sammlung: `ordner` (lesbare Dateien in `.plug-n-rag/abschriften/`; wandern mit dem Index, eine
+     Kopie des Ordners braucht kein erneutes Abschreiben) oder `intern` (nur für die Suche).
+   Gibt es gleichzeitig Scans, beide Fragen (Ablage und Abschreiben) in einer Nachricht stellen.
 1. `plug-n-rag aufnehmen "<datei>"` ausführen. Der Befehl liest die Textebene, nutzt lokale
    Texterkennung (falls Tesseract installiert ist) und prüft die Qualität. Seiten mit Textebene
    werden sofort übernommen.
@@ -38,7 +46,8 @@ listet PDFs und Scans).
 5. Abschließen: `plug-n-rag aufnehmen "<datei>" --abschliessen haiku` (bzw. `sonnet`).
    - Vault-Modus: Es entsteht eine **neue** Notiz neben dem PDF mit Frontmatter `quelle:` und
      `transkription:`. Bestehende Notizen werden nie verändert.
-   - Sammlungs-Modus: Der Text liegt nur im lokalen Cache, die Sammlung bleibt unverändert.
+   - Sammlungs-Modus: Die Sammlung bleibt unverändert. Der Text liegt je nach Wahl als lesbare
+     Abschrift in `.plug-n-rag/abschriften/` oder nur intern für die Suche.
 6. `plug-n-rag sync` und kurz berichten: Seiten, Methode, unleserliche Stellen.
 
 Kosten grob (Stand November 2026, vor dem Nennen aktuelle Preise prüfen): Haiku etwa 0,06 Cent

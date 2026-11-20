@@ -126,7 +126,7 @@ def inventory(root: Path) -> dict:
         "root": str(root),
         "is_vault": (root / ".obsidian").is_dir(),
         "configured": bool(layout and layout.configured and layout.root == root),
-        "config_exists": (root / CONFIG_NAME).exists(),
+        "config_exists": (root / STATE_DIR_NAME / CONFIG_NAME).exists() or (root / CONFIG_NAME).exists(),
         "index_exists": (root / STATE_DIR_NAME / "index").is_dir(),
         "markdown_files": md,
         "markdown_mb": round(md_bytes / 1e6, 2),

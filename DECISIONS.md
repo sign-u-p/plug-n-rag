@@ -164,3 +164,34 @@ Stand: 19.11.2026, Sprint 1.
 35. **Scans sind kein Fehler.** Eingescannte PDFs ohne Textebene heißen jetzt „wartet auf Aufnahme“
     und stehen als Hinweis in Abgleich, Status und Sitzungsstart, nicht unter „Fehler“.
 36. **Version 0.5.0.**
+
+## Nachtrag 20.11.2026: Ordneraufbau und Abschriften (0.6.0)
+
+37. **Trennung nach Art der Dateien.** *Teilbar* (Konfiguration, Index, optionale Abschriften) liegt
+    in genau einem Ordner `.plug-n-rag/`, auch die Konfiguration (`.plug-n-rag/plug-n-rag.yml`
+    statt im Wurzelordner). *Flüchtig* (Suchdatenbank, Protokoll, Zwischenstände, Seitenbilder,
+    Extrakte) liegt immer zentral im Cache des Benutzers (`<cache>/plug-n-rag/state/<name>-<hash>/`).
+    Grund: iCloud, OneDrive oder Obsidian Sync würden die ständig wechselnde SQLite-Datenbank
+    sonst mitsynchronisieren; `.gitignore`-Einträge für den Cache entfallen.
+38. **Überall derselbe Name `.plug-n-rag`** (Entscheidung der Auftraggebenden), auch für Sammlungen.
+39. **Sammlungen: Ablageort wird gefragt** (im Ordner oder zentral). Empfehlung im Ordner, wenn er
+    ein Git-Repo ist oder geteilt bzw. synchronisiert wird; ohne Angabe wählt `init` im Ordner nur
+    bei Git-Repos. Der zentrale Ort ist jetzt das **Datenverzeichnis** des Benutzers (Windows
+    `%APPDATA%`, macOS `~/Library/Application Support`, Linux `~/.local/share`), nicht mehr der
+    Cache, weil Aufräumprogramme Caches leeren und ein Index Geld kosten kann.
+40. **Vaults: kein Ablageort-Dialog.** Der Index gehört in die Vault (mehrere Geräte, Cloud).
+    `umziehen --nach zentral` verlangt bei Vaults ein ausdrückliches `--trotzdem`.
+41. **Abschriften: einmalige Frage, Antwort in `abschriften.ort`.** Vault: `neben_original` oder
+    `ordner` (Standard „Abschriften/“, gespiegelte Unterordner). Sammlung: `ordner` (lesbar in
+    `.plug-n-rag/abschriften/`) oder `intern`. Abschriften tragen `datei_hash`; fehlt der Cache
+    (anderer Rechner, Kopie des Ordners, Cache geleert), stellt plug-n-rag den Seitentext daraus
+    wieder her, ohne erneut abzuschreiben.
+42. **Bezahlte Abschriften gehen nie verloren.** Ein neuer Extraktor (`pdf-v2`) übernimmt die
+    Seitentexte älterer Extrakte mit Transkription. Alte Caches (`.plug-n-rag/cache`, zentrale
+    Sammlungen unter dem Cache-Ordner) werden beim ersten Lauf automatisch in den neuen Cache
+    kopiert. Behebt einen Fehler aus 0.5.0, durch den Abschriften aus 0.4 als „wartet auf
+    Aufnahme“ erschienen wären.
+43. **`plug-n-rag umziehen [--nach ordner|zentral]`** stellt auf den neuen Aufbau um bzw. wechselt
+    den Ort, ohne neu zu berechnen. Der alte Aufbau wird weiter erkannt; der Sitzungsstart weist
+    einmal pro Sitzung darauf hin.
+44. **Version 0.6.0.**

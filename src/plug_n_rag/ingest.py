@@ -176,6 +176,30 @@ def record_transcription(layout: Layout, stage: Path, method: str) -> int:
     return n
 
 
+PLACES = {
+    "vault": {"neben_original": "neben dem Original-PDF",
+              "ordner": "in einem eigenen Ordner (Standard „Abschriften/“, gleiche Unterordner wie die PDFs)"},
+    "collection": {"ordner": "als lesbare Markdown-Dateien in .plug-n-rag/abschriften/ (wandern mit dem Index mit)",
+                   "intern": "nur intern für die Suche, keine zusätzlichen Dateien"},
+}
+
+
+def transcript_place(layout: Layout) -> str | None:
+    """Configured place for transcripts, or None if nobody has decided yet."""
+    ort = (layout.config.get("abschriften") or {}).get("ort")
+    valid = PLACES["collection" if layout.mode == "collection" else "vault"]
+    return ort if ort in valid else None
+
+
+def place_question(layout: Layout) -> str:
+    opts = PLACES["collection" if layout.mode == "collection" else "vault"]
+    lines = ["FRAGE AN NUTZER:IN (einmalig, wird gemerkt): Wohin sollen Abschriften von PDFs?"]
+    for key, text in opts.items():
+        lines.append(f"  {key}: {text}")
+    lines.append("Danach denselben Befehl mit `--ablage <wahl>` ausführen.")
+    return "\n".join(lines)
+
+
 def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -> str:
     data = pdf.read_bytes()
     file_hash = sha256_bytes(data)
@@ -200,35 +224,49 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
         "lokal" if methods & {"ocr", "lokal-unsicher"} else "text")
     if "sonnet" in methods and "haiku" in methods:
         kind = "haiku+sonnet"
+    place = transcript_place(layout)
+    header = [
+        "---",
+        f"quelle: \"{rel}\"",
+        f"datei_hash: \"{file_hash}\"",
+        f"transkription: {kind}",
+        f"aufgenommen: {_dt.date.today().isoformat()}",
+        "---",
+        f"# {pdf.stem}",
+        "",
+    ]
+    body = list(header)
+    for i, t in enumerate(texts, start=1):
+        body += [f"<!-- Seite {i} -->", t, ""]
     if layout.mode == "collection":
+        # the index always uses the page texts (exact page citations) ...
         extract = load_extract(data, file_hash, layout.cache_dir)
         extract["pages"] = [t if t != "[nicht erkannt]" else "" for t in texts]
         extract["version"] = EXTRACT_VERSION
         extract["transcription"] = kind
         atomic_write_json(layout.cache_dir / "extract" / (file_hash.replace("sha256:", "") + ".json"), extract,
                           indent=None)
-        where = "im lokalen Cache (die Sammlung bleibt unverändert)"
-        target_rel = rel
+        if place == "ordner":
+            # ... and, if wanted, a readable copy that travels with the folder
+            target = layout.transcripts_dir / (rel + ".md")
+            atomic_write_text(target, "\n".join(body))
+            shown = (target.relative_to(layout.root).as_posix() if layout.location == "inside" else str(target))
+            where = f"als lesbare Abschrift {shown} (die Sammlung selbst bleibt unverändert)"
+        else:
+            where = "nur intern im lokalen Cache (die Sammlung bleibt unverändert)"
     else:
-        target = pdf.with_suffix(".md")
+        if place == "ordner":
+            folder = str(layout.config.get("abschriften", {}).get("ordner") or "Abschriften").strip("/")
+            target = layout.root / folder / Path(rel).with_suffix(".md")
+        else:
+            target = pdf.with_suffix(".md")
+            if target.exists():
+                target = pdf.with_name(pdf.stem + " (Transkription).md")
         if target.exists():
-            target = pdf.with_name(pdf.stem + " (Transkription).md")
-        if target.exists():
-            return f"{target.name} existiert bereits, nichts überschrieben."
-        body = [
-            "---",
-            f"quelle: \"{rel}\"",
-            f"transkription: {kind}",
-            f"aufgenommen: {_dt.date.today().isoformat()}",
-            "---",
-            f"# {pdf.stem}",
-            "",
-        ]
-        for i, t in enumerate(texts, start=1):
-            body += [f"<!-- Seite {i} -->", t, ""]
+            return f"{target.relative_to(layout.root).as_posix()} existiert bereits, nichts überschrieben."
+        target.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_text(target, "\n".join(body))
-        target_rel = target.relative_to(layout.root).as_posix()
-        where = f"als neue Notiz {target_rel}"
+        where = f"als neue Notiz {target.relative_to(layout.root).as_posix()}"
     msg = f"{rel}: {n} Seiten abgelegt {where} (Transkription: {kind})."
     if missing:
         msg += f" Nicht erkannt: Seiten {', '.join(map(str, missing))}."
@@ -237,6 +275,8 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
 
 def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", write_pages: bool = False) -> str:
     """transcribe: 'fragen' (ask first), 'lokal' (never send pages), 'erlaubt' (consent given)."""
+    if transcript_place(layout) is None:
+        return place_question(layout)
     out = []
     for f in files:
         f = f if f.is_absolute() else (Path.cwd() / f)

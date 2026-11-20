@@ -34,7 +34,8 @@ def test_render_failure_is_reported_not_swallowed(tmp_path, monkeypatch):
         (lib / "scan.pdf").write_bytes(mp.build())
     finally:
         mp.PAGES = old
-    layout = init_layout(lib, mode="collection", location="external", provider="fake")
+    layout = init_layout(lib, mode="collection", location="external", provider="fake",
+                         extra={"abschriften": {"ort": "intern"}})
     import plug_n_rag.ingest as ing
 
     def broken(pdf, page, out_png, dpi=200):

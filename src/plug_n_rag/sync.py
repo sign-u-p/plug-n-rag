@@ -195,7 +195,7 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
             report.pending.extend(t[0].rel for t in todo[n:])
             break
         try:
-            doc, _ = load_document(f.abs, f.rel, f.fmt, layout.cache_dir)
+            doc, _ = load_document(f.abs, f.rel, f.fmt, layout.cache_dir, layout.transcripts_dir)
         except NeedsTranscription:
             report.awaiting.append(f.rel)
             continue

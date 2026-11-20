@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 import tempfile
 import time
 from contextlib import contextmanager
@@ -129,6 +130,18 @@ def user_cache_dir() -> Path:
     if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
         return Path(os.environ["LOCALAPPDATA"]) / "plug-n-rag"
     return Path.home() / ".cache" / "plug-n-rag"
+
+
+def user_data_dir() -> Path:
+    """Durable per-user data (central indexes). Unlike the cache, cleaners must not delete it."""
+    base = os.environ.get("XDG_DATA_HOME")
+    if base:
+        return Path(base) / "plug-n-rag"
+    if os.name == "nt" and os.environ.get("APPDATA"):
+        return Path(os.environ["APPDATA"]) / "plug-n-rag" / "data"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "plug-n-rag"
+    return Path.home() / ".local" / "share" / "plug-n-rag"
 
 
 def user_config_dir() -> Path:
