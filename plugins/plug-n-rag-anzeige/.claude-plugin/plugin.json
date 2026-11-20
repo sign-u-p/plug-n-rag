@@ -1,0 +1,13 @@
+{
+  "name": "plug-n-rag-anzeige",
+  "displayName": "plug-n-rag Anzeige",
+  "version": "0.1.0",
+  "description": "Zeigt unaufdringlich im Chat, was plug-n-rag tut: Suchen, gelesene Abschnitte, Abgleich, Indexierung und geschätzte Ersparnis, mit Seitenleiste auf Klick.",
+  "author": { "name": "sign-u-p" },
+  "homepage": "https://github.com/sign-u-p/plug-n-rag",
+  "repository": "https://github.com/sign-u-p/plug-n-rag",
+  "license": "MIT",
+  "keywords": ["plug-n-rag", "obsidian", "mod", "anzeige"],
+  "dependencies": ["plug-n-rag"],
+  "types": "./types/index.d.ts"
+}

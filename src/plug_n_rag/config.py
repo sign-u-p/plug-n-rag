@@ -54,6 +54,7 @@ DEFAULTS: dict[str, Any] = {
     "tuning": {"commit_learning": False},
     "transcription": "ask",
     "abschriften": {"ort": None, "ordner": "Abschriften"},
+    "anzeige": "kompakt",  # kompakt | aus: source line in sessions where nothing is drawn
     "git": {"auto_commit": "off", "auto_push": False},
 }
 

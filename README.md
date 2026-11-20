@@ -160,6 +160,23 @@ Claude nutzt dafür automatisch die Suche von plug-n-rag und nennt die Quellen m
 Claude selbst verwendet im Hintergrund `plug-n-rag suche`, `gliederung`, `lesen`, `verwandt` und
 `karte`. Du kannst sie auch selbst im Terminal aufrufen (`plug-n-rag --help`).
 
+### Sehen, was plug-n-rag tut (optional)
+
+Mit dem Zusatz **plug-n-rag Anzeige** siehst du im Chat, was plug-n-rag gerade macht: eine ruhige
+Zeile pro Suche oder gelesenem Abschnitt (aufklappbar mit Trefferliste und Relevanz), ein Band
+über dem Eingabefeld nur dann, wenn im Hintergrund indexiert wird oder etwas auf dich wartet, und
+auf Wunsch eine Seitenleiste mit Verlauf, Zustand der Vault und geschätzter Ersparnis (`/pnr`).
+Claude sieht davon nichts, es kostet also keine Tokens.
+
+```
+/plugin install plug-n-rag-anzeige@plug-n-rag
+```
+
+Die Anzeige läuft in der Desktop-App (Code-Tab), im Terminal und in VS Code; in der Handy-App als
+eine ruhige Zeile. In Cloud-Sitzungen wird nichts gezeichnet; dort beendet Claude Antworten aus der
+Vault mit einer kurzen Quellenzeile (abschaltbar mit `anzeige: aus` in der Konfiguration).
+Mehr in [plugins/plug-n-rag-anzeige/README.md](plugins/plug-n-rag-anzeige/README.md).
+
 ### Rückmeldung geben
 
 - „Das war mir zu oberflächlich.“ → Claude liefert künftig für diese Art Aufgabe mehr.
@@ -353,6 +370,7 @@ scripts/plug-n-rag    Starter (uv, Umgebung im Nutzer-Cache; der Sitzungsstart l
 hooks/hooks.json      SessionStart, Stop
 skills/               suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
 agents/               transkription (Haiku)
+plugins/plug-n-rag-anzeige/   optionaler Mod: Anzeige im Chat (TypeScript, eigenes Plugin im Marketplace)
 src/plug_n_rag/       Kern: formats, chunk, index_store, sync, db, search, navigate, mapview,
                       status, tuning, ingest, inventory, gitops, cloud, embed/, mcp_server, cli
 tests/                pytest, Fixture-Vault, PDF-Generator

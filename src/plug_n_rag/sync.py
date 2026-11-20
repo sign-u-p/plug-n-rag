@@ -190,6 +190,8 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
     errors: dict[str, str] = {}
     pool: dict[str, str] | None = None
     embed_ok = not mismatch
+    progress_path = layout.cache_dir / "progress.json"
+    last_progress = time.monotonic()
     for n, (f, h, existed) in enumerate(todo):
         if time_budget is not None and time.monotonic() - t0 > time_budget:
             report.pending.extend(t[0].rel for t in todo[n:])
@@ -234,6 +236,10 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
         (report.updated if existed else report.added).append(f.rel)
         if progress:
             progress(f"{n + 1}/{len(todo)} {f.rel}")
+        now = time.monotonic()
+        if now - last_progress > 2.0:  # for the display mod: progress of long runs
+            last_progress = now
+            atomic_write_json(progress_path, {"done": n + 1, "total": len(todo), "t": time.time()}, indent=None)
 
     # Orphans: sources that no longer exist (deleted, renamed, excluded).
     # While files are pending their vectors may still be needed, so only excluded/
@@ -258,6 +264,10 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
     merged.update(errors)
     atomic_write_json(_errors_path(layout), merged)
     report.errors = errors
+    try:
+        progress_path.unlink()
+    except OSError:
+        pass
     atomic_write_json(layout.cache_dir / "pending.json", {
         "pending": report.pending, "embed_error": report.embed_error,
         "model_mismatch": list(report.model_mismatch) if report.model_mismatch else None,

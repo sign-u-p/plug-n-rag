@@ -9,6 +9,11 @@
       "name": "plug-n-rag",
       "source": "./",
       "description": "Semantische Suche für Obsidian-Vaults und Dokumentensammlungen, mit versioniertem Index im eigenen Repo"
+    },
+    {
+      "name": "plug-n-rag-anzeige",
+      "source": "./plugins/plug-n-rag-anzeige",
+      "description": "Optionale Anzeige für plug-n-rag: ruhige, aufklappbare Zeilen im Chat, Seitenleiste mit Verlauf, Vault und Ersparnis (Mod für Desktop-App, Terminal, VS Code)"
     }
   ]
 }

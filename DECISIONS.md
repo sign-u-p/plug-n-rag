@@ -195,3 +195,30 @@ Stand: 19.11.2026, Sprint 1.
     den Ort, ohne neu zu berechnen. Der alte Aufbau wird weiter erkannt; der Sitzungsstart weist
     einmal pro Sitzung darauf hin.
 44. **Version 0.6.0.**
+
+## Nachtrag 20.11.2026: Anzeige im Chat als eigener Mod (0.7.0)
+
+45. **Eigenes Plugin `plug-n-rag-anzeige` im selben Marketplace** (Entscheidung der
+    Auftraggebenden), unter `plugins/plug-n-rag-anzeige/`. Ein Mod läuft ohne Sandbox und kann von
+    Organisationen gesperrt werden; getrennt bleibt plug-n-rag für alle nutzbar, und wer keine
+    Anzeige will, installiert sie nicht. Das Anzeige-Plugin listet plug-n-rag als Abhängigkeit.
+46. **Daten aus der Werkzeugausgabe, nicht aus einem Feed.** Die Zeile eines Werkzeugaufrufs
+    (`ToolUse`) erhält Eingabe und Ausgabe des Bash-Befehls. Der Mod liest die (stabile, deutsche)
+    Textausgabe von `plug-n-rag suche`, `lesen` usw. Der im Konzept geplante Aktivitäts-Feed ist
+    dadurch unnötig; die Ausgabe an Claude bleibt unverändert.
+47. **`plug-n-rag anzeige-daten`** liefert JSON für Seitenleiste und Band (Dateien, Indexierung mit
+    Fortschritt, wartende Scans, Ersparnis, Karte), lokal und ohne Modell, ohne Notizinhalte und
+    Suchanfragen. Der Abgleich schreibt dafür bei langen Läufen alle 2 s eine Fortschrittsdatei.
+    Der Mod findet den Starter von plug-n-rag als Nachbar-Plugin (Ordner- oder Cache-Layout), sonst
+    über den stabilen Starter im Benutzer-Cache oder den PATH.
+48. **Unaufdringlich nach den Mustern der App:** kompakte Zeile statt des Bash-Befehls (Strg+O zeigt
+    das Original), Details nur auf Klick, Band nur bei laufender Indexierung oder offenen Aufgaben
+    und ausblendbar, Seitenleiste nur auf Wunsch (`/pnr`). In der Handy-App bleibt die native Zeile
+    mit einer ruhigen Zusatzzeile. Kein Button handelt selbst: Vorschläge landen über
+    `$.prompt.fill` im Eingabefeld.
+49. **Barrierefreiheit:** Relevanz als Wort plus Form (●●●/●●○/●○○), keine Farbe als einzige
+    Information, Farben aus dem Theme der App, alle Buttons mit Beschriftung und Tasten (1–3, R),
+    keine Animation.
+50. **Cloud-Sitzungen** zeichnen nichts. Dort bittet der Sitzungsstart Claude um eine Quellenzeile
+    unter Antworten aus der Vault (`anzeige: kompakt`, abschaltbar mit `aus`).
+51. **Version 0.7.0** (plug-n-rag), **0.1.0** (plug-n-rag-anzeige).

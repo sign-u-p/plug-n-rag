@@ -393,6 +393,13 @@ def cmd_session_start(args):
     _print(karte(layout, short=True))
     for n in notes:
         _print("Hinweis: " + n)
+    from .cloud import in_cloud
+
+    if in_cloud() and str(layout.config.get("anzeige", "kompakt")) != "aus":
+        # Nothing is drawn in cloud sessions, so the person cannot see what plug-n-rag did.
+        _print("Anzeige: In dieser Cloud-Sitzung sieht die Nutzer:in nicht, was plug-n-rag tut. Beende "
+               "Antworten, die sich auf die Vault stützen, mit einer Zeile wie „— aus deiner Vault: "
+               "3 Abschnitte aus 2 Notizen“.")
 
 
 def cmd_stop(args):
@@ -499,6 +506,12 @@ def cmd_umziehen(args):
     if new and new.configured:
         r = sync(new)
         _print(_report_text(r))
+
+
+def cmd_anzeige_daten(args):
+    from .anzeige import render_json
+
+    _print(render_json(_layout(args, require=False)))
 
 
 def cmd_mcp(args):
@@ -634,6 +647,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--nach", choices=["ordner", "zentral"], help="Ziel: im Ordner (.plug-n-rag/) oder zentral")
     s.add_argument("--trotzdem", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_umziehen)
+
+    s = sub.add_parser("anzeige-daten", help=argparse.SUPPRESS)  # JSON for the display mod
+    s.set_defaults(func=cmd_anzeige_daten)
 
     s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
     s.set_defaults(func=cmd_mcp)

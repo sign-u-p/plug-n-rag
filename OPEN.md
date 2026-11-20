@@ -71,6 +71,17 @@ Stop-Hook durchlaufen. Offen ist:
 - [ ] **Sammlung im Ordner auf einem Netzlaufwerk/Nextcloud** mit zwei Rechnern: Index und Abschriften
       werden übernommen, nichts wird neu berechnet (als Unit-Test mit Kopie des Ordners belegt).
 
+- [ ] **plug-n-rag Anzeige in der Desktop-App** (Code-Tab, lokale Sitzung): Getestet sind die Hooks
+      mit dem Test-Kit der Engine (Desktop, Terminal, Handy) und `claude plugin validate`; noch
+      nicht gesehen in der echten App:
+  - [ ] Wirkt die kompakte Zeile ruhig genug? Passt „Details“ als Bedienung, oder lieber nur der Pfeil?
+  - [ ] Findet der Mod den Starter von plug-n-rag (Cache-Layout `…/plug-n-rag/plug-n-rag/<version>/`)
+        und läuft `sh <starter> anzeige-daten` unter Windows (Git Bash)?
+  - [ ] Band mit Fortschritt während einer langen Indexierung; Ausblenden hält für die Sitzung.
+  - [ ] Seitenleiste: Breite, Lesbarkeit, Tastenbedienung, Bildschirmleser.
+  - [ ] Handy-App: erscheint die ruhige Zeile unter dem Schritt?
+  - [ ] Nimmt die Plugin-Seite (claude.ai) ein Plugin mit Mod an?
+
 ## Nicht umgesetzt oder nur teilweise
 
 - **Modellvergleich** (SPEC Schritt 2): drei lokale Kandidaten (e5-small, EmbeddingGemma 300M,
