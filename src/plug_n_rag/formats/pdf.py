@@ -6,15 +6,66 @@ user's folder. Scanned pages without a text layer are reported, not guessed.
 
 from __future__ import annotations
 
+import collections
 import io
+import logging
 import re
+import warnings
 from pathlib import Path
 
 from ..util import atomic_write_json, estimate_tokens, read_json
-from .base import Block, Document, ExtractionError, OutlineItem, Section
+from .base import Block, Document, ExtractionError, NeedsTranscription, OutlineItem, Section
 
-EXTRACT_VERSION = "pdf-v1"
+EXTRACT_VERSION = "pdf-v2"  # v2: printed page numbers
 MIN_PAGE_CHARS = 25  # below this a page counts as "no text layer" (likely scanned)
+
+
+def quiet_pypdf() -> None:
+    """pypdf logs one warning per font it cannot fully decode (e.g. "fontTools is required…").
+    With large collections that is tens of kilobytes of noise in the agent's context."""
+    logging.getLogger("pypdf").setLevel(logging.ERROR)
+    warnings.filterwarnings("ignore", module="pypdf")
+
+
+quiet_pypdf()
+
+PAGE_NO_RE = re.compile(r"^\s*[-–—]?\s*(?:S\.|Seite|Page)?\s*(\d{1,4})\s*[-–—]?\s*$", re.IGNORECASE)
+
+
+def printed_page_labels(reader, pages: list[str]) -> list[str] | None:
+    """Printed page numbers, if they differ from the PDF page index.
+
+    1. The PDF's own page labels (/PageLabels), e.g. roman numbers in the front matter.
+    2. Otherwise: a bare number in the first or last line of the page text, if most such
+       numbers agree on one offset (PDF page 1 = book page 11).
+    """
+    n = len(pages)
+    try:
+        root = reader.trailer["/Root"]
+        if "/PageLabels" in root:
+            labels = list(reader.page_labels)
+            if len(labels) == n and any(lab != str(i + 1) for i, lab in enumerate(labels)):
+                return [str(lab) for lab in labels]
+    except Exception:  # noqa: BLE001 - labels are optional
+        pass
+    offsets: collections.Counter = collections.Counter()
+    found = 0
+    for i, text in enumerate(pages):
+        lines = [ln for ln in text.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        for cand in (lines[0], lines[-1]):
+            m = PAGE_NO_RE.match(cand)
+            if m:
+                offsets[int(m.group(1)) - (i + 1)] += 1
+                found += 1
+                break
+    if not offsets:
+        return None
+    offset, count = offsets.most_common(1)[0]
+    if offset == 0 or count < 3 or count < 0.3 * n:
+        return None
+    return [str(i + 1 + offset) if i + 1 + offset > 0 else "" for i in range(n)]
 
 
 def _clean(text: str) -> str:
@@ -75,7 +126,11 @@ def extract_pdf(data: bytes) -> dict:
         raise
     except Exception as exc:  # noqa: BLE001
         raise ExtractionError(f"PDF konnte nicht gelesen werden: {exc}") from exc
-    return {"version": EXTRACT_VERSION, "pages": pages, "outline": outline, "meta": meta}
+    try:
+        labels = printed_page_labels(reader, pages)
+    except Exception:  # noqa: BLE001
+        labels = None
+    return {"version": EXTRACT_VERSION, "pages": pages, "outline": outline, "meta": meta, "labels": labels}
 
 
 def load_extract(data: bytes, file_hash: str, cache_dir: Path | None) -> dict:
@@ -95,11 +150,12 @@ def parse_pdf(source: str, extract: dict) -> Document:
     n = len(pages)
     empty = [i + 1 for i, p in enumerate(pages) if len(p) < MIN_PAGE_CHARS]
     if n == 0 or len(empty) == n:
-        raise ExtractionError(
-            f"Keine Textebene gefunden ({n} Seiten, vermutlich eingescannt). "
-            "Umwandlung über den Aufnahme-Befehl möglich."
+        raise NeedsTranscription(
+            f"wartet auf Aufnahme: keine Textebene ({n} Seiten, eingescannt), /plug-n-rag:aufnehmen"
         )
     meta = dict(extract.get("meta", {}))
+    if extract.get("labels"):
+        meta["page_labels"] = extract["labels"]
     if empty:
         meta["pages_without_text"] = empty
     outline_raw = sorted(extract.get("outline", []), key=lambda t: (t[2], t[1]))

@@ -12,7 +12,7 @@ from . import tuning
 from .config import Layout
 from .db import open_db
 from .formats import read_units
-from .formats.base import format_range
+from .formats.base import format_range, printed_suffix
 from .util import estimate_tokens, fmt_int
 
 RANGE_RE = re.compile(r"^(?P<ref>.+?)(?::|#\s*(?:[ZzSs]\.?|Zeilen?|Seiten?)\s*)(?P<a>\d+)(?:\s*[-–]\s*(?P<b>\d+))?$")
@@ -20,6 +20,13 @@ RANGE_RE = re.compile(r"^(?P<ref>.+?)(?::|#\s*(?:[ZzSs]\.?|Zeilen?|Seiten?)\s*)(
 
 class NotFound(LookupError):
     pass
+
+
+def _meta(note) -> dict:
+    try:
+        return json.loads(note["meta"] or "{}")
+    except (ValueError, KeyError, IndexError):
+        return {}
 
 
 def resolve_note(conn: sqlite3.Connection, ref: str) -> sqlite3.Row:
@@ -72,6 +79,7 @@ def outline(layout: Layout, ref: str) -> str:
             return str(exc)
         items = json.loads(note["outline"] or "[]")
         unit = note["unit"]
+        nmeta = _meta(note)
         head = f"{note['path']} – „{note['title']}“ ({fmt_int(note['tokens'])} Tokens"
         if note["tags"]:
             head += ", Tags: " + ", ".join(note["tags"].split())
@@ -81,13 +89,15 @@ def outline(layout: Layout, ref: str) -> str:
             for it in items:
                 indent = "  " * max(0, it["level"] - 1)
                 lines.append(f"{indent}{'#' * it['level']} {it['heading']} · "
-                             f"{format_range(unit, it['start'], it['end'])} · {fmt_int(it['tokens'])} Tokens")
+                             f"{format_range(unit, it['start'], it['end'])}"
+                             f"{printed_suffix(nmeta, unit, it['start'], it['end'])} · {fmt_int(it['tokens'])} Tokens")
         else:
             rows = conn.execute('SELECT heading_path, start, "end", tokens FROM chunks WHERE note_id=? ORDER BY ord',
                                 (note["id"],)).fetchall()
             lines.append("Keine Überschriften. Abschnitte:")
             for r in rows:
-                lines.append(f"  {format_range(unit, r['start'], r['end'])} · {fmt_int(r['tokens'])} Tokens")
+                lines.append(f"  {format_range(unit, r['start'], r['end'])}"
+                             f"{printed_suffix(nmeta, unit, r['start'], r['end'])} · {fmt_int(r['tokens'])} Tokens")
         links_out = [r[0] for r in conn.execute("SELECT DISTINCT dst FROM links WHERE src=?", (note["id"],))]
         back = _backlinks(conn, note)
         if links_out or back:
@@ -140,7 +150,7 @@ def read(layout: Layout, target: str) -> str:
         whole = False
         if rng:
             start, end = rng
-            label = format_range(unit, start, end)
+            label = format_range(unit, start, end) + printed_suffix(_meta(note), unit, start, end)
         elif heading:
             items = json.loads(note["outline"] or "[]")
             it = _find_heading(items, heading.split(">")[-1])
@@ -148,7 +158,7 @@ def read(layout: Layout, target: str) -> str:
                 avail = ", ".join(i["heading"] for i in items[:12]) or "keine"
                 return f"Überschrift „{heading}“ nicht gefunden in {note['path']}. Vorhanden: {avail}"
             start, end = it["start"], it["end"]
-            label = f"{it['heading']}, {format_range(unit, start, end)}"
+            label = f"{it['heading']}, {format_range(unit, start, end)}{printed_suffix(_meta(note), unit, start, end)}"
         else:
             whole = True
             start, end = 1, 10 ** 9

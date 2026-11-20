@@ -18,6 +18,7 @@ from .chunk import chunk_document
 from .config import Layout
 from .embed import Embedder, EmbeddingUnavailable, dims_for, get_embedder, model_id_for
 from .formats import ExtractionError, load_document
+from .formats.base import NeedsTranscription
 from .scan import scan
 from .util import atomic_write_json, file_lock, read_json, sha256_bytes
 
@@ -32,6 +33,7 @@ class SyncReport:
     reused_chunks: int = 0
     private_removed: list[str] = field(default_factory=list)
     errors: dict[str, str] = field(default_factory=dict)
+    awaiting: list[str] = field(default_factory=list)  # scanned files waiting for "aufnehmen"
     pending: list[str] = field(default_factory=list)  # not indexed yet (budget/provider)
     embed_error: str | None = None
     model_mismatch: tuple[str, str] | None = None  # (configured, index)
@@ -194,6 +196,9 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
             break
         try:
             doc, _ = load_document(f.abs, f.rel, f.fmt, layout.cache_dir)
+        except NeedsTranscription:
+            report.awaiting.append(f.rel)
+            continue
         except (ExtractionError, OSError) as exc:
             errors[f.rel] = str(exc)
             continue
@@ -257,6 +262,7 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
         "pending": report.pending, "embed_error": report.embed_error,
         "model_mismatch": list(report.model_mismatch) if report.model_mismatch else None,
         "too_large": report.too_large,
+        "awaiting": report.awaiting,
     })
     report.elapsed = time.monotonic() - t0
     return report

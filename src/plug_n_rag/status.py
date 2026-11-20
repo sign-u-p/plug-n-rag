@@ -52,6 +52,10 @@ def status(layout: Layout, *, check_remote: bool = True) -> str:
         lines.append(f"Suchdatenbank: {fmt_int(n_notes)} Dateien, {fmt_int(n_chunks)} Abschnitte, Vektorsuche über {engine}")
     except sqlite3.Error:
         lines.append("Suchdatenbank: noch nicht gebaut (entsteht beim nächsten Abgleich)")
+    if pend.get("awaiting"):
+        n = len(pend["awaiting"])
+        lines.append(f"Hinweis: {n} eingescannte {'Datei wartet' if n == 1 else 'Dateien warten'} auf Aufnahme "
+                     "(/plug-n-rag:aufnehmen): " + ", ".join(pend["awaiting"][:5]) + (" …" if n > 5 else ""))
     errors = read_json(layout.cache_dir / "errors.json", {}) or {}
     if errors:
         lines.append(f"Fehler bei {len(errors)} Dateien:")

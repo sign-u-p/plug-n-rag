@@ -94,6 +94,9 @@ def _report_text(r) -> str:
         lines.append(f"Hinweis: {r.embed_error}")
     if r.model_mismatch:
         lines.append("Hinweis: Index passt nicht zum Modell, nur Stichwortsuche. /plug-n-rag:reindex bietet die Neuindexierung an.")
+    if r.awaiting:
+        lines.append(f"Hinweis: {plural(len(r.awaiting), 'eingescannte Datei wartet', 'eingescannte Dateien warten')} "
+                     "auf Aufnahme (/plug-n-rag:aufnehmen)")
     for path, msg in list(r.errors.items())[:5]:
         lines.append(f"Fehler: {path}: {msg}")
     return "\n".join(lines)
@@ -340,6 +343,9 @@ def cmd_session_start(args):
             notes.append("Index passt nicht zum Modell: nur Stichwortsuche. /plug-n-rag:reindex anbieten.")
         if r.errors:
             notes.append(f"{len(r.errors)} Dateien konnten nicht gelesen werden (Details: plug-n-rag status).")
+        if r.awaiting:
+            notes.append(f"{plural(len(r.awaiting), 'eingescannte Datei wartet', 'eingescannte Dateien warten')} "
+                         "auf Aufnahme (/plug-n-rag:aufnehmen).")
         if in_git and r.changed:
             mode = git_cfg.get("auto_commit", "off")
             done = False
@@ -574,11 +580,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-        except (OSError, ValueError):
-            pass
+    for stream in (sys.stdout, sys.stderr):  # Windows consoles default to cp1252 ("St�rung")
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
     args = build_parser().parse_args(argv)
     try:
         args.func(args)

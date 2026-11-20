@@ -1,10 +1,10 @@
 [project]
 name = "plug-n-rag"
-version = "0.4.0"
+version = "0.5.0"
 description = "Semantische Suche für Obsidian-Vaults und Dokumentensammlungen in Claude Code"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",
     "pyyaml>=6.0",
@@ -18,6 +18,7 @@ dependencies = [
 mcp = ["mcp>=1.2"]
 aufnahme = [
     "pypdfium2>=4.30",
+    "pillow>=10",
 ]
 
 [project.scripts]

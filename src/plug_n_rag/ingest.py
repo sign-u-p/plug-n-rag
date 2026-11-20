@@ -42,23 +42,38 @@ def tesseract_available() -> bool:
     return shutil.which("tesseract") is not None
 
 
-def _render_page(pdf: Path, page: int, out_png: Path, dpi: int = 200) -> bool:
+class RenderError(RuntimeError):
+    pass
+
+
+def _render_page(pdf: Path, page: int, out_png: Path, dpi: int = 200) -> None:
+    """Render one page to PNG. Raises RenderError with a readable reason if nothing works."""
     out_png.parent.mkdir(parents=True, exist_ok=True)
+    reasons = []
     try:
         import pypdfium2 as pdfium
 
         doc = pdfium.PdfDocument(str(pdf))
-        img = doc[page - 1].render(scale=dpi / 72).to_pil()
-        img.save(out_png)
-        return True
-    except Exception:  # noqa: BLE001 - fall back to poppler
-        pass
+        try:
+            img = doc[page - 1].render(scale=dpi / 72).to_pil()
+            img.save(out_png)
+        finally:
+            doc.close()
+        return
+    except ImportError as exc:
+        reasons.append(f"Python-Paket fehlt ({exc.name or exc})")
+    except Exception as exc:  # noqa: BLE001 - report and try poppler
+        reasons.append(f"pypdfium2: {exc}")
     if shutil.which("pdftoppm"):
         stem = out_png.with_suffix("")
         r = subprocess.run(["pdftoppm", "-f", str(page), "-l", str(page), "-r", str(dpi), "-png",
                             "-singlefile", str(pdf), str(stem)], capture_output=True, timeout=120)
-        return r.returncode == 0 and out_png.exists()
-    return False
+        if r.returncode == 0 and out_png.exists():
+            return
+        reasons.append("pdftoppm schlug fehl")
+    else:
+        reasons.append("pdftoppm nicht installiert")
+    raise RenderError("; ".join(reasons))
 
 
 def ocr_page(png: Path) -> tuple[str, float]:
@@ -109,7 +124,12 @@ def analyse(layout: Layout, pdf: Path, rel: str, *, use_ocr: bool = True) -> dic
         entry = {"method": "pending"}
         if use_ocr and tesseract_available():
             png = stage / "img" / f"{i:04d}.png"
-            if png.exists() or _render_page(pdf, i, png):
+            try:
+                if not png.exists():
+                    _render_page(pdf, i, png)
+            except RenderError:
+                png = None
+            if png is not None:
                 ocr_text, conf = ocr_page(png)
                 share = word_share(ocr_text)
                 entry.update({"ocr_confidence": round(conf, 1), "word_share": round(share, 2)})
@@ -123,17 +143,25 @@ def analyse(layout: Layout, pdf: Path, rel: str, *, use_ocr: bool = True) -> dic
     return state
 
 
-def prepare_images(layout: Layout, pdf: Path, state: dict) -> list[list[str]]:
-    """Render page images for pending pages and group them in batches for the subagent."""
+def prepare_images(layout: Layout, pdf: Path, state: dict) -> tuple[list[list[str]], list[int], str]:
+    """Render page images for pending pages and group them in batches for the subagent.
+
+    Returns (batches, pages without image, reason).
+    """
     stage = Path(state["stage"])
-    paths = []
+    paths, failed, reason = [], [], ""
     for key, entry in sorted(state["pages"].items(), key=lambda kv: int(kv[0])):
         if entry.get("method") != "pending":
             continue
         png = stage / "img" / f"{int(key):04d}.png"
-        if png.exists() or _render_page(pdf, int(key), png):
+        try:
+            if not png.exists():
+                _render_page(pdf, int(key), png)
             paths.append(str(png))
-    return [paths[i:i + BATCH_PAGES] for i in range(0, len(paths), BATCH_PAGES)]
+        except RenderError as exc:
+            failed.append(int(key))
+            reason = str(exc)
+    return [paths[i:i + BATCH_PAGES] for i in range(0, len(paths), BATCH_PAGES)], failed, reason
 
 
 def record_transcription(layout: Layout, stage: Path, method: str) -> int:
@@ -246,7 +274,13 @@ def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", wri
                        "nur lokal, das ist aber ungenauer.".replace(",", "."))
             out.append(f"Danach: `plug-n-rag aufnehmen \"{rel}\" --transkription erlaubt` oder `--transkription lokal`.")
             continue
-        batches = prepare_images(layout, f, state)
+        batches, failed, reason = prepare_images(layout, f, state)
+        if failed:
+            out.append(f"FEHLER: Für {len(failed)} Seiten konnten keine Seitenbilder erzeugt werden ({reason}). "
+                       "Ohne Bilder ist kein Abschreiben möglich. Lösung: plug-n-rag über den Starter neu aufrufen "
+                       "(er installiert pypdfium2 und Pillow) oder Poppler (pdftoppm) installieren.")
+            if not batches:
+                continue
         plan = {"source": rel, "stage": state["stage"], "pages_dir": str(Path(state["stage"]) / "pages"),
                 "batches": batches}
         out.append("TRANSKRIPTION: Bitte den Subagenten `transkription` je Bündel aufrufen. Plan:")

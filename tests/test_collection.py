@@ -51,4 +51,9 @@ def test_scanned_pdf_reports_error(tmp_path, fake):
         mp.PAGES = old
     layout = init_layout(lib, mode="collection", location="external", provider="fake")
     r = sync(layout, embedder=fake)
-    assert "scan.pdf" in r.errors and "Textebene" in r.errors["scan.pdf"]
+    # a scan is not an error: it waits for "aufnehmen"
+    assert "scan.pdf" not in r.errors and r.awaiting == ["scan.pdf"]
+    from plug_n_rag.status import status
+
+    out = status(layout, check_remote=False)
+    assert "wartet auf Aufnahme" in out and "Fehler: keine" in out

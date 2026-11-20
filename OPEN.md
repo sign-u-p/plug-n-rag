@@ -59,6 +59,12 @@ Stop-Hook durchlaufen. Offen ist:
   - [ ] Kommt ein über das Konto hinzugefügtes Plugin auch in Cloud-Sitzungen an? Falls ja, wird
         das Setup-Skript für die Installation überflüssig (fürs Vorladen des Modells bleibt es sinnvoll).
 
+- [ ] **Windows** nach 0.5.0 erneut: Umlaute in `sync --fortschritt`, Seitenbilder für `aufnehmen`
+      ohne Poppler (pypdfium2 + Pillow), Wechsel von einer alten 3.10-Umgebung auf ≥ 3.11.
+- [ ] **Gedruckte Seitenzahlen** an echten Büchern prüfen (Erkennung über Kopf-/Fußzeilen ist eine
+      Heuristik; bei Auszügen mit fehlenden Seiten kann der Versatz springen).
+- [ ] **Literaturlisten-Erkennung** an echten Fachbüchern prüfen (Schwelle 3,5 Jahreszahlen pro 100 Wörter).
+
 ## Nicht umgesetzt oder nur teilweise
 
 - **Modellvergleich** (SPEC Schritt 2): drei lokale Kandidaten (e5-small, EmbeddingGemma 300M,

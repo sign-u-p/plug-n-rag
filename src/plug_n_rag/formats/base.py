@@ -62,11 +62,29 @@ class Document:
 
 
 class ExtractionError(RuntimeError):
-    """Raised when a file cannot be turned into text (e.g. a scanned PDF without text layer)."""
+    """Raised when a file cannot be turned into text."""
+
+
+class NeedsTranscription(ExtractionError):
+    """A scanned document without text layer: not an error, it waits for ``aufnehmen``."""
 
 
 UNIT_LABEL = {"lines": ("Z.", "Zeile", "Zeilen"), "pages": ("S.", "Seite", "Seiten"),
               "paragraphs": ("Abs.", "Absatz", "Absätze")}
+
+
+def printed_suffix(meta: dict | None, unit: str, start: int, end: int) -> str:
+    """' (gedruckt S. 11–12)' when the document has printed page numbers that differ."""
+    labels = (meta or {}).get("page_labels") if unit == "pages" else None
+    if not labels:
+        return ""
+    a = labels[start - 1] if 0 < start <= len(labels) else ""
+    b = labels[end - 1] if 0 < end <= len(labels) else ""
+    if not a:
+        return ""
+    if a == str(start) and (b or a) == str(end):
+        return ""
+    return f" (gedruckt S. {a})" if start == end or not b or a == b else f" (gedruckt S. {a}–{b})"
 
 
 def format_range(unit: str, start: int, end: int) -> str:

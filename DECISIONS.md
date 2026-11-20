@@ -138,3 +138,29 @@ Stand: 19.11.2026, Sprint 1.
     über `${CLAUDE_PLUGIN_ROOT}`. Weg A der README ist damit die Plugin-Seite; Terminal und
     „Claude erledigt es“ bleiben als Wege B und C.
 27. **Version 0.4.0.**
+
+## Nachtrag 20.11.2026: Rückmeldung aus der ersten echten Einrichtung (Windows 11, Sammlungs-Modus)
+
+28. **Python ≥ 3.11.** `onnxruntime` hat keine Pakete mehr für Python 3.10; uv wählte eine
+    vorhandene 3.10 und die Installation scheiterte. `requires-python = ">=3.11"`, Lockfile neu.
+    uv legt eine bestehende, unpassende Umgebung beim nächsten Aufruf selbst neu an.
+29. **Pillow im Extra `aufnahme`** (pypdfium2 braucht es für `to_pil()`). Seitenbilder, die sich
+    nicht erzeugen lassen, führen zu einer klaren Fehlermeldung mit Grund, statt still einen
+    leeren Plan auszugeben.
+30. **Inventur zählt PDFs mit Textebene und Textdateien.** Stichprobe von bis zu sechs Seiten pro
+    PDF, hochgerechnet; PDF-Abschnitte mindestens einer pro Seite. Ausgegeben werden getrennte
+    Schätzungen für Vault- und Sammlungs-Modus.
+31. **pypdf-Warnungen auf ERROR** (die „fontTools is required…“-Flut kostete Kontext). Kein
+    zusätzliches fonttools, weil die Textextraktion auch ohne es funktioniert.
+32. **Literaturlisten abwerten.** Erkennung über die Überschrift (Literatur, Quellen, References …)
+    oder den Text (viele Jahreszahlen pro 100 Wörter plus Verlags-/DOI-/Initialen-Muster).
+    Solche Abschnitte bekommen 40 % der Stärke und 50 % des RRF-Werts und sind als
+    „Literaturliste“ markiert, außer die Frage zielt erkennbar auf Literatur oder Quellen.
+33. **Gedruckte Seitenzahlen.** Aus den Seitenbezeichnungen des PDFs (/PageLabels), sonst aus einer
+    alleinstehenden Zahl in der ersten oder letzten Zeile, wenn die Mehrheit auf denselben Versatz
+    kommt. Angezeigt als „S. 1 (gedruckt S. 11)“. Extraktionsversion `pdf-v2`: PDFs werden neu
+    gelesen, Vektoren über den Hash-Pool wiederverwendet (kein neues Embedding).
+34. **UTF-8 auch für die Fehler- und Fortschrittsausgabe** (Windows-Konsolen zeigten „St�rung“).
+35. **Scans sind kein Fehler.** Eingescannte PDFs ohne Textebene heißen jetzt „wartet auf Aufnahme“
+    und stehen als Hinweis in Abgleich, Status und Sitzungsstart, nicht unter „Fehler“.
+36. **Version 0.5.0.**

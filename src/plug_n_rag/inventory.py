@@ -22,22 +22,41 @@ SECONDS_PER_CHUNK_LOCAL = 0.03  # measured on a 4-core cloud CPU with multilingu
 TOKENS_PER_CHUNK = 350
 
 
-def _pdf_info(path: Path) -> tuple[int, bool]:
+def _pdf_info(path: Path) -> tuple[int, bool, int]:
+    """(pages, has text layer, estimated tokens). Samples up to 6 pages spread over the file."""
     try:
         from pypdf import PdfReader
 
+        from .formats.pdf import quiet_pypdf
+
+        quiet_pypdf()
         r = PdfReader(str(path))
         n = len(r.pages)
-        sample = [r.pages[i] for i in range(min(n, 3))]
-        text = "".join((p.extract_text() or "") for p in sample)
-        return n, len(text.strip()) > 40 * max(1, len(sample))
+        if n == 0:
+            return 0, False, 0
+        idx = sorted({min(n - 1, round(i * (n - 1) / 5)) for i in range(6)}) if n > 6 else list(range(n))
+        texts = [(r.pages[i].extract_text() or "").strip() for i in idx]
+        with_text = [t for t in texts if len(t) >= 25]
+        has_text = len(with_text) * 2 >= len(texts)
+        avg_chars = sum(len(t) for t in texts) / len(texts)
+        return n, has_text, int(estimate_tokens("x" * int(avg_chars)) * n)
     except Exception:  # noqa: BLE001
-        return 0, False
+        return 0, False, 0
+
+
+def _estimate(tokens: int, files: int, pdf_tokens: int, extra_chunks: int = 0) -> dict:
+    chunks = max(1, tokens // TOKENS_PER_CHUNK + files) + extra_chunks
+    total = tokens + pdf_tokens
+    seconds = total / TOKENS_PER_CHUNK * SECONDS_PER_CHUNK_LOCAL * 3 + 15
+    return {"tokens": total, "chunks": chunks, "local_seconds": round(seconds),
+            "voyage_tokens": total + chunks * 15}
 
 
 def inventory(root: Path) -> dict:
     root = root.resolve()
     md = 0
+    txt_files = 0
+    txt_tokens = 0
     md_bytes = 0
     md_tokens = 0
     with_fm = 0
@@ -81,8 +100,12 @@ def inventory(root: Path) -> dict:
             else:
                 other[ext or "(ohne Endung)"] += 1
                 if ext == ".pdf":
-                    pages, has_text = _pdf_info(p)
-                    pdfs.append({"path": rel, "pages": pages, "text_layer": has_text})
+                    pages, has_text, tok = _pdf_info(p)
+                    pdfs.append({"path": rel, "pages": pages, "text_layer": has_text,
+                                 "tokens": tok if has_text else 0})
+                elif ext in (".txt", ".text"):
+                    txt_files += 1
+                    txt_tokens += max(1, size // 4)
     is_git = gitops.is_repo(root)
     url = gitops.remote_url(root) if is_git else None
     gh = shutil.which("gh") is not None
@@ -93,7 +116,12 @@ def inventory(root: Path) -> dict:
         except (OSError, subprocess.TimeoutExpired):
             gh_auth = False
     layout = find_layout(root)
-    chunks = max(1, md_tokens // TOKENS_PER_CHUNK + md)
+    pdf_tokens = sum(p["tokens"] for p in pdfs)
+    pdf_pages = sum(p["pages"] for p in pdfs if p["text_layer"])
+    vault_est = _estimate(md_tokens, md, 0)
+    # PDF chunks never cross a page: at least one per page, more for long pages
+    pdf_chunks = pdf_pages * max(1, -(-int(pdf_tokens / max(1, pdf_pages)) // 450)) if pdf_pages else 0
+    coll_est = _estimate(md_tokens + txt_tokens, md + txt_files, pdf_tokens, extra_chunks=pdf_chunks)
     return {
         "root": str(root),
         "is_vault": (root / ".obsidian").is_dir(),
@@ -116,8 +144,12 @@ def inventory(root: Path) -> dict:
         "git": {"repo": is_git, "remote": url, "github": gitops.github_slug(url),
                 "visibility": gitops.repo_visibility(root) if url else None,
                 "gh_installed": gh, "gh_logged_in": gh_auth},
-        "estimate": {"chunks": chunks, "local_seconds": round(chunks * SECONDS_PER_CHUNK_LOCAL + 15),
-                     "voyage_tokens": md_tokens + chunks * 15},
+        "text_files": txt_files,
+        "text_tokens": txt_tokens,
+        "pdf_tokens": pdf_tokens,
+        "estimate": vault_est if (root / ".obsidian").is_dir() else coll_est,
+        "estimate_vault": vault_est,
+        "estimate_collection": coll_est,
     }
 
 
@@ -137,7 +169,9 @@ def render(inv: dict) -> str:
     if inv["pdfs"]:
         scans = inv["scanned_pdfs"]
         pages = sum(p["pages"] for p in scans)
-        lines.append(f"PDFs: {len(inv['pdfs'])}, davon {len(scans)} ohne Textebene (eingescannt, {pages} Seiten)")
+        text_pages = sum(p["pages"] for p in inv["pdfs"] if p["text_layer"])
+        lines.append(f"PDFs: {len(inv['pdfs'])}, davon {len(scans)} ohne Textebene (eingescannt, {pages} Seiten); "
+                     f"mit Textebene {fmt_int(text_pages)} Seiten, ca. {fmt_int(inv['pdf_tokens'])} Tokens")
     if inv["template_folders"]:
         lines.append("Vorlagen-Ordner (Vorschlag: ausschließen): " + ", ".join(inv["template_folders"]))
     if inv["private_candidates"]:
@@ -155,9 +189,16 @@ def render(inv: dict) -> str:
         lines.append(f"Git: Repo vorhanden, GitHub: {g['github'] or 'nein'}" + (f", Sichtbarkeit {vis}" if g["remote"] else ""))
     lines.append(f"GitHub-CLI: {'installiert' if g['gh_installed'] else 'fehlt'}"
                  + (", angemeldet" if g["gh_logged_in"] else (", nicht angemeldet" if g["gh_installed"] else "")))
-    e = inv["estimate"]
-    lines.append(f"Schätzung: ca. {fmt_int(e['chunks'])} Abschnitte · lokal ca. {max(1, e['local_seconds'] // 60)} Min. "
-                 f"(plus einmalig ca. 470 MB Modell-Download) · Voyage ca. {fmt_int(e['voyage_tokens'])} Tokens")
+    def est(label: str, e: dict) -> str:
+        return (f"{label}: ca. {fmt_int(e['tokens'])} Tokens, {fmt_int(e['chunks'])} Abschnitte · lokal ca. "
+                f"{max(1, round(e['local_seconds'] / 60))} Min. (plus einmalig ca. 470 MB Modell-Download) · "
+                f"Voyage ca. {fmt_int(e['voyage_tokens'])} Tokens")
+
+    if inv["text_files"] or inv["pdf_tokens"]:
+        lines.append(est("Schätzung Vault-Modus (nur Markdown)", inv["estimate_vault"]))
+        lines.append(est("Schätzung Sammlungs-Modus (Markdown, Text, PDF mit Textebene)", inv["estimate_collection"]))
+    else:
+        lines.append(est("Schätzung", inv["estimate"]))
     return "\n".join(lines)
 
 

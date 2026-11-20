@@ -20,7 +20,7 @@ from . import tuning
 from .config import Layout
 from .db import chunk_vectors, open_db, vector_search
 from .embed import EmbeddingUnavailable, get_embedder, model_id_for
-from .formats.base import format_range
+from .formats.base import format_range, printed_suffix
 from .index_store import read_meta
 from .util import atomic_write_json, estimate_tokens, fmt_int, read_json
 
@@ -61,6 +61,7 @@ class Hit:
     coverage: float = 0.0
     strength: float = 0.0
     relevant: bool = False
+    reference_list: bool = False
 
 
 @dataclass
@@ -73,6 +74,7 @@ class NoteResult:
     folder: str
     score: float
     hits: list[Hit] = field(default_factory=list)
+    meta: dict = field(default_factory=dict)
 
     @property
     def best(self) -> Hit:
@@ -178,6 +180,29 @@ def _coverage(terms: list[str], text: str, weights: dict[str, float] | None = No
     return hit / total if total else 0.0
 
 
+REF_HEADING_RE = re.compile(r"(literatur|quellen|bibliogra|references|reference list|works cited|"
+                            r"weiterführende lektüre)", re.IGNORECASE)
+REF_YEAR_RE = re.compile(r"\(?\b(?:19|20)\d{2}[a-z]?\)?[.,:;)]")
+REF_MARKER_RE = re.compile(r"(Verlag|\bdoi\b|ISBN|Hrsg\.|\(Hg\.\)|\bIn: |\bS\. \d|\bpp?\. ?\d|\bVol\.|\bJg\.|"
+                           r"\bAufl\.|https?://)", re.IGNORECASE)
+REF_AUTHOR_RE = re.compile(r"\b[A-ZÄÖÜ][\w\-]+, (?:[A-ZÄÖÜ]\.\s?){1,3}")
+REF_QUERY_RE = re.compile(r"(literatur|quelle|bibliogra|reference|zitier|autor)", re.IGNORECASE)
+
+
+def is_reference_list(heading_path: str, body: str) -> bool:
+    """A bibliography rather than content: many years, author initials and publisher markers."""
+    last = heading_path.split(" > ")[-1] if heading_path else ""
+    if last and REF_HEADING_RE.search(last) and len(last) < 60:
+        return True
+    words = len(body.split())
+    if words < 30:
+        return False
+    years = len(REF_YEAR_RE.findall(body))
+    markers = len(REF_MARKER_RE.findall(body))
+    authors = len(REF_AUTHOR_RE.findall(body))
+    return years * 100 / words >= 3.5 and (markers >= 3 or authors >= 3)
+
+
 def _filter_sql(folder: str | None, tag: str | None, since: float | None) -> tuple[str, list]:
     cond, args = [], []
     if folder:
@@ -212,6 +237,7 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         terms = query_terms(query)
         filtered = bool(folder or tag or since)
         k = CANDIDATES * (4 if filtered else 1)
+        wants_refs = bool(REF_QUERY_RE.search(query))
         lists: list[list[int]] = list(_lexical(conn, terms, k))
         weights = term_weights(conn, terms)
         meta = read_meta(layout.index_dir) or {}
@@ -249,7 +275,7 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         marks = ",".join("?" * len(ids))
         fsql, fargs = _filter_sql(folder, tag, _parse_since(since))
         sql = (f'SELECT c.id, c.note_id, n.path, c.heading_path, c.start, c."end", c.tokens, c.body,'
-               f" n.title, n.unit, n.tokens AS ntok, n.tags, n.folder FROM chunks c JOIN notes n ON n.id=c.note_id"
+               f" n.title, n.unit, n.tokens AS ntok, n.tags, n.folder, n.meta AS nmeta FROM chunks c JOIN notes n ON n.id=c.note_id"
                f" WHERE c.id IN ({marks})" + (f" AND {fsql}" if fsql else ""))
         rows = conn.execute(sql, ids + fargs).fetchall()
         if qvec is not None:
@@ -271,9 +297,19 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
             h.strength = max(sem, h.coverage) * 0.7 + min(sem, h.coverage) * 0.3
             if not h.relevant:
                 continue
+            if not wants_refs and is_reference_list(r["heading_path"], r["body"]):
+                # literature lists match many topic words but rarely answer the question
+                h.reference_list = True
+                h.strength *= 0.4
+                h.rrf *= 0.5
             nr = notes.get(r["note_id"])
             if nr is None:
-                nr = NoteResult(r["path"], r["title"], r["unit"], r["ntok"], r["tags"], r["folder"], 0.0)
+                try:
+                    nmeta = json.loads(r["nmeta"] or "{}")
+                except ValueError:
+                    nmeta = {}
+                nr = NoteResult(r["path"], r["title"], r["unit"], r["ntok"], r["tags"], r["folder"], 0.0,
+                                meta=nmeta)
                 notes[r["note_id"]] = nr
             nr.hits.append(h)
         ranked = []
@@ -394,7 +430,8 @@ def _note_to_json(n: NoteResult, params: dict) -> dict:
     for h in n.hits[: params["chunks_per_note"]]:
         hits.append({"heading": h.heading_path, "start": h.start, "end": h.end, "tokens": h.tokens,
                      "strength": round(h.strength, 3), "snippet_src": h.body[:1200],
-                     "label": _section_label(h, n.unit)})
+                     "label": _section_label(h, n.unit) + (" · Literaturliste" if h.reference_list else ""),
+                     "printed": printed_suffix(n.meta, n.unit, h.start, h.end)})
     return {"path": n.path, "title": n.title, "unit": n.unit, "tokens": n.tokens,
             "score": round(n.score, 5), "hits": hits}
 
@@ -441,7 +478,8 @@ def _render(layout: Layout, data: dict, offset: int, count: int, params: dict) -
         lines.append(f"{i}. {n['path']} ({fmt_int(n['tokens'])} Tokens)")
         for j, h in enumerate(n["hits"]):
             s, e = _neighbors(layout, n["path"], h["start"], h["end"], params.get("neighbors", 0))
-            lines.append(f"   › {h['label']}, {format_range(n['unit'], s, e)} ({label(h['strength'])})")
+            printed = h.get("printed", "") if (s, e) == (h["start"], h["end"]) else ""
+            lines.append(f"   › {h['label']}, {format_range(n['unit'], s, e)}{printed} ({label(h['strength'])})")
             if i == offset + 1 and j == 0:
                 lines.append(f"   „{_snippet(h['snippet_src'], data.get('terms', []))}“")
         lines.append("")
