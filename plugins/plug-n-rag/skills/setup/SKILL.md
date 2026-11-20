@@ -268,7 +268,7 @@ Cloud-Umgebung (`plug-n-rag cloud` gibt beides passend aus).
 **d) CLAUDE.md**: kurzen Abschnitt anbieten (nur nach Zustimmung, nur anhängen):
 „Diese Vault ist mit plug-n-rag durchsuchbar. Für Inhalte zuerst `plug-n-rag suche` nutzen. Fehlt
 der Befehl in einer Cloud-Sitzung, braucht die Cloud-Umgebung ein Setup-Skript und eine
-Netzwerkfreigabe für Hugging Face; Anleitung: https://github.com/sign-u-p/plug-n-rag#cloud-sitzungen“
+Netzwerkfreigabe für Hugging Face; Anleitung: https://github.com/sign-u-p/plug-n-rag#in-der-cloud-nutzen“
 Dieser Hinweis hilft Claude in einer Cloud-Sitzung, in der das Plugin (noch) fehlt.
 
 ## Schritt 12: Abschluss

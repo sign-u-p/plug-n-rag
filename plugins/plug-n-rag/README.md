@@ -1,20 +1,17 @@
 # plug-n-rag
 
-Macht Obsidian-Vaults und auf Wunsch andere Ordner für Claude Code semantisch durchsuchbar, damit
-Claude gezielt statt vollständig liest und Tokens spart.
+**Claude kennt deine Notizen und liest nur, was es für deine Frage wirklich braucht.**
 
-Installation, erste Schritte, Datenschutz, Cloud-Sitzungen und bekannte Grenzen stehen in der
-[Anleitung im Repository](https://github.com/sign-u-p/plug-n-rag#readme).
+plug-n-rag macht deine Obsidian-Notizen (und auf Wunsch andere Ordner mit Dokumenten) für Claude
+Code durchsuchbar. Claude findet passende Stellen auch dann, wenn du andere Worte benutzt als in
+der Notiz stehen, liest nur diese Abschnitte und nennt die Quelle mit Zeilen. Das schont dein
+Nutzungskontingent. Deine Notizen bleiben unverändert, und ohne deine Zustimmung geht nichts an
+zusätzliche Dienste.
 
-Kurz:
+**Loslegen:** im Ordner deiner Vault `/plug-n-rag:setup` eingeben. Claude führt dich durch die
+Einrichtung.
 
-```
-/plugin marketplace add sign-u-p/plug-n-rag
-/plugin install plug-n-rag@plug-n-rag
-```
+Die vollständige Anleitung (Installation, Datenschutz, wie es funktioniert, Cloud-Sitzungen,
+Grenzen) steht im Repository: <https://github.com/sign-u-p/plug-n-rag#readme>
 
-Danach im Ordner deiner Vault `/plug-n-rag:setup` eingeben.
-
-Dieser Ordner enthält das Plugin: `scripts/` (Starter), `skills/`, `hooks/`, `agents/`, den
-Python-Kern unter `src/plug_n_rag/` und die Tests unter `tests/`. Lizenz: MIT, siehe `LICENSE`
-und `THIRD_PARTY_NOTICES.md`.
+Lizenz: MIT, siehe `LICENSE` und `THIRD_PARTY_NOTICES.md`.

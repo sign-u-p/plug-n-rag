@@ -2,12 +2,19 @@
   "name": "plug-n-rag",
   "displayName": "plug-n-rag",
   "version": "0.8.0",
-  "description": "Macht Obsidian-Vaults und auf Wunsch andere Ordner semantisch durchsuchbar, damit Claude gezielt statt vollständig liest und Tokens spart.",
+  "description": "Claude findet in deinen Obsidian-Notizen und Dokumenten, was zu deiner Frage passt, auch bei anderen Worten, und liest nur die passenden Abschnitte. Antworten mit Quellenangabe, weniger Verbrauch, deine Notizen bleiben unverändert und privat.",
   "author": {
     "name": "sign-u-p"
   },
   "homepage": "https://github.com/sign-u-p/plug-n-rag",
   "repository": "https://github.com/sign-u-p/plug-n-rag",
   "license": "MIT",
-  "keywords": ["obsidian", "rag", "suche", "embeddings", "vault", "deutsch"]
+  "keywords": [
+    "obsidian",
+    "rag",
+    "suche",
+    "embeddings",
+    "vault",
+    "deutsch"
+  ]
 }
