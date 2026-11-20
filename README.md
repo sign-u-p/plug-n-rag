@@ -7,17 +7,18 @@ Obsidian-Notizen (und auf Wunsch andere Ordner mit Dokumenten) für Claude durch
 Claude etwas fragst, sucht es zuerst in deinen eigenen Notizen, liest nur die passenden Stellen und
 sagt dir, woher eine Aussage stammt.
 
-Gedacht ist plug-n-rag für alle, die mit einer gewachsenen Notizsammlung arbeiten, zum Beispiel
-in Therapie, Lehre, Forschung oder Beratung. Programmierkenntnisse brauchst du nicht.
-Deutschsprachige Notizen funktionieren ausdrücklich gut.
+Gedacht ist plug-n-rag für alle, die mit einer gewachsenen Sammlung arbeiten: Projekt- und
+Besprechungsnotizen, Lesenotizen, ein Zettelkasten, Unterlagen aus Studium und Weiterbildung oder
+ein Ordner voller Fachbücher als PDF. Programmierkenntnisse brauchst du nicht. Deutschsprachige
+Texte funktionieren ausdrücklich gut.
 
 ## Was hast du davon?
 
 - **Antworten aus deinem eigenen Wissen, mit Quelle.** Claude nennt bei jeder Aussage die Notiz
   und die Zeilen, aus denen sie stammt. Du kannst alles nachprüfen.
-- **Treffer auch bei anderen Worten.** Du fragst nach „Reizüberflutung“, gefunden wird auch die
-  Notiz, in der steht, dass ein Kind „den Lärm im Hort kaum aushält“. Und „Reizverarbeitung“
-  findet „Reizverarbeitungsstörung“.
+- **Treffer auch bei anderen Worten.** Du fragst nach den „Kosten“ eines Projekts, gefunden wird
+  auch die Notiz, in der vom „Budget“ die Rede ist. Und „Datenschutz“ findet auch
+  „Datenschutzbeauftragte“ oder „Datenschutzerklärung“.
 - **Weniger Verbrauch.** Claude liest nicht mehr ganze Notizen, sondern die zwei, drei passenden
   Abschnitte. Das schont dein Nutzungskontingent (bzw. die Kosten) und lässt mehr Platz für deine
   eigentliche Aufgabe.
@@ -28,18 +29,30 @@ Deutschsprachige Notizen funktionieren ausdrücklich gut.
 
 ### So sieht das aus
 
-> **Du:** Wie helfe ich einem Kind, das morgens beim Anziehen eskaliert?
->
-> **Claude:** Deine Notizen geben dazu drei Hinweise:
-> – Die Schwierigkeit liegt oft beim *Planen* der Handlung, nicht bei Kraft oder Beweglichkeit
-> (themen/Handlungsplanung.md, Z. 6–12).
-> – Bewährt hat sich, das Anziehen selbst zu üben, mit visuellen Hilfen und Sätzen, die sich das
-> Kind vorsagt (themen/Handlungsplanung.md, Z. 24–34).
-> – Im Fall K. wurde eine Morgenroutine mit Bildkarten vereinbart
-> (gespraeche/2026-10-supervision.md, Z. 7–11).
-> Zu einer bestimmten Reihenfolge beim Anziehen steht nichts in deinen Notizen.
+**In deiner Vault**, zum Beispiel mit Projekt- und Besprechungsnotizen:
 
-Gelesen hat Claude dafür drei kurze Abschnitte statt drei ganzer Notizen.
+> **Du:** Was haben wir beim Website-Relaunch zum Budget entschieden?
+>
+> **Claude:** Laut deinen Notizen:
+> – Im Kick-off wurde ein Rahmen von 12.000 € festgelegt, davon 2.000 € als Reserve
+> (besprechungen/2026-09-03 Kick-off Relaunch.md, Z. 14–22).
+> – Im Oktober wurde die Reserve für die barrierefreie Umsetzung freigegeben
+> (projekte/Website-Relaunch.md › Entscheidungen, Z. 40–47).
+> Wer die Freigabe erteilt hat, steht nicht in deinen Notizen.
+
+Gelesen hat Claude dafür zwei kurze Abschnitte statt aller Notizen zum Projekt.
+
+**In einer Bibliothek**, zum Beispiel einem Ordner mit Fachbüchern als PDF:
+
+> **Du:** Was sagen meine Bücher dazu, wie man Feedback-Gespräche vorbereitet?
+>
+> **Claude:** Zwei deiner Bücher behandeln das:
+> – Ziel und Beobachtungen vorher schriftlich festhalten, Bewertungen davon trennen
+> (Fuehrung/Gespraechsfuehrung.pdf, S. 45, gedruckt S. 37).
+> – Dem Gegenüber vorab ankündigen, worum es geht, damit es sich vorbereiten kann
+> (Fuehrung/Teams leiten.pdf, S. 112–113).
+
+Die Zahlen und Inhalte sind ausgedacht; so sehen die Quellenangaben aus.
 
 ## Begriffe in einer Minute
 
@@ -128,10 +141,11 @@ Verbindung ein paar Minuten). Die Suche nach Stichworten funktioniert schon vorh
 
 ### Und dann: einfach fragen
 
-- „Was habe ich zu sensorischer Integration notiert?“
-- „Fass meine Supervisionsnotizen vom Oktober zusammen.“
-- „Recherchiere in meiner Vault alles zu betätigungsorientierter Befunderhebung.“
-- „Schreib mir aus meinen Notizen einen Elternbrief zum Thema Morgenroutine.“
+- „Was habe ich mir zum Thema Zeitmanagement notiert?“
+- „Fass meine Besprechungsnotizen vom Oktober zusammen. Welche Aufgaben sind noch offen?“
+- „Recherchiere in meiner Vault alles, was ich zu Datenschutz in Vereinen gesammelt habe.“
+- „Was steht in meinen Fachbüchern zu Nebenkostenabrechnungen?“
+- „Schreib mir aus meinen Lesenotizen eine Zusammenfassung für das Team.“
 
 War dir eine Antwort zu knapp oder zu ausführlich, sag es einfach („Das war mir zu oberflächlich“).
 plug-n-rag merkt sich das für diese Art von Aufgabe.
@@ -198,7 +212,7 @@ sich aufklappen.
 plug-n-rag teilt jede Notiz an ihren Überschriften in Abschnitte. Sehr lange Abschnitte werden
 zusätzlich an Absätzen geteilt (Richtwert: etwa 500 Tokens, mit etwas Überlappung, damit kein
 Gedanke an einer Schnittstelle verloren geht). Jeder Abschnitt kennt seinen Ort in der Notiz,
-z. B. „Grundlagen › Modulation“, und seine Zeilen. PDFs werden nach Seiten geteilt, damit Quellen
+z. B. „Website-Relaunch › Entscheidungen“, und seine Zeilen. PDFs werden nach Seiten geteilt, damit Quellen
 immer eine genaue Seite nennen.
 
 Eigenschaften oben in der Notiz (Frontmatter), Tags und Verknüpfungen (`[[…]]`) werden nicht
@@ -230,8 +244,8 @@ ungefähr geht. Deshalb gelten sie als vertraulich.
 Jede Suche läuft auf drei Wegen gleichzeitig:
 
 1. **ganze Wörter**, wie eine klassische Stichwortsuche,
-2. **Wortteile**, damit „Reizverarbeitung“ auch „Reizverarbeitungsstörung“ findet; das ist für
-   deutsche Zusammensetzungen wichtig,
+2. **Wortteile**, damit „Datenschutz“ auch „Datenschutzbeauftragte“ findet; das ist für deutsche
+   Zusammensetzungen wichtig,
 3. **Bedeutung**, über die Fingerabdrücke aus Schritt 2.
 
 Die drei Ranglisten werden zu einer zusammengeführt: Ein Abschnitt, der auf mehreren Wegen weit
@@ -344,8 +358,9 @@ Zeile. Mehr dazu: [plugins/plug-n-rag-anzeige/README.md](plugins/plug-n-rag-anze
 
 ### Andere Ordner durchsuchbar machen
 
-Sag Claude zum Beispiel: „Mach meinen Ordner Fachliteratur durchsuchbar“. Das geht mit Markdown,
-Text und PDFs, deren Text sich markieren lässt. Deine Dateien werden nie verändert. Claude fragt
+Das eignet sich für Bibliotheken mit Fachbüchern, Seminar- und Kursunterlagen, Vertragsordner
+oder Projektablagen. Sag Claude zum Beispiel: „Mach meinen Ordner Fachliteratur durchsuchbar“.
+Das geht mit Markdown, Text und PDFs, deren Text sich markieren lässt. Deine Dateien werden nie verändert. Claude fragt
 dich, wo plug-n-rag seine eigenen Dateien ablegen soll:
 
 - **im Ordner** (Unterordner `.plug-n-rag`): gut, wenn du den Ordner teilst oder synchronisierst,

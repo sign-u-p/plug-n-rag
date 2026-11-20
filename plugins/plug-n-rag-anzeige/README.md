@@ -15,7 +15,7 @@ Claude sieht nichts von der Anzeige. Sie verbraucht also nichts von deinem Konti
 
 ```
 🔍 plug-n-rag   Gesucht: 3 Notizen · beste sehr passend · 2 weitere   Details
-📖 plug-n-rag   Gelesen: themen/Handlungsplanung.md › Intervention, Z. 24–34
+📖 plug-n-rag   Gelesen: projekte/Website-Relaunch.md › Entscheidungen, Z. 40–47
 ```
 
 Ein Klick auf **Details** zeigt, was gefunden wurde: welche Notizen, welche Abschnitte mit Zeilen,
