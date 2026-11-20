@@ -54,6 +54,8 @@ Claude read two short sections for this instead of every note about the project.
 
 The figures and contents are made up; this is what the source references look like.
 
+What happens in the background is shown in two short diagrams: [At a glance](#at-a-glance).
+
 ## English and German
 
 plug-n-rag works equally well with English and German notes, even mixed in one vault. The search
@@ -217,7 +219,50 @@ To get rid of plug-n-rag: uninstall the plugin and delete the folder `.plug-n-ra
 
 ## How plug-n-rag works
 
-For everyone who wants to know exactly. None of this is needed to use it. Each section expands.
+For everyone who wants to know exactly. None of this is needed to use it. First an overview, then
+the details; each detail section expands.
+
+### At a glance
+
+**When new information arrives** (a new or changed note, a PDF):
+
+```mermaid
+flowchart TD
+    A["📝 New or changed note<br/>or 📄 PDF"] --> B{"Scanned PDF?"}
+    B -- "no" --> D["Split into sections<br/>at the headings"]
+    B -- "yes" --> C["Get the text: text layer →<br/>local text recognition →<br/>Claude transcribes, only with your consent"]
+    C --> D
+    D --> E{"Section already known?<br/>(checksum)"}
+    E -- "yes, e.g. renamed" --> G
+    E -- "no" --> F["Compute its meaning as numbers<br/>on your computer"]
+    F --> G["Index file in .plug-n-rag/index/<br/>no note text, travels with your repo"]
+    G --> H["Search database<br/>rebuilt locally at every start"]
+```
+
+plug-n-rag splits the note into sections, computes only what is new and stores the result next to
+your notes. Your notes themselves stay unchanged.
+
+**When you ask a question:**
+
+```mermaid
+flowchart TD
+    Q["💬 Your question"] --> W["Whole words"]
+    Q --> T["Word parts"]
+    Q --> M["Meaning"]
+    W --> R["One shared ranking"]
+    T --> R
+    M --> R
+    R --> K{"Anything relevant<br/>enough?"}
+    K -- "no" --> N["“Nothing relevant found”:<br/>Claude does not make anything up"]
+    K -- "yes" --> L["List of hits: note, section,<br/>lines, relevance in words"]
+    L --> S["Claude reads only<br/>the matching sections"]
+    S --> A2["✅ Answer with source"]
+```
+
+Three searches run at once and are merged into one ranking. Claude sees a short list first and
+then reads only the passages it needs, which is where the tokens are saved.
+
+### In detail
 
 <details>
 <summary><b>1. Splitting notes into sections</b></summary>

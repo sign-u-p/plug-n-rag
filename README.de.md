@@ -56,6 +56,8 @@ Gelesen hat Claude dafür zwei kurze Abschnitte statt aller Notizen zum Projekt.
 
 Die Zahlen und Inhalte sind ausgedacht; so sehen die Quellenangaben aus.
 
+Was dabei im Hintergrund passiert, zeigen zwei kurze Grafiken: [Auf einen Blick](#auf-einen-blick).
+
 ## Deutsch und Englisch
 
 plug-n-rag funktioniert mit deutschen und englischen Notizen gleich gut, auch gemischt in einer
@@ -223,8 +225,50 @@ plug-n-rag wieder loswerden: Plugin deinstallieren und den Ordner `.plug-n-rag/`
 
 ## Wie plug-n-rag funktioniert
 
-Für alle, die es genau wissen wollen. Zum Benutzen ist nichts davon nötig. Jeder Abschnitt lässt
-sich aufklappen.
+Für alle, die es genau wissen wollen. Zum Benutzen ist nichts davon nötig. Erst der Überblick,
+dann die Einzelheiten; jeder Abschnitt dort lässt sich aufklappen.
+
+### Auf einen Blick
+
+**Wenn neue Informationen dazukommen** (eine neue oder geänderte Notiz, ein PDF):
+
+```mermaid
+flowchart TD
+    A["📝 Neue oder geänderte Notiz<br/>oder 📄 PDF"] --> B{"Eingescanntes PDF?"}
+    B -- "nein" --> D["In Abschnitte teilen<br/>an den Überschriften"]
+    B -- "ja" --> C["Text holen: Textebene →<br/>lokale Texterkennung →<br/>Claude schreibt ab, nur mit deiner Zustimmung"]
+    C --> D
+    D --> E{"Abschnitt schon bekannt?<br/>(Prüfsumme)"}
+    E -- "ja, z. B. umbenannt" --> G
+    E -- "nein" --> F["Bedeutung als Zahlen berechnen<br/>auf deinem Rechner"]
+    F --> G["Index-Datei in .plug-n-rag/index/<br/>ohne Notiztext, wandert mit dem Repo"]
+    G --> H["Suchdatenbank<br/>bei jedem Start lokal neu gebaut"]
+```
+
+plug-n-rag teilt die Notiz in Abschnitte, berechnet nur, was neu ist, und legt das Ergebnis neben
+deinen Notizen ab. Die Notizen selbst bleiben unverändert.
+
+**Wenn du etwas fragst:**
+
+```mermaid
+flowchart TD
+    Q["💬 Deine Frage"] --> W["Ganze Wörter"]
+    Q --> T["Wortteile"]
+    Q --> M["Bedeutung"]
+    W --> R["Eine gemeinsame Rangliste"]
+    T --> R
+    M --> R
+    R --> K{"Etwas passend<br/>genug?"}
+    K -- "nein" --> N["„Nichts Passendes gefunden“:<br/>Claude dichtet nichts hinzu"]
+    K -- "ja" --> L["Trefferliste: Notiz, Abschnitt,<br/>Zeilen, Relevanz in Worten"]
+    L --> S["Claude liest nur<br/>die passenden Abschnitte"]
+    S --> A2["✅ Antwort mit Quelle"]
+```
+
+Drei Suchen laufen gleichzeitig und werden zu einer Rangliste zusammengeführt. Claude sieht zuerst
+eine kurze Liste und liest dann nur die Stellen, die es braucht. Dort entsteht die Ersparnis.
+
+### Im Detail
 
 <details>
 <summary><b>1. Notizen in Abschnitte zerlegen</b></summary>
