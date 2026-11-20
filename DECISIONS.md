@@ -234,3 +234,20 @@ Stand: 19.11.2026, Sprint 1.
 53. **Der Anzeige-Mod fragt beim Sitzungsstart nur in der Nähe einer Vault oder Sammlung Daten ab**
     (gleiche Merkmale, über `$.fs.exists` und die Sammlungsliste). Nach jedem tatsächlichen
     plug-n-rag-Aufruf und bei `/pnr` fragt er weiterhin.
+
+## Nachtrag 20.11.2026: Repo als Marketplace mit mehreren Plugins (0.8.0 / Anzeige 0.1.2)
+
+54. **Jedes Plugin in `plugins/<name>/`**, auch plug-n-rag selbst (vorher Quelle `./`, das ganze Repo).
+    Grund: Mit `./` steckte jedes weitere Plugin im Paket von plug-n-rag mit drin, und Dokumente des
+    Repos (SPEC, DECISIONS) wurden mitinstalliert. Jetzt enthält jedes Plugin nur sich selbst. Im
+    Plugin-Cache ändert sich nichts (`…/<marketplace>/plug-n-rag/<version>/scripts/plug-n-rag`),
+    deshalb funktionieren Setup-Skripte für Cloud-Umgebungen und der stabile Starter unverändert.
+    Repo-Ebene: Katalog, Anleitung, Spezifikation, Entscheidungen, Lizenz, `tools/check.sh`,
+    `CONTRIBUTING.md`.
+55. **`tools/check.sh`** prüft den Katalog und jedes Plugin unter `plugins/` (validate, pytest bei
+    `pyproject.toml`, Mod-Tests bei `*.test.ts(x)`) und findet neue Plugins von selbst. Eine
+    GitHub-Action dafür ist bewusst noch nicht angelegt (siehe OPEN.md).
+56. **Lizenz und Hinweise in jedem Plugin-Ordner**, weil installierte Plugins nur ihren eigenen
+    Ordner bekommen.
+57. **Anzeige 0.1.2** sucht den Starter zuerst unter `plugins/plug-n-rag/` (Ordner-Marketplace),
+    dann wie bisher im Plugin-Cache und im alten Aufbau.

@@ -82,9 +82,14 @@ def test_launcher_script_runs_core(tmp_path):
 
 def test_plugin_manifest_and_hooks_are_valid_json():
     plugin = json.loads((REPO / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-    market = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+    market = json.loads((REPO.parents[1] / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
     hooks = json.loads((REPO / "hooks" / "hooks.json").read_text(encoding="utf-8"))
-    assert plugin["name"] == market["plugins"][0]["name"] == "plug-n-rag"
+    entry = next(e for e in market["plugins"] if e["name"] == "plug-n-rag")
+    assert plugin["name"] == "plug-n-rag" and entry["source"] == "./plugins/plug-n-rag"
+    # every marketplace entry points at its own folder below plugins/
+    for e in market["plugins"]:
+        assert e["source"] == f"./plugins/{e['name']}"
+        assert (REPO.parents[1] / e["source"] / ".claude-plugin" / "plugin.json").is_file()
     assert set(hooks["hooks"]) == {"SessionStart", "Stop"}
     for skill in (REPO / "skills").iterdir():
         text = (skill / "SKILL.md").read_text(encoding="utf-8")

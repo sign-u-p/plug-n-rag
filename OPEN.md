@@ -84,6 +84,10 @@ Stop-Hook durchlaufen. Offen ist:
 
 ## Nicht umgesetzt oder nur teilweise
 
+- **GitHub-Action**, die `tools/check.sh --schnell` bei jedem Pull Request ausführt (braucht Node für
+  die Claude-Code-CLI und uv). Nicht angelegt, weil Änderungen an Workflows besondere
+  GitHub-Rechte brauchen; bei Bedarf über die GitHub-Weboberfläche ergänzen.
+
 - **Modellvergleich** (SPEC Schritt 2): drei lokale Kandidaten (e5-small, EmbeddingGemma 300M,
   Model2Vec) und Voyage an zehn typischen Fragen einer echten deutschen Vault, Trefferqualität
   und CPU-Laufzeit dokumentieren. Bisher nur e5-small, kalibriert an der kleinen Test-Vault.

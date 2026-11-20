@@ -59,8 +59,10 @@ type Engine = any
 async function findLauncher($: Engine): Promise<string[]> {
   if (launcher) return launcher
   const root = $.plugin.root.replace(/\\/g, '/')
-  const up2 = root.replace(/\/[^/]+\/[^/]+\/?$/, '')
-  const candidates = [`${up2}/scripts/plug-n-rag`]
+  const up1 = root.replace(/\/[^/]+\/?$/, '')
+  const up2 = up1.replace(/\/[^/]+\/?$/, '')
+  // <repo>/plugins/plug-n-rag (folder marketplace), then the older layout with plug-n-rag at the root
+  const candidates = [`${up1}/plug-n-rag/scripts/plug-n-rag`, `${up2}/scripts/plug-n-rag`]
   try {
     const dir = `${up2}/plug-n-rag`
     if (await $.fs.exists(dir)) {

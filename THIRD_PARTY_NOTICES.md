@@ -9,8 +9,8 @@ https://github.com/dogfoodlab-io/git-rag (v0.1.0)
 
 Übernommen: Breadcrumb vor dem Embedding-Text, Chunk-Hash über Titel + Überschrift + Text,
 Ersatz-Abschnitt für leere Notizen, Parsing von Frontmatter/Tags/Wikilinks, Verkettung
-bestehender Git-Hooks, Zitierregeln im Skill. Betroffene Dateien: `src/plug_n_rag/chunk.py`,
-`src/plug_n_rag/formats/markdown.py`, `src/plug_n_rag/gitops.py`, `skills/suche/SKILL.md`.
+bestehender Git-Hooks, Zitierregeln im Skill. Betroffene Dateien: `plugins/plug-n-rag/src/plug_n_rag/chunk.py`,
+`plugins/plug-n-rag/src/plug_n_rag/formats/markdown.py`, `plugins/plug-n-rag/src/plug_n_rag/gitops.py`, `plugins/plug-n-rag/skills/suche/SKILL.md`.
 
 ```
 MIT License
@@ -42,8 +42,8 @@ https://github.com/ccherrad/git-semantic (Lizenz laut Cargo.toml: MIT OR Apache-
 
 Übernommen: Index-Datei pro Quelldatei mit gespiegeltem Pfad, `hydrate` in eine lokale
 SQLite-Datenbank, Gliederungs-Modus zum Token-Sparen, Karte vor der Suche. Betroffene Dateien:
-`src/plug_n_rag/index_store.py`, `src/plug_n_rag/db.py`, `src/plug_n_rag/navigate.py`,
-`src/plug_n_rag/mapview.py`. Genutzt unter der MIT-Lizenz.
+`plugins/plug-n-rag/src/plug_n_rag/index_store.py`, `plugins/plug-n-rag/src/plug_n_rag/db.py`, `plugins/plug-n-rag/src/plug_n_rag/navigate.py`,
+`plugins/plug-n-rag/src/plug_n_rag/mapview.py`. Genutzt unter der MIT-Lizenz.
 
 ## qmd
 

@@ -351,30 +351,32 @@ Details: [DECISIONS.md](DECISIONS.md) (Entscheidungen), [OPEN.md](OPEN.md) (offe
 
 ## Für Entwickler:innen
 
-```bash
-uv sync --all-extras
-```
+Das Repo ist ein Marketplace mit mehreren Plugins; jedes liegt in einem eigenen Ordner unter
+`plugins/`. Alles prüfen:
 
 ```bash
-uv run pytest
+tools/check.sh --schnell
 ```
 
-Die Tests nutzen eine Beispiel-Vault unter `tests/fixtures/vault/`. Tests mit dem echten lokalen
-Modell sind mit `model` markiert (`uv run pytest -m "not model"` überspringt sie), Tests gegen die
-echte Voyage-API mit `voyage` (laufen nur mit gesetztem `VOYAGE_API_KEY`).
+Ohne `--schnell` laufen auch die Tests mit dem echten lokalen Modell (einmalig etwa 470 MB
+Download). Tests gegen die echte Voyage-API laufen nur mit gesetztem `VOYAGE_API_KEY`.
 
 Aufbau:
 
 ```
-.claude-plugin/       plugin.json, marketplace.json
-scripts/plug-n-rag    Starter (uv, Umgebung im Nutzer-Cache; der Sitzungsstart legt ihn auf den PATH)
-hooks/hooks.json      SessionStart, Stop
-skills/               suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
-agents/               transkription (Haiku)
-plugins/plug-n-rag-anzeige/   optionaler Mod: Anzeige im Chat (TypeScript, eigenes Plugin im Marketplace)
-src/plug_n_rag/       Kern: formats, chunk, index_store, sync, db, search, navigate, mapview,
-                      status, tuning, ingest, inventory, gitops, cloud, embed/, mcp_server, cli
-tests/                pytest, Fixture-Vault, PDF-Generator
+.claude-plugin/marketplace.json   Katalog: plug-n-rag und plug-n-rag-anzeige
+plugins/plug-n-rag/               das Hauptplugin
+  .claude-plugin/plugin.json
+  scripts/plug-n-rag              Starter (uv, Umgebung im Nutzer-Cache; der Sitzungsstart legt ihn auf den PATH)
+  hooks/hooks.json                SessionStart, Stop
+  skills/                         suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
+  agents/                         transkription (Haiku)
+  src/plug_n_rag/                 Python-Kern
+  tests/                          pytest, Beispiel-Vault, PDF-Generator
+plugins/plug-n-rag-anzeige/       optionaler Mod: Anzeige im Chat (TypeScript)
+tools/check.sh                    prüft Katalog und alle Plugins
 ```
+
+Wie ein weiteres Plugin dazukommt, steht in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Lizenz: MIT. Hinweise zu übernommenen Ideen: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
