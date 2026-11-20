@@ -293,3 +293,6 @@ Stand: 19.11.2026, Sprint 1.
     geteilt wird, Links und Backlinks, Umlaute in Dateinamen, eine private Notiz, einen privaten
     Ordner, eine Vorlage und ein PDF mit zwei Seiten. Die Relevanzschwellen bestehen auch an der
     neuen Vault (Umschreibungen treffen, Fremdthemen ergeben „Nichts Passendes gefunden“).
+67. **Sichtbarer Name „plug-n-rag Display“** statt „plug-n-rag Anzeige (display)“: In der englischen
+    Plugin-Liste wirkte das deutsche Wort verwirrend. Die Kennung `plug-n-rag-anzeige` bleibt, damit
+    bestehende Installationen und Befehle gültig bleiben (Anzeige 0.2.1).

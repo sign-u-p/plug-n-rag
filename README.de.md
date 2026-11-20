@@ -408,7 +408,7 @@ wenn möglich, und gibt sie bei Quellen mit an.
 
 ### Sehen, was plug-n-rag tut
 
-Der Zusatz **plug-n-rag Anzeige** zeigt im Chat eine ruhige Zeile pro Schritt (z. B. „Gesucht:
+Der Zusatz **plug-n-rag Display** zeigt im Chat eine ruhige Zeile pro Schritt (z. B. „Gesucht:
 3 Notizen · beste sehr passend“), die du aufklappen kannst. Ein schmales Band über dem Eingabefeld
 erscheint nur, wenn im Hintergrund gearbeitet wird oder etwas auf dich wartet. Auf Wunsch (`/pnr`)
 gibt es eine Seitenleiste mit Verlauf, Zustand und geschätzter Ersparnis. Claude sieht davon
@@ -593,6 +593,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | „nur Stichwortsuche“ | Das Sprachmodell ist (noch) nicht da oder passt nicht; `/plug-n-rag:status` erklärt, warum |
 | In der Cloud fehlt plug-n-rag | Die Sitzung läuft in einer anderen Umgebung, oder das Setup-Skript fehlt (`/plug-n-rag:cloud`) |
 | Eingescannte PDFs „warten auf Aufnahme“ | `/plug-n-rag:aufnehmen` |
+| Die Plugin-Seite zeigt eine alte Beschreibung, oder plug-n-rag Display fehlt | die App kennt noch einen alten Katalog: `claude plugin marketplace update plug-n-rag` ausführen, oder auf der Plugin-Seite den Marketplace entfernen und `sign-u-p/plug-n-rag` neu hinzufügen |
 
 Weitere Hintergründe: [DECISIONS.md](DECISIONS.md) (warum etwas so gebaut ist),
 [OPEN.md](OPEN.md) (offene Punkte), [SPEC.md](SPEC.md) (ursprüngliche Spezifikation).

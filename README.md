@@ -394,7 +394,7 @@ where possible and includes them in sources.
 
 ### See what plug-n-rag does
 
-The add-on **plug-n-rag Anzeige** (display) shows a calm line per step in the chat (e.g.
+The add-on **plug-n-rag Display** shows a calm line per step in the chat (e.g.
 "Searched: 3 notes · best very relevant") that you can expand. A narrow band above the prompt only
 appears while work runs in the background or something is waiting for you. On request (`/pnr`)
 there is a side pane with history, state and estimated savings. Claude sees none of it, so it costs
@@ -578,6 +578,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | "keyword search only" | the language model is not there (yet) or does not fit; `/plug-n-rag:status` explains why |
 | plug-n-rag is missing in the cloud | the session runs in a different environment, or the setup script is missing (`/plug-n-rag:cloud`) |
 | Scanned PDFs are "waiting for ingestion" | `/plug-n-rag:ingest` |
+| The plugin page shows an old description, or plug-n-rag Display is missing | the app still knows an old catalogue: run `claude plugin marketplace update plug-n-rag`, or remove the marketplace on the plugin page and add `sign-u-p/plug-n-rag` again |
 
 More background (in German): [DECISIONS.md](DECISIONS.md) (why things are built this way),
 [OPEN.md](OPEN.md) (open points), [SPEC.md](SPEC.md) (original specification).

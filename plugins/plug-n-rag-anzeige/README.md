@@ -1,4 +1,4 @@
-# plug-n-rag Anzeige
+# plug-n-rag Display
 
 > **English:** an optional display for [plug-n-rag](../../README.md). It shows a calm, expandable
 > line in the chat for each step plug-n-rag takes (e.g. "🔍 Searched: 3 notes · best very
@@ -53,7 +53,7 @@ Mit der Tastatur: 1, 2, 3 wechseln die Ansicht, R aktualisiert.
 Voraussetzung ist plug-n-rag; der Zusatz bringt es automatisch mit, falls es fehlt.
 
 - **Über die Plugin-Seite:** Einstellungen → Plugins, Marketplace `sign-u-p/plug-n-rag` (falls noch
-  nicht hinzugefügt), dann bei **plug-n-rag Anzeige** auf „Hinzufügen“.
+  nicht hinzugefügt), dann bei **plug-n-rag Display** auf „Hinzufügen“.
 - **In Claude Code:**
 
   ```

@@ -1,4 +1,4 @@
-// plug-n-rag Anzeige (display): shows quietly in the chat what plug-n-rag does.
+// plug-n-rag Display: shows quietly in the chat what plug-n-rag does.
 //
 // * a compact, expandable row in place of each `plug-n-rag …` Bash call (search, read, sync …)
 // * a short word on the spinner while plug-n-rag works
