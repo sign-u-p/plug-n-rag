@@ -296,3 +296,14 @@ Stand: 19.11.2026, Sprint 1.
 67. **Sichtbarer Name „plug-n-rag Display“** statt „plug-n-rag Anzeige (display)“: In der englischen
     Plugin-Liste wirkte das deutsche Wort verwirrend. Die Kennung `plug-n-rag-anzeige` bleibt, damit
     bestehende Installationen und Befehle gültig bleiben (Anzeige 0.2.1).
+68. **Rückmeldung aus dem Alltag (0.9.1 / Display 0.2.2).**
+    - Unter Windows rief Claude `plug-n-rag` einmal im PowerShell-Werkzeug auf und bekam
+      „nicht erkannt“: Der Starter liegt über `CLAUDE_ENV_FILE` nur für das Bash-Werkzeug auf dem
+      PATH. Jeder Skill sagt jetzt ausdrücklich „mit dem Bash-Werkzeug“, und der Sitzungsstart
+      erinnert unter Windows daran.
+    - Bis zur ersten Antwort verging bis zu einer Minute ohne Rückmeldung (Anleitung laden,
+      mehrere Suchen; die Suche selbst dauert wenige Sekunden). Der Skill `suche` lässt Claude vorher
+      einen Satz schreiben („Ich schaue nach, was in deinen Notizen dazu steht. Einen kleinen
+      Moment.“).
+    - Das Display fasst Lese-Befehle mit mehreren Abschnitten zusammen („Gelesen: 3 Abschnitte aus
+      2 Notizen“) und nimmt nie eine Trennlinie wie `====` als Zusammenfassung.

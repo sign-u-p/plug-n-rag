@@ -5,6 +5,9 @@ description: Switches plug-n-rag's embedding provider or model, with a cost esti
 allowed-tools: Bash(plug-n-rag konfig*) Bash(plug-n-rag inventur*) Bash(plug-n-rag status*) Bash(plug-n-rag config*) Bash(plug-n-rag inventory*) Bash(plug-n-rag guide*)
 ---
 
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
+
 This is the English name of `/plug-n-rag:modell-wechseln`. Load its instructions and follow them exactly:
 
 ```

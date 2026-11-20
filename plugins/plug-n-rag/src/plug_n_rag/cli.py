@@ -466,6 +466,9 @@ def cmd_session_start(args):
     except Exception:  # noqa: BLE001 - learning must never break the session start
         pass
     _print(karte(layout, short=True))
+    if os.name == "nt":  # PATH is set for the Bash tool only; PowerShell does not know the command
+        notes.append(tr("`plug-n-rag` immer im Bash-Werkzeug aufrufen, nicht in PowerShell.",
+                        "Always call `plug-n-rag` in the Bash tool, not in PowerShell."))
     for n in notes:
         _print(tr("Hinweis: ", "Note: ") + n)
     from .cloud import in_cloud

@@ -9,6 +9,9 @@ allowed-tools: Bash(plug-n-rag lernen*) Bash(plug-n-rag learn*)
 > gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
 > gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
 > von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
+>
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
 
 1. `plug-n-rag lernen` zeigt die aktuellen Werte je Zweck (frage, recherche, erstellen) und ob sie
    gelernt, Startwert oder eigene Vorgabe sind.

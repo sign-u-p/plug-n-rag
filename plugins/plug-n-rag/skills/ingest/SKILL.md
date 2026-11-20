@@ -6,6 +6,9 @@ argument-hint: "<pdf file> [more]"
 allowed-tools: Bash(plug-n-rag aufnehmen*) Bash(plug-n-rag sync*) Bash(plug-n-rag ingest*) Bash(plug-n-rag guide*)
 ---
 
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
+
 This is the English name of `/plug-n-rag:aufnehmen`. Load its instructions and follow them exactly:
 
 ```

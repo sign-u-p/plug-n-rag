@@ -8,6 +8,9 @@ allowed-tools: Bash(plug-n-rag *)
 > gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
 > gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
 > von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
+>
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
 
 # Suchen und Lesen in der Vault
 
@@ -17,6 +20,10 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
 
 ## Ablauf: Karte → Suche → Gliederung → Abschnitt
 
+0. **Kurz Bescheid geben**, bevor du mit dem Suchen beginnst: ein Satz an die Nutzer:in, z. B.
+   „Ich schaue nach, was in deinen Notizen dazu steht. Einen kleinen Moment.“ (englisch: “Let me
+   check what your notes say about this. One moment.”). Erst danach die Befehle ausführen, damit
+   niemand ohne Rückmeldung wartet. Nur einmal pro Frage, nicht vor jedem Lesen.
 1. **Orientieren** (nur wenn die Kurz-Karte vom Sitzungsstart nicht reicht): `plug-n-rag karte`
 2. **Suchen**, immer mit Zweck:
    `plug-n-rag suche "<frage in eigenen Worten>" --zweck frage|recherche|erstellen`

@@ -103,10 +103,24 @@ export function parseSearch(out: string): Search {
   return res
 }
 
-/** First line of `lesen`/`read`: `path › label (N Tokens)`. */
-export function parseRead(out: string): { path: string; label: string; tokens: number } | null {
-  const m = (out.split('\n')[0] ?? '').match(/^(.+?) › (.+) \(([\d.,]+) [Tt]okens\)$/)
-  return m ? { path: (m[1] ?? ''), label: (m[2] ?? ''), tokens: num((m[3] ?? '')) } : null
+export type Read = { path: string; label: string; tokens: number }
+
+const READ_HEAD = /^(.+?) › (.+) \(([\d.,]+) [Tt]okens\)$/
+
+/** Every section header in the output of `lesen`/`read`: `path › label (N Tokens)`.
+ *  Claude sometimes reads several sections in one command, separated by lines like `====`. */
+export function parseReads(out: string): Read[] {
+  const found: Read[] = []
+  for (const line of out.split('\n')) {
+    const m = line.trim().match(READ_HEAD)
+    if (m) found.push({ path: m[1] ?? '', label: m[2] ?? '', tokens: num(m[3] ?? '') })
+  }
+  return found
+}
+
+/** The first section read (kept for callers that need one). */
+export function parseRead(out: string): Read | null {
+  return parseReads(out)[0] ?? null
 }
 
 export const estimateTokens = (text: string) => Math.max(0, Math.round(text.length / 3.8))
@@ -118,7 +132,8 @@ export const RELEVANCE_MARK: Record<string, string> = {
 
 export const isMarginal = (relevance: string) => relevance === 'am Rande' || relevance === 'marginal'
 
-const firstLine = (s: string) => (s.split('\n').find(l => l.trim()) ?? '').trim()
+// the first line that says something (not a separator such as "====" or "----")
+const firstLine = (s: string) => (s.split('\n').find(l => /[\p{L}\p{N}]/u.test(l)) ?? '').trim()
 const shortPath = (p: string) => (p.length > 48 ? '…' + p.slice(-47) : p)
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
@@ -157,8 +172,14 @@ export function summarize(call: Call, out: string | undefined, isRunning: boolea
         (s.isKeywordOnly ? T(' · nur Stichwort', ' · keyword only') : '')
     }
     case 'lesen': {
-      const r = parseRead(text)
-      return r ? T('Gelesen: ', 'Read: ') + `${shortPath(r.path)} › ${r.label}` : firstLine(text)
+      const reads = parseReads(text)
+      if (reads.length === 1) return T('Gelesen: ', 'Read: ') + `${shortPath(reads[0]!.path)} › ${reads[0]!.label}`
+      if (reads.length > 1) {
+        const notes = new Set(reads.map(x => x.path)).size
+        return T(`Gelesen: ${plural(reads.length, 'Abschnitt', 'Abschnitte')} aus ${plural(notes, 'Notiz', 'Notizen')}`,
+          `Read: ${plural(reads.length, 'section', 'sections')} from ${plural(notes, 'note', 'notes')}`)
+      }
+      return firstLine(text)
     }
     case 'gliederung': {
       const l = firstLine(text)

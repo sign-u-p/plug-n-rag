@@ -6,6 +6,9 @@ argument-hint: "[commit message]"
 allowed-tools: Bash(plug-n-rag nach-main*) Bash(plug-n-rag status*) Bash(git status*) Bash(git diff*) Bash(plug-n-rag to-main*) Bash(plug-n-rag guide*)
 ---
 
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
+
 This is the English name of `/plug-n-rag:nach-main`. Load its instructions and follow them exactly:
 
 ```

@@ -9,6 +9,9 @@ allowed-tools: Bash(plug-n-rag konfig*) Bash(plug-n-rag inventur*) Bash(plug-n-r
 > gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
 > gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
 > von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
+>
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
 
 Ein Modellwechsel ist ein bewusster Vorgang. Schritte:
 

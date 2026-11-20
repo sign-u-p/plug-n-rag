@@ -229,3 +229,11 @@ test('reads English output and answers in English', async () => {
     setLang('de')
   }
 })
+
+test('several sections in one read command are summed up, separators are not a summary', async () => {
+  const call = parseCommand('for t in "a.md#A" "b.md#B"; do echo ====; plug-n-rag lesen "$t"; done')!
+  expect(call.kind).toBe('lesen')
+  const out = `====\nwissen/a.md › Ablauf (120 Tokens)\n\nText A\n====\nwissen/b.md › Kern (1.200 Tokens)\n\nText B\n====\nwissen/b.md › Rand (80 Tokens)\n\nText C`
+  expect(summarize(call, out, false, false)).toBe('Gelesen: 3 Abschnitte aus 2 Notizen')
+  expect(summarize(call, '====\nDatei nicht lesbar: kaputt', false, false)).toBe('Datei nicht lesbar: kaputt')
+})

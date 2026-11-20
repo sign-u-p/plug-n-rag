@@ -5,6 +5,9 @@ description: Resets or shows the learned values of plug-n-rag's token steering (
 allowed-tools: Bash(plug-n-rag lernen*) Bash(plug-n-rag learn*) Bash(plug-n-rag guide*)
 ---
 
+> **Werkzeug / tool:** `plug-n-rag` immer mit dem **Bash**-Werkzeug ausführen, nie mit PowerShell
+> (unter Windows kennt PowerShell den Befehl nicht). Always run `plug-n-rag` with the Bash tool.
+
 This is the English name of `/plug-n-rag:lernen-zuruecksetzen`. Load its instructions and follow them exactly:
 
 ```

@@ -14,7 +14,7 @@ import type { Register } from 'claude-code'
 
 import type { Entry, Snapshot, Tab } from '../types'
 import {
-  ICON, RELEVANCE_MARK, T, detectLang, estimateTokens, isMarginal, lang, parseCommand, parseRead, parseSearch,
+  ICON, RELEVANCE_MARK, T, detectLang, estimateTokens, isMarginal, lang, parseCommand, parseReads, parseSearch,
   setLang, summarize, type Call,
 } from './parse'
 
@@ -148,7 +148,7 @@ async function record(
   if (call.kind === 'suche') fullTokens = parseSearch(out).hits.reduce((sum, x) => sum + x.tokens, 0)
   const entry: Entry = {
     id, kind: call.kind, summary: summarize(call, out, false, !isOk), at: await $.clock.now(), isOk,
-    tokens: call.kind === 'lesen' ? parseRead(out)?.tokens ?? estimateTokens(out) : estimateTokens(out),
+    tokens: call.kind === 'lesen' ? (parseReads(out).reduce((n, x) => n + x.tokens, 0) || estimateTokens(out)) : estimateTokens(out),
     fullTokens,
   }
   await update($, history, list => [...list.filter(x => x.id !== id), entry].slice(-200))
