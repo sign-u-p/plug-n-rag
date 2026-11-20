@@ -74,3 +74,54 @@ def test_collection_transcription_stays_in_cache(tmp_path, fake):
     out = ingest(layout, [lib / "alt.pdf"], transcribe="lokal")
     assert "im lokalen Cache" in out
     assert sorted(p.name for p in lib.iterdir()) == ["alt.pdf"]
+
+
+def _fake_tesseract(tmp_path, monkeypatch, langs):
+    """A stand-in `tesseract` that knows only `langs` and records its calls."""
+    import stat
+
+    from plug_n_rag import ingest
+
+    bindir = tmp_path / "fakebin"
+    bindir.mkdir()
+    log = tmp_path / "calls.txt"
+    script = bindir / "tesseract"
+    listing = "\\n".join(langs)
+    script.write_text(f"""#!/bin/sh
+echo "$@" >> "{log}"
+if [ "$1" = "--list-langs" ]; then printf 'List of available languages in "/x" ({len(langs)}):\\n{listing}\\n'; exit 0; fi
+printf 'level\\tpage_num\\tblock_num\\tpar_num\\tline_num\\tword_num\\tleft\\ttop\\twidth\\theight\\tconf\\ttext\\n'
+printf '5\\t1\\t1\\t1\\t1\\t1\\t0\\t0\\t1\\t1\\t95\\tHallo\\n'
+""", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{bindir}:" + __import__("os").environ["PATH"])
+    monkeypatch.setattr(ingest, "_installed_langs", None)
+    return log
+
+
+def test_ocr_uses_only_installed_language_packs(tmp_path, monkeypatch):
+    from plug_n_rag import i18n, ingest
+
+    log = _fake_tesseract(tmp_path, monkeypatch, ["eng", "osd"])
+    assert ingest.ocr_languages() == "eng"
+    assert ingest.missing_ocr_languages() == ["deu"]
+    text, conf = ingest.ocr_page(tmp_path / "page.png")
+    assert text == "Hallo" and conf == 95
+    calls = log.read_text(encoding="utf-8").splitlines()
+    assert calls[-1].endswith("-l eng tsv") and len([c for c in calls if "tsv" in c]) == 1  # no failed first try
+
+    (tmp_path / "b").mkdir()
+    _fake_tesseract(tmp_path / "b", monkeypatch, ["deu", "eng"])
+    assert ingest.ocr_languages() == "deu+eng"
+    i18n.set_language("en")
+    assert ingest.ocr_languages() == "eng+deu"  # the folder's language first
+    i18n.set_language(None)
+
+
+def test_ocr_without_any_known_pack_uses_tesseract_default(tmp_path, monkeypatch):
+    from plug_n_rag import ingest
+
+    log = _fake_tesseract(tmp_path, monkeypatch, ["fra"])
+    assert ingest.ocr_languages() is None
+    ingest.ocr_page(tmp_path / "page.png")
+    assert "-l" not in log.read_text(encoding="utf-8").splitlines()[-1]

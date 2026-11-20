@@ -38,8 +38,10 @@ listet PDFs und Scans).
    nicht erneut fragen.
 3. **Lokal**: `plug-n-rag aufnehmen "<datei>" --transkription lokal`. Fehlt Tesseract, anbieten,
    es nach Zustimmung zu installieren (macOS `brew install tesseract tesseract-lang`,
-   Debian/Ubuntu `sudo apt install tesseract-ocr tesseract-ocr-deu`, Windows über den
-   UB-Mannheim-Installer anleiten).
+   Debian/Ubuntu `sudo apt install tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng`, Windows über
+   den UB-Mannheim-Installer anleiten, dort „German“ und „English“ anhaken). plug-n-rag nutzt die
+   installierten Sprachpakete Deutsch und Englisch; meldet die Ausgabe ein fehlendes Paket, anbieten,
+   es nachzuinstallieren.
 4. **Abschreiben erlaubt**: `plug-n-rag aufnehmen "<datei>" --transkription erlaubt`. Die Ausgabe
    enthält einen JSON-Plan mit `batches` (Listen von Seitenbildern, je höchstens 20) und
    `pages_dir`. Rufe für **jedes Bündel** den Subagenten `transkription` auf (Agent-Werkzeug,

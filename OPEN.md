@@ -119,8 +119,6 @@ Stop-Hook durchlaufen. Offen ist:
 - **Englisch an einer echten englischen Vault prüfen** (Schwellen `min_similarity`/`strong_similarity`
   sind an deutschen Texten kalibriert; an der englischen Beispiel-Vault passten sie). Ebenso die
   Suche über Sprachgrenzen hinweg in gemischten Vaults.
-- **Tesseract-Sprachpakete**: die lokale Texterkennung nutzt `deu+eng`; fehlt eines der Pakete,
-  bricht Tesseract ab. Prüfen, welche installiert sind, und nur die vorhandenen verwenden.
 
 ## Kann-Umfang (Punkt 8 des Auftrags)
 

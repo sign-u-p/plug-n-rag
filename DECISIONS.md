@@ -282,3 +282,8 @@ Stand: 19.11.2026, Sprint 1.
     meldet (neues Feld `language`) oder die eine Ausgabe erkennen lässt.
 64. **README:** Englisch als Hauptseite (`README.md`), Deutsch als `README.de.md`, gegenseitig verlinkt.
     DECISIONS, OPEN, SPEC und CONTRIBUTING bleiben deutsch (Arbeitsdokumente).
+65. **Texterkennung mit den vorhandenen Sprachpaketen.** plug-n-rag fragt Tesseract einmal nach den
+    installierten Paketen (`--list-langs`) und nutzt Deutsch und Englisch, soweit vorhanden, die
+    Sprache der Vault zuerst. Vorher wurde immer `deu+eng` verlangt; fehlte ein Paket, lief die
+    Erkennung ohne Sprachangabe (nur Englisch) neu, und deutsche Scans wurden schlechter erkannt.
+    Fehlt ein Paket, sagt `aufnehmen` das, und der Skill bietet die Nachinstallation an.

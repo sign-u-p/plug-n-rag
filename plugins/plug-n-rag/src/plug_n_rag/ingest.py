@@ -1,7 +1,7 @@
 """Ingestion (``aufnehmen``): turn PDFs into text, page by page, through a cascade.
 
 1. text layer (pypdf) – free and exact
-2. local OCR (Tesseract with German language pack, if installed) for pages without text
+2. local OCR (Tesseract with the German and/or English language pack, whichever is installed) for pages without text
 3. quality check: OCR confidence and share of real words
 4. pages that fail → subagent ``transkription`` (Haiku), only with consent
 5. escalation to Sonnet is decided by the main agent
@@ -22,7 +22,7 @@ from pathlib import Path
 
 from .config import Layout
 from .formats.pdf import EXTRACT_VERSION, MIN_PAGE_CHARS, load_extract
-from .i18n import tr
+from .i18n import is_en, tr
 from .util import fmt_int, atomic_write_json, atomic_write_text, read_json, sha256_bytes
 
 WORD_RE = re.compile(r"\S+")
@@ -77,11 +77,50 @@ def _render_page(pdf: Path, page: int, out_png: Path, dpi: int = 200) -> None:
     raise RenderError("; ".join(reasons))
 
 
+OCR_LANGS = ("deu", "eng")
+_installed_langs: list[str] | None = None
+
+
+def tesseract_langs() -> list[str]:
+    """Language packs Tesseract has installed (asked once per process)."""
+    global _installed_langs
+    if _installed_langs is None:
+        try:
+            r = subprocess.run(["tesseract", "--list-langs"], capture_output=True, text=True, timeout=30)
+            out = (r.stdout or "") + "\n" + (r.stderr or "")  # older versions print the list to stderr
+            _installed_langs = [ln.strip() for ln in out.splitlines()
+                                if ln.strip() and " " not in ln.strip() and not ln.strip().endswith(":")]
+        except (OSError, subprocess.SubprocessError):
+            _installed_langs = []
+    return _installed_langs
+
+
+def ocr_languages() -> str | None:
+    """The `-l` value: German and English as far as installed, the folder's language first.
+
+    None means: neither pack is there, Tesseract uses its default.
+    """
+    have = set(tesseract_langs())
+    order = ("eng", "deu") if is_en() else ("deu", "eng")
+    usable = [lang for lang in order if lang in have]
+    return "+".join(usable) or None
+
+
+def missing_ocr_languages() -> list[str]:
+    if not tesseract_available():
+        return []
+    have = set(tesseract_langs())
+    return [lang for lang in OCR_LANGS if lang not in have]
+
+
 def ocr_page(png: Path) -> tuple[str, float]:
-    """Run Tesseract (German + English). Returns (text, mean confidence 0-100)."""
-    r = subprocess.run(["tesseract", str(png), "stdout", "-l", "deu+eng", "tsv"],
-                       capture_output=True, text=True, timeout=300)
-    if r.returncode != 0:
+    """Run Tesseract with the installed German/English packs. Returns (text, mean confidence 0-100)."""
+    cmd = ["tesseract", str(png), "stdout"]
+    langs = ocr_languages()
+    if langs:
+        cmd += ["-l", langs]
+    r = subprocess.run(cmd + ["tsv"], capture_output=True, text=True, timeout=300)
+    if r.returncode != 0 and langs:  # a broken pack: fall back to Tesseract's default
         r = subprocess.run(["tesseract", str(png), "stdout", "tsv"], capture_output=True, text=True, timeout=300)
     words, confs, lines = [], [], {}
     for row in r.stdout.splitlines()[1:]:
@@ -324,6 +363,10 @@ def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", wri
         if not tesseract_available() and pending:
             line += tr(" (lokale Texterkennung nicht installiert: Tesseract mit den Sprachpaketen deu und eng)",
                        " (local text recognition not installed: Tesseract with language packs eng/deu)")
+        elif pending and (missing := missing_ocr_languages()):
+            names = ", ".join(missing)
+            line += tr(f" (Sprachpaket für die Texterkennung fehlt: {names}; erkannt wird mit den vorhandenen)",
+                       f" (language pack for text recognition missing: {names}; the installed ones are used)")
         out.append(line)
         if not pending:
             out.append(finalize(layout, f, rel))
