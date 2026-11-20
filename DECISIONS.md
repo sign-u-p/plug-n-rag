@@ -251,3 +251,34 @@ Stand: 19.11.2026, Sprint 1.
     Ordner bekommen.
 57. **Anzeige 0.1.2** sucht den Starter zuerst unter `plugins/plug-n-rag/` (Ordner-Marketplace),
     dann wie bisher im Plugin-Cache und im alten Aufbau.
+
+## Nachtrag 20.11.2026: Zweisprachig, Englisch und Deutsch (0.9.0 / Anzeige 0.2.0)
+
+58. **Werkzeug und Anleitung in beiden Sprachen.** plug-n-rag spart Tokens und damit Rechenleistung;
+    das soll nicht an einer Sprachgrenze enden. Das Suchmodell bleibt multilingual-e5-small: gezielt
+    gewählt wegen seiner Stärke im Deutschen, im Englischen genauso gut (an einer englischen
+    Beispiel-Vault belegt: Umschreibungen ohne gemeinsame Wörter treffen, Fremdthemen ergeben
+    „Nothing relevant found“, eine deutsche Frage findet eine englische Notiz; `tests/test_english.py`).
+    Über Sprachgrenzen hinweg trifft die Suche seltener als innerhalb einer Sprache; die Skill-Anleitung
+    rät deshalb, bei mageren Treffern zusätzlich in der Sprache der Notizen zu fragen.
+59. **Texte nebeneinander im Code**, `tr("Deutsch", "English")` (`i18n.py`), statt Übersetzungsdateien:
+    Beide Fassungen stehen an der Stelle, an der sie gebraucht werden, und können nicht
+    auseinanderlaufen. Zwei Sprachen rechtfertigen kein gettext.
+60. **Welche Sprache gilt:** `PLUG_N_RAG_LANG` > `language` in der Konfiguration (vom Setup in der
+    Sprache des Gesprächs gesetzt, `init --sprache/--language`) > Deutsch für Konfigurationen ohne
+    diesen Schlüssel (alle vor 0.9 waren deutsch; bestehende Vaults ändern sich also nicht) >
+    Systemsprache (`LC_ALL`, `LC_MESSAGES`, `LANG`; Deutsch nur bei `de…`). Claude antwortet immer
+    in der Sprache der Nutzer:in; die Einstellung betrifft nur die festen Texte.
+61. **Befehle, Optionen und Werte haben deutsche und englische Namen** (`suche`/`search`,
+    `--zweck frage`/`--purpose question`, `--ablage ordner`/`--place folder` …). Gespeichert wird
+    intern weiter der deutsche Wert, damit ältere Konfigurationen und Lernstände gültig bleiben. Die
+    Hilfe (`--help`) nennt zuerst den Namen in der aktuellen Sprache.
+62. **Skills:** deutsche Skills bleiben (bestehende Aufrufe funktionieren), Beschreibungen tragen einen
+    englischen Satz, damit Claude sie auch bei englischen Anfragen auswählt. Für die von Hand
+    aufgerufenen Skills gibt es englische Namen (`ingest`, `to-main`, `switch-model`,
+    `reset-learning`), die über `plug-n-rag guide <name>` dieselbe Anleitung laden, mit denselben
+    Werkzeugfreigaben. So gibt es eine Anleitung, nicht zwei.
+63. **Anzeige 0.2.0** erkennt beide Ausgabeformate und spricht die Sprache, die `anzeige-daten`
+    meldet (neues Feld `language`) oder die eine Ausgabe erkennen lässt.
+64. **README:** Englisch als Hauptseite (`README.md`), Deutsch als `README.de.md`, gegenseitig verlinkt.
+    DECISIONS, OPEN, SPEC und CONTRIBUTING bleiben deutsch (Arbeitsdokumente).

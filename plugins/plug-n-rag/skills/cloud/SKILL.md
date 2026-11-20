@@ -1,8 +1,13 @@
 ---
 name: cloud
-description: Richtet plug-n-rag für Cloud-Sitzungen ein (Claude Code im Browser, in der Desktop- oder Handy-App mit einer Vault auf GitHub) und prüft, ob alles bereit ist. Verwenden, wenn jemand die Vault in Cloud-Sitzungen nutzen möchte, wenn in einer Cloud-Sitzung das Suchmodell nicht geladen werden kann oder wenn das Setup bei Schritt „Cloud-Sitzungen“ ankommt.
-allowed-tools: Bash(plug-n-rag cloud*) Bash(plug-n-rag modell-laden*) Bash(plug-n-rag status*)
+description: Richtet plug-n-rag für Cloud-Sitzungen ein (Claude Code im Browser, in der Desktop- oder Handy-App mit einer Vault auf GitHub) und prüft, ob alles bereit ist. Verwenden, wenn jemand die Vault in Cloud-Sitzungen nutzen möchte, wenn in einer Cloud-Sitzung das Suchmodell nicht geladen werden kann oder wenn das Setup bei Schritt „Cloud-Sitzungen“ ankommt. English: sets up plug-n-rag for cloud sessions and checks that everything is ready.
+allowed-tools: Bash(plug-n-rag cloud*) Bash(plug-n-rag modell-laden*) Bash(plug-n-rag status*) Bash(plug-n-rag load-model*)
 ---
+
+> **Sprache / language:** Antworte in der Sprache, in der die Nutzer:in schreibt; auf Deutsch
+> gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
+> gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
+> von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
 
 # plug-n-rag in Cloud-Sitzungen
 

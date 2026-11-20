@@ -1,11 +1,20 @@
 # plug-n-rag Anzeige
 
+> **English:** an optional display for [plug-n-rag](../../README.md). It shows a calm, expandable
+> line in the chat for each step plug-n-rag takes (e.g. "🔍 Searched: 3 notes · best very
+> relevant"), a narrow band above the prompt only while indexing runs or something waits for you,
+> and on request (`/pnr`) a side pane with history, vault state and estimated savings. Claude sees
+> none of it, so it costs no tokens. It reads plug-n-rag's output in English and German and speaks
+> the vault's language. Install: `/plugin install plug-n-rag-anzeige@plug-n-rag`.
+
 **Sieh im Chat, was plug-n-rag gerade für dich tut.**
 
-[plug-n-rag](../../README.md) arbeitet still im Hintergrund: Es durchsucht deine Notizen, Claude
+[plug-n-rag](../../README.de.md) arbeitet still im Hintergrund: Es durchsucht deine Notizen, Claude
 liest die passenden Abschnitte, und alles bleibt aktuell. Dieser optionale Zusatz macht das
 sichtbar, ohne zu stören. So siehst du, welche Notizen gefunden wurden, was Claude davon gelesen
 hat und wie viel das gezielte Lesen ungefähr gespart hat.
+
+Die Anzeige spricht die Sprache deiner Vault (Deutsch oder Englisch).
 
 Claude sieht nichts von der Anzeige. Sie verbraucht also nichts von deinem Kontingent.
 

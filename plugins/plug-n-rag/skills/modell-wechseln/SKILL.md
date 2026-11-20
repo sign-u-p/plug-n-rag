@@ -1,9 +1,14 @@
 ---
 name: modell-wechseln
 disable-model-invocation: true
-description: Wechselt bei plug-n-rag den Embedding-Provider oder das Modell (lokal oder Voyage AI) mit Kostenvoranschlag und anschließender vollständiger Neuindexierung. Nur auf ausdrücklichen Wunsch der Nutzer:in.
-allowed-tools: Bash(plug-n-rag konfig*) Bash(plug-n-rag inventur*) Bash(plug-n-rag status*)
+description: Wechselt bei plug-n-rag den Embedding-Provider oder das Modell (lokal oder Voyage AI) mit Kostenvoranschlag und anschließender vollständiger Neuindexierung. Nur auf ausdrücklichen Wunsch der Nutzer:in. English: switches plug-n-rag's embedding model or provider (/plug-n-rag:switch-model).
+allowed-tools: Bash(plug-n-rag konfig*) Bash(plug-n-rag inventur*) Bash(plug-n-rag status*) Bash(plug-n-rag config*) Bash(plug-n-rag inventory*)
 ---
+
+> **Sprache / language:** Antworte in der Sprache, in der die Nutzer:in schreibt; auf Deutsch
+> gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
+> gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
+> von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
 
 Ein Modellwechsel ist ein bewusster Vorgang. Schritte:
 

@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 from .config import Layout
+from .i18n import tr
 
 HOOK_MARKER = "# plug-n-rag pre-commit"
 
@@ -85,26 +86,26 @@ def has_upstream(root: Path) -> bool:
 
 
 def pull(root: Path, timeout: float = 25) -> str | None:
-    """`git pull --rebase` if safe. Returns a short German note for the user, or None."""
+    """`git pull --rebase` if safe. Returns a short note for the user, or None."""
     if not remote_url(root) or not has_upstream(root):
         return None
     if unmerged(root):
-        return "Git: Es gibt ungelöste Konflikte. Bitte mit Claude gemeinsam klären."
+        return tr("Git: Es gibt ungelöste Konflikte. Bitte mit Claude gemeinsam klären.", "Git: There are unresolved conflicts. Please sort them out together with Claude.")
     dirty = [ln for ln in status_porcelain(root) if not ln[3:].startswith(".plug-n-rag/")]
     if dirty:
-        return "Git: Neuester Stand nicht geholt, weil es ungesicherte Änderungen gibt."
+        return tr("Git: Neuester Stand nicht geholt, weil es ungesicherte Änderungen gibt.", "Git: Newest state not fetched because there are uncommitted changes.")
     try:
         r = git(root, "pull", "--rebase", "--quiet", timeout=timeout)
     except subprocess.TimeoutExpired:
-        return "Git: Abholen des neuesten Stands hat zu lange gedauert, übersprungen."
+        return tr("Git: Abholen des neuesten Stands hat zu lange gedauert, übersprungen.", "Git: Fetching the newest state took too long, skipped.")
     if r.returncode != 0:
         if (root / ".git" / "rebase-merge").exists() or (root / ".git" / "rebase-apply").exists():
             conflicted = unmerged(root)
             if conflicted and all(p.startswith(".plug-n-rag/index/") for p in conflicted):
                 return resolve_index_conflicts_rebase(root, conflicted)
             git(root, "rebase", "--abort")
-            return "Git: Konflikt beim Abholen, nichts verändert. Bitte gemeinsam klären."
-        return "Git: Neuester Stand konnte nicht geholt werden (offline?)."
+            return tr("Git: Konflikt beim Abholen, nichts verändert. Bitte gemeinsam klären.", "Git: Conflict while fetching, nothing changed. Please sort it out together.")
+        return tr("Git: Neuester Stand konnte nicht geholt werden (offline?).", "Git: Could not fetch the newest state (offline?).")
     return None
 
 
@@ -119,8 +120,8 @@ def resolve_index_conflicts_rebase(root: Path, paths: list[str]) -> str:
     env_ok = git(root, "-c", "core.editor=true", "rebase", "--continue")
     if env_ok.returncode != 0:
         git(root, "rebase", "--abort")
-        return "Git: Konflikt beim Abholen, nichts verändert. Bitte gemeinsam klären."
-    return f"Git: {len(paths)} Index-Dateien mit Konflikt verworfen, werden neu berechnet."
+        return tr("Git: Konflikt beim Abholen, nichts verändert. Bitte gemeinsam klären.", "Git: Conflict while fetching, nothing changed. Please sort it out together.")
+    return tr(f"Git: {len(paths)} Index-Dateien mit Konflikt verworfen, werden neu berechnet.", f"Git: {len(paths)} conflicting index files discarded, they will be recomputed.")
 
 
 def commit_paths(root: Path, paths: list[str], message: str) -> bool:
@@ -161,7 +162,7 @@ def install_precommit(root: Path, launcher: str) -> str:
     """Install (or chain) a pre-commit hook that runs sync and stages index files."""
     hooks = root / ".git" / "hooks"
     if not hooks.is_dir():
-        return "Kein Git-Repo gefunden."
+        return tr("Kein Git-Repo gefunden.", "No git repository found.")
     path = hooks / "pre-commit"
     body = f"""{HOOK_MARKER}
 # Hält den Index von plug-n-rag im selben Commit wie die Notizen. Blockiert nie.
@@ -177,7 +178,7 @@ fi
         if HOOK_MARKER in old:
             new = re.sub(r'PNR="[^"]*"', f'PNR="{launcher}"', old)
             path.write_text(new, encoding="utf-8")
-            return "Git-Hook aktualisiert."
+            return tr("Git-Hook aktualisiert.", "Git hook updated.")
         backup = hooks / "pre-commit.vor-plug-n-rag"
         if not backup.exists():
             shutil.copy2(path, backup)
@@ -188,7 +189,7 @@ fi
         content = "#!/bin/sh\n" + body
     path.write_text(content, encoding="utf-8")
     path.chmod(0o755)
-    return "Git-Hook installiert."
+    return tr("Git-Hook installiert.", "Git hook installed.")
 
 
 SECRET_RE = re.compile(r"(pa-[A-Za-z0-9_\-]{30,}|sk-ant-[A-Za-z0-9_\-]{20,}|gh[pousr]_[A-Za-z0-9]{30,})")
@@ -228,9 +229,9 @@ def publish_to_main(layout: Layout, message: str, resync=None) -> str:
     """
     root = layout.root
     if not remote_url(root):
-        return "Kein GitHub-Repo verbunden, nichts zu übernehmen."
+        return tr("Kein GitHub-Repo verbunden, nichts zu übernehmen.", "No GitHub repository connected, nothing to publish.")
     if unmerged(root):
-        return "Es gibt ungelöste Konflikte. Bitte zuerst gemeinsam klären."
+        return tr("Es gibt ungelöste Konflikte. Bitte zuerst gemeinsam klären.", "There are unresolved conflicts. Please sort them out together first.")
     target = default_branch(root)
     branch = current_branch(root)
     lines = []
@@ -239,14 +240,17 @@ def publish_to_main(layout: Layout, message: str, resync=None) -> str:
         secrets = staged_secrets(root)
         if secrets:
             git(root, "reset", "-q")
-            return ("Abgebrochen: In " + ", ".join(secrets) + " steht etwas, das wie ein API-Key aussieht. "
-                    "Bitte entfernen; Keys gehören nie ins Repo.")
+            return tr("Abgebrochen: In " + ", ".join(secrets) + " steht etwas, das wie ein API-Key aussieht. "
+                      "Bitte entfernen; Keys gehören nie ins Repo.",
+                      "Stopped: " + ", ".join(secrets) + " contains something that looks like an API key. "
+                      "Please remove it; keys never belong in the repository.")
         if git(root, "commit", "--quiet", "-m", message).returncode == 0:
-            lines.append(f"Commit: „{message}“")
+            lines.append(tr(f"Commit: „{message}“", f"Commit: “{message}”"))
     for attempt in range(2):
         f = git(root, "fetch", "--quiet", "origin", target, timeout=60)
         if f.returncode != 0:
-            return "\n".join(lines + [f"Neuester Stand von {target} konnte nicht geholt werden (offline?)."])
+            return "\n".join(lines + [tr(f"Neuester Stand von {target} konnte nicht geholt werden (offline?).",
+                                          f"Could not fetch the newest state of {target} (offline?).")])
         m = git(root, "merge", "--no-edit", "--quiet", f"origin/{target}", timeout=60)
         if m.returncode != 0:
             conflicted = unmerged(root)
@@ -257,23 +261,29 @@ def publish_to_main(layout: Layout, message: str, resync=None) -> str:
                     resync()
                 git(root, "add", "-A", "--", ".plug-n-rag")
                 git(root, "commit", "--quiet", "--no-edit")
-                lines.append(f"{len(conflicted)} Index-Dateien mit Konflikt neu berechnet.")
+                lines.append(tr(f"{len(conflicted)} Index-Dateien mit Konflikt neu berechnet.",
+                                f"{len(conflicted)} conflicting index files recomputed."))
             else:
                 git(root, "merge", "--abort")
-                names = ", ".join(conflicted[:8]) or "unbekannt"
-                return "\n".join(lines + [
+                names = ", ".join(conflicted[:8]) or tr("unbekannt", "unknown")
+                return "\n".join(lines + [tr(
                     f"Nicht übernommen: Diese Notizen wurden hier und auf {target} unterschiedlich geändert: "
-                    f"{names}. Bitte gemeinsam entscheiden, welche Fassung gilt. Es wurde nichts verändert."])
+                    f"{names}. Bitte gemeinsam entscheiden, welche Fassung gilt. Es wurde nichts verändert.",
+                    f"Not published: these notes were changed differently here and on {target}: "
+                    f"{names}. Please decide together which version is right. Nothing was changed.")])
         p = git(root, "push", "--quiet", "origin", f"HEAD:{target}", timeout=90)
         if p.returncode == 0:
             if branch not in (target, "HEAD"):
                 git(root, "push", "--quiet", "origin", f"HEAD:{branch}", timeout=90)
-            lines.append(f"Auf {target} übernommen" + (f" (vom Branch {branch})" if branch != target else "") + ".")
+            via = (tr(f" (vom Branch {branch})", f" (from branch {branch})") if branch != target else "")
+            lines.append(tr(f"Auf {target} übernommen", f"Published to {target}") + via + ".")
             return "\n".join(lines)
         if attempt == 0:
             continue
-        err = (p.stderr or "").strip().splitlines()[-1:] or ["unbekannter Fehler"]
-        hint = " Vermutlich ist der Branch geschützt; dann über einen Pull Request zusammenführen." \
+        err = (p.stderr or "").strip().splitlines()[-1:] or [tr("unbekannter Fehler", "unknown error")]
+        hint = tr(" Vermutlich ist der Branch geschützt; dann über einen Pull Request zusammenführen.",
+                  " The branch is probably protected; then merge it through a pull request.") \
             if "protected" in (p.stderr or "").lower() else ""
-        return "\n".join(lines + [f"Push nach {target} abgelehnt: {err[0]}.{hint}"])
+        return "\n".join(lines + [tr(f"Push nach {target} abgelehnt: {err[0]}.{hint}",
+                                      f"Push to {target} rejected: {err[0]}.{hint}")])
     return "\n".join(lines)

@@ -1,7 +1,8 @@
 """Command line entry point: ``plug-n-rag <befehl>``.
 
 Hooks, skill, slash commands and the MCP wrapper all call into this core.
-Subcommands are German (as in SPEC) with English aliases.
+Subcommands and options are German (as in SPEC) with English aliases; help and messages
+follow the folder's language (see i18n.py).
 """
 
 from __future__ import annotations
@@ -13,20 +14,43 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from . import i18n
 from .config import Layout, find_layout, init_layout, load_config, save_config
+from .i18n import tr
 from .util import LockBusy, fmt_int, plural, user_cache_dir
 
-NOT_SET_UP = ("Hier ist noch nichts für plug-n-rag eingerichtet. "
-              "Mit /plug-n-rag:setup startet die geführte Einrichtung.")
+PURPOSES = ["frage", "recherche", "erstellen", "question", "research", "create"]
+PURPOSE_FROM_EN = {"question": "frage", "research": "recherche", "create": "erstellen"}
+TRANSCRIPTION_FROM_EN = {"ask": "fragen", "local": "lokal", "allowed": "erlaubt"}
+LOCATION_FROM_EN = {"folder": "ordner", "central": "zentral"}
+PLACE_CHOICES = ["neben_original", "ordner", "intern", "beside", "folder", "internal"]
+
+
+def not_set_up() -> str:
+    return tr("Hier ist noch nichts für plug-n-rag eingerichtet. "
+              "Mit /plug-n-rag:setup startet die geführte Einrichtung.",
+              "Nothing is set up for plug-n-rag here yet. "
+              "/plug-n-rag:setup starts the guided setup.")
 
 
 def _layout(args, require: bool = True) -> Layout | None:
     start = Path(args.ordner).expanduser() if getattr(args, "ordner", None) else None
     layout = find_layout(start)
+    i18n.use_layout(layout if layout is not None and layout.configured else None)
     if require and (layout is None or not layout.configured):
-        print(NOT_SET_UP)
+        print(not_set_up())
         sys.exit(2)
     return layout
+
+
+def _purpose(value: str | None) -> str:
+    return PURPOSE_FROM_EN.get(value or "frage", value or "frage")
+
+
+def _place(value: str | None) -> str | None:
+    from .ingest import PLACE_FROM_EN
+
+    return PLACE_FROM_EN.get(value, value) if value else value
 
 
 def _print(text: str) -> None:
@@ -45,7 +69,7 @@ def cmd_suche(args):
     from .search import search
 
     query = " ".join(args.frage) if args.frage else None
-    _print(search(_layout(args), query, purpose=args.zweck, folder=args.in_, tag=args.tag,
+    _print(search(_layout(args), query, purpose=_purpose(args.zweck), folder=args.in_, tag=args.tag,
                   since=args.seit, more=args.weiter))
 
 
@@ -76,30 +100,39 @@ def cmd_status(args):
 def _report_text(r) -> str:
     parts = []
     if r.added:
-        parts.append(f"{len(r.added)} neu")
+        parts.append(tr(f"{len(r.added)} neu", f"{len(r.added)} new"))
     if r.updated:
-        parts.append(f"{len(r.updated)} geändert")
+        parts.append(tr(f"{len(r.updated)} geändert", f"{len(r.updated)} changed"))
     if r.removed:
-        parts.append(f"{len(r.removed)} entfernt")
+        parts.append(tr(f"{len(r.removed)} entfernt", f"{len(r.removed)} removed"))
     if r.private_removed:
-        parts.append(f"{len(r.private_removed)} privat (Index gelöscht)")
-    head = "Abgleich: " + (", ".join(parts) if parts else "nichts zu tun")
-    head += f" · {fmt_int(r.unchanged)} unverändert"
+        parts.append(tr(f"{len(r.private_removed)} privat (Index gelöscht)",
+                        f"{len(r.private_removed)} private (index deleted)"))
+    head = tr("Abgleich: ", "Sync: ") + (", ".join(parts) if parts else tr("nichts zu tun", "nothing to do"))
+    head += tr(f" · {fmt_int(r.unchanged)} unverändert", f" · {fmt_int(r.unchanged)} unchanged")
     if r.embedded_chunks or r.reused_chunks:
-        head += f" · {fmt_int(r.embedded_chunks)} Abschnitte neu eingebettet, {fmt_int(r.reused_chunks)} wiederverwendet"
+        head += tr(f" · {fmt_int(r.embedded_chunks)} Abschnitte neu eingebettet, {fmt_int(r.reused_chunks)} wiederverwendet",
+                   f" · {fmt_int(r.embedded_chunks)} sections newly embedded, {fmt_int(r.reused_chunks)} reused")
     lines = [head]
+    note = tr("Hinweis: ", "Note: ")
     if r.pending:
-        lines.append(f"Noch ausstehend: {plural(len(r.pending), 'Datei', 'Dateien')}")
+        lines.append(tr(f"Noch ausstehend: {plural(len(r.pending), 'Datei', 'Dateien')}",
+                        f"Still pending: {plural(len(r.pending), 'file', 'files')}"))
     if r.embed_error:
-        lines.append(f"Hinweis: {r.embed_error}")
+        lines.append(note + r.embed_error)
     if r.model_mismatch:
-        lines.append("Hinweis: Index passt nicht zum Modell, nur Stichwortsuche. /plug-n-rag:reindex bietet die Neuindexierung an.")
+        lines.append(note + tr("Index passt nicht zum Modell, nur Stichwortsuche. /plug-n-rag:reindex bietet die Neuindexierung an.",
+                               "The index does not match the model, keyword search only. /plug-n-rag:reindex offers a full reindex."))
     if r.awaiting:
-        lines.append(f"Hinweis: {plural(len(r.awaiting), 'eingescannte Datei wartet', 'eingescannte Dateien warten')} "
-                     "auf Aufnahme (/plug-n-rag:aufnehmen)")
+        lines.append(note + _awaiting(len(r.awaiting)))
     for path, msg in list(r.errors.items())[:5]:
-        lines.append(f"Fehler: {path}: {msg}")
+        lines.append(tr("Fehler: ", "Error: ") + f"{path}: {msg}")
     return "\n".join(lines)
+
+
+def _awaiting(n: int) -> str:
+    return tr(f"{plural(n, 'eingescannte Datei wartet', 'eingescannte Dateien warten')} auf Aufnahme (/plug-n-rag:aufnehmen)",
+              f"{plural(n, 'scanned file is', 'scanned files are')} waiting for ingestion (/plug-n-rag:aufnehmen)")
 
 
 def cmd_sync(args):
@@ -113,7 +146,8 @@ def cmd_sync(args):
         r = sync(layout, time_budget=args.budget, progress=progress, lock_wait=0 if args.quiet else 60)
     except LockBusy:
         if not args.quiet:
-            _print("Ein anderer Abgleich läuft gerade. Bitte kurz warten.")
+            _print(tr("Ein anderer Abgleich läuft gerade. Bitte kurz warten.",
+                      "Another sync is running right now. Please wait a moment."))
         return
     _write_pending_spawn(layout, r, args)
     if not args.quiet:
@@ -129,8 +163,10 @@ def cmd_hydrate(args):
     from .db import hydrate
 
     st = hydrate(_layout(args), rebuild=args.neu)
-    _print(f"Suchdatenbank: {st['notes']} Dateien ({st['added']} neu, {st['updated']} aktualisiert, "
-           f"{st['removed']} entfernt) in {st['elapsed']:.1f} s")
+    _print(tr(f"Suchdatenbank: {st['notes']} Dateien ({st['added']} neu, {st['updated']} aktualisiert, "
+              f"{st['removed']} entfernt) in {st['elapsed']:.1f} s",
+              f"Search database: {st['notes']} files ({st['added']} new, {st['updated']} updated, "
+              f"{st['removed']} removed) in {st['elapsed']:.1f} s"))
 
 
 def cmd_reindex(args):
@@ -139,9 +175,12 @@ def cmd_reindex(args):
     layout = _layout(args)
     if not args.ja:
         todo, total = pending_count(layout)
-        _print(f"Neuindexierung von {plural(total, 'Datei', 'Dateien')} mit Modell "
-               f"{layout.config['embedding']['model']} ({layout.config['embedding']['provider']}). "
-               "Bitte mit Nutzer:in bestätigen und dann `plug-n-rag reindex --ja` ausführen.")
+        emb = layout.config["embedding"]
+        _print(tr(f"Neuindexierung von {plural(total, 'Datei', 'Dateien')} mit Modell "
+                  f"{emb['model']} ({emb['provider']}). "
+                  "Bitte mit Nutzer:in bestätigen und dann `plug-n-rag reindex --ja` ausführen.",
+                  f"Full reindex of {plural(total, 'file', 'files')} with model {emb['model']} ({emb['provider']}). "
+                  "Please confirm with the user, then run `plug-n-rag reindex --yes`."))
         return
     r = reindex(layout, progress=(lambda m: print("  " + m, file=sys.stderr)) if args.fortschritt else None)
     _print(_report_text(r))
@@ -149,19 +188,22 @@ def cmd_reindex(args):
 
 def cmd_init(args):
     root = Path(args.pfad).expanduser().resolve() if args.pfad else Path.cwd()
+    lang = i18n._norm(args.sprache) if args.sprache else i18n.language()
+    i18n.set_language(lang)
     if not root.is_dir():
-        _print(f"Ordner nicht gefunden: {root}")
+        _print(tr(f"Ordner nicht gefunden: {root}", f"Folder not found: {root}"))
         sys.exit(2)
     mode = "collection" if args.modus in ("sammlung", "collection") else "vault"
     from . import gitops
 
     if args.extern:
         args.ort = "zentral"
+    args.ort = LOCATION_FROM_EN.get(args.ort, args.ort)
     if args.ort:
         location = "external" if args.ort == "zentral" else "inside"
     else:  # vaults always inside; collections inside only if they already are a git repo
         location = "inside" if mode == "vault" or gitops.is_repo(root) else "external"
-    extra: dict = {}
+    extra: dict = {"language": lang}
     if args.privat:
         extra["private_folders"] = args.privat
     from .config import COLLECTION_FORMATS, VAULT_DEFAULT_EXCLUDE
@@ -177,7 +219,7 @@ def cmd_init(args):
     elif mode == "collection":
         extra["formats"] = args.formate or list(COLLECTION_FORMATS)
     if args.abschriften:
-        extra["abschriften"] = {"ort": args.abschriften}
+        extra["abschriften"] = {"ort": _place(args.abschriften)}
         if args.abschriften_ordner:
             extra["abschriften"]["ordner"] = args.abschriften_ordner
     from .config import CONFIG_NAME, STATE_DIR_NAME, external_state_dir
@@ -187,11 +229,17 @@ def cmd_init(args):
     layout = init_layout(root, mode=mode, location=location, provider=args.provider, model=args.modell, extra=extra)
     if location == "inside" and layout.mode == "vault":
         _ensure_gitignore(root)
-    _print(("Konfiguration war schon vorhanden, nichts überschrieben: " if existed else "Eingerichtet: ")
-           + str(layout.config_path))
-    _print(f"Index: {layout.index_dir}" + (" (im Ordner)" if layout.location == "inside" else
-                                           " (zentral auf diesem Rechner, im Ordner wird nichts angelegt)"))
-    _print(f"Ausgeschlossen: {', '.join(layout.config.get('exclude', []))}")
+    if existed:
+        i18n.use_layout(layout)
+    _print((tr("Konfiguration war schon vorhanden, nichts überschrieben: ",
+               "A configuration already existed, nothing overwritten: ") if existed
+            else tr("Eingerichtet: ", "Set up: ")) + str(layout.config_path))
+    _print(f"Index: {layout.index_dir}" + (tr(" (im Ordner)", " (inside the folder)") if layout.location == "inside" else
+                                           tr(" (zentral auf diesem Rechner, im Ordner wird nichts angelegt)",
+                                              " (central on this computer, nothing is created in the folder)")))
+    _print(tr("Ausgeschlossen: ", "Excluded: ") + ", ".join(layout.config.get("exclude", [])))
+    _print(tr("Sprache der Ausgaben: Deutsch (ändern: plug-n-rag konfig --setzen language=en)",
+              "Language of messages: English (change: plug-n-rag config --set language=de)"))
 
 
 def _ensure_gitignore(root: Path) -> None:
@@ -212,6 +260,11 @@ def cmd_inventur(args):
     from .inventory import as_json, inventory, render
 
     root = Path(args.pfad).expanduser() if args.pfad else Path.cwd()
+    if args.sprache:
+        i18n.set_language(args.sprache)
+    else:
+        found = find_layout(root)
+        i18n.use_layout(found if found is not None and found.configured else None)
     inv = inventory(root)
     _print(as_json(inv) if args.json else render(inv))
 
@@ -231,10 +284,13 @@ def cmd_config(args):
                 node = node.setdefault(p, {})
             node[parts[-1]] = value
         if any(k.lower().find("key") >= 0 and "api" in k.lower() for k in (s.partition("=")[0] for s in args.setzen)):
-            _print("API-Keys gehören nicht in die Konfiguration. Bitte VOYAGE_API_KEY als Umgebungsvariable setzen.")
+            _print(tr("API-Keys gehören nicht in die Konfiguration. Bitte VOYAGE_API_KEY als Umgebungsvariable setzen.",
+                      "API keys do not belong in the configuration. Please set VOYAGE_API_KEY as an environment variable."))
             sys.exit(2)
         save_config(layout.config_path, cfg)
-        _print("Konfiguration gespeichert.")
+        layout.config = load_config(layout.config_path)
+        i18n.use_layout(layout)
+        _print(tr("Konfiguration gespeichert.", "Configuration saved."))
     import yaml
 
     _print(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
@@ -246,10 +302,12 @@ def cmd_lernen(args):
     layout = _layout(args)
     if args.zuruecksetzen:
         tuning.reset(layout, keep_overrides=args.vorgaben_behalten)
-        _print("Lern-Datei auf Startwerte gesetzt.")
+        _print(tr("Lern-Datei auf Startwerte gesetzt.", "Learning file reset to starting values."))
     elif args.tiefer or args.knapper:
-        ov = tuning.set_override(layout, args.zweck, deeper=bool(args.tiefer))
-        _print(f"Vorgabe für „{args.zweck}“ gespeichert: " + ", ".join(f"{k}={v}" for k, v in ov.items()))
+        purpose = _purpose(args.zweck)
+        ov = tuning.set_override(layout, purpose, deeper=bool(args.tiefer))
+        _print(tr(f"Vorgabe für „{purpose}“ gespeichert: ", f"Preference for “{tuning.PURPOSE_EN[purpose]}” saved: ")
+               + ", ".join(f"{k}={v}" for k, v in ov.items()))
     else:
         tuning.learn(layout)
     _print("\n".join(tuning.describe(layout)))
@@ -260,12 +318,15 @@ def cmd_aufnehmen(args):
 
     layout = _layout(args)
     files = [Path(p) for p in args.dateien]
+    args.ablage = _place(args.ablage)
     if args.ablage:
-        from .ingest import PLACES
+        from .ingest import PLACE_EN, PLACES
 
         valid = PLACES["collection" if layout.mode == "collection" else "vault"]
         if args.ablage not in valid:
-            _print(f"„{args.ablage}“ passt nicht zu diesem Modus. Möglich: {', '.join(valid)}")
+            shown = [tr(v, PLACE_EN[v]) for v in valid]
+            _print(tr(f"„{args.ablage}“ passt nicht zu diesem Modus. Möglich: {', '.join(shown)}",
+                      f"“{PLACE_EN.get(args.ablage, args.ablage)}” does not fit this mode. Possible: {', '.join(shown)}"))
             return
         cfg = load_config(layout.config_path)
         cfg.setdefault("abschriften", {})["ort"] = args.ablage
@@ -274,7 +335,7 @@ def cmd_aufnehmen(args):
     if args.abschliessen:
         _print(complete(layout, files, args.abschliessen))
     else:
-        mode = args.transkription
+        mode = TRANSCRIPTION_FROM_EN.get(args.transkription, args.transkription)
         if mode == "fragen":  # a permanent choice in the config counts as consent / refusal
             mode = {"allow": "erlaubt", "local_only": "lokal"}.get(str(layout.config.get("transcription")), "fragen")
         _print(ingest(layout, files, transcribe=mode))
@@ -324,8 +385,10 @@ def cmd_session_start(args):
     if layout is None:
         return
     if not layout.configured:
-        _print("plug-n-rag: Obsidian-Vault erkannt, aber noch nicht eingerichtet. "
-               "/plug-n-rag:setup startet die Einrichtung.")
+        _print(tr("plug-n-rag: Obsidian-Vault erkannt, aber noch nicht eingerichtet. "
+                  "/plug-n-rag:setup startet die Einrichtung.",
+                  "plug-n-rag: Obsidian vault detected, but not set up yet. "
+                  "/plug-n-rag:setup starts the setup."))
         return
     from . import gitops, tuning
     from .mapview import karte
@@ -346,60 +409,74 @@ def cmd_session_start(args):
 
         if not is_model_cached(emb_cfg.get("model", ""), emb_cfg.get("revision")):
             budget = 0  # never download ~470 MB inside the hook: the background sync does it
-            notes.append("Das Suchmodell wird einmalig im Hintergrund geladen (etwa 470 MB). "
-                         "Bis dahin funktioniert die Stichwortsuche.")
+            notes.append(tr("Das Suchmodell wird einmalig im Hintergrund geladen (etwa 470 MB). "
+                            "Bis dahin funktioniert die Stichwortsuche.",
+                            "The search model is loaded once in the background (about 470 MB). "
+                            "Until then keyword search works."))
     try:
         r = sync(layout, time_budget=budget, lock_wait=5)
     except LockBusy:
         r = None
-        notes.append("Ein Abgleich läuft bereits im Hintergrund.")
+        notes.append(tr("Ein Abgleich läuft bereits im Hintergrund.", "A sync is already running in the background."))
     if r is not None:
         if r.pending and not r.embed_error and not r.model_mismatch:
             spawn_background_sync(layout)
-            notes.append(f"{plural(len(r.pending), 'Datei wird', 'Dateien werden')} im Hintergrund indexiert; "
-                         "Stichwortsuche funktioniert schon.")
+            notes.append(tr(f"{plural(len(r.pending), 'Datei wird', 'Dateien werden')} im Hintergrund indexiert; "
+                            "Stichwortsuche funktioniert schon.",
+                            f"{plural(len(r.pending), 'file is', 'files are')} being indexed in the background; "
+                            "keyword search already works."))
         if r.embed_error:
-            notes.append(f"Semantischer Index nicht aktualisierbar: {r.embed_error}")
+            notes.append(tr(f"Semantischer Index nicht aktualisierbar: {r.embed_error}",
+                            f"Semantic index cannot be updated: {r.embed_error}"))
             from .cloud import in_cloud
 
             if in_cloud():
-                notes.append("Cloud-Sitzung: `plug-n-rag cloud` zeigt, was die Cloud-Umgebung braucht "
-                             "(Netzwerkfreigabe, Setup-Skript).")
+                notes.append(tr("Cloud-Sitzung: `plug-n-rag cloud` zeigt, was die Cloud-Umgebung braucht "
+                                "(Netzwerkfreigabe, Setup-Skript).",
+                                "Cloud session: `plug-n-rag cloud` shows what the cloud environment needs "
+                                "(network access, setup script)."))
         if r.model_mismatch:
-            notes.append("Index passt nicht zum Modell: nur Stichwortsuche. /plug-n-rag:reindex anbieten.")
+            notes.append(tr("Index passt nicht zum Modell: nur Stichwortsuche. /plug-n-rag:reindex anbieten.",
+                            "The index does not match the model: keyword search only. Offer /plug-n-rag:reindex."))
         if r.errors:
-            notes.append(f"{len(r.errors)} Dateien konnten nicht gelesen werden (Details: plug-n-rag status).")
+            notes.append(tr(f"{len(r.errors)} Dateien konnten nicht gelesen werden (Details: plug-n-rag status).",
+                            f"{len(r.errors)} files could not be read (details: plug-n-rag status)."))
         if r.awaiting:
-            notes.append(f"{plural(len(r.awaiting), 'eingescannte Datei wartet', 'eingescannte Dateien warten')} "
-                         "auf Aufnahme (/plug-n-rag:aufnehmen).")
+            notes.append(_awaiting(len(r.awaiting)) + ".")
         if in_git and r.changed:
             mode = git_cfg.get("auto_commit", "off")
             done = False
             if mode == "all":
-                done = gitops.commit_all(layout.root, "plug-n-rag: Änderungen übernommen und Index aktualisiert")
+                done = gitops.commit_all(layout.root, tr("plug-n-rag: Änderungen übernommen und Index aktualisiert",
+                                                         "plug-n-rag: changes taken over and index updated"))
             elif mode == "index":
-                done = gitops.commit_paths(layout.root, gitops.index_paths(layout), "plug-n-rag: Index aktualisiert")
+                done = gitops.commit_paths(layout.root, gitops.index_paths(layout),
+                                           tr("plug-n-rag: Index aktualisiert", "plug-n-rag: index updated"))
             if done and git_cfg.get("auto_push"):
                 gitops.push(layout.root)
     from .migrate import needs_update
 
     if needs_update(layout):
-        notes.append("plug-n-rag nutzt jetzt einen aufgeräumten Ordneraufbau. `plug-n-rag umziehen` stellt "
-                     "um, ohne etwas neu zu berechnen (vorher kurz bei der Nutzer:in nachfragen).")
+        notes.append(tr("plug-n-rag nutzt jetzt einen aufgeräumten Ordneraufbau. `plug-n-rag umziehen` stellt "
+                        "um, ohne etwas neu zu berechnen (vorher kurz bei der Nutzer:in nachfragen).",
+                        "plug-n-rag now uses a tidier folder layout. `plug-n-rag migrate` switches over "
+                        "without recomputing anything (briefly ask the user first)."))
     try:
         tuning.learn(layout)
     except Exception:  # noqa: BLE001 - learning must never break the session start
         pass
     _print(karte(layout, short=True))
     for n in notes:
-        _print("Hinweis: " + n)
+        _print(tr("Hinweis: ", "Note: ") + n)
     from .cloud import in_cloud
 
-    if in_cloud() and str(layout.config.get("anzeige", "kompakt")) != "aus":
+    if in_cloud() and str(layout.config.get("anzeige", "kompakt")) not in ("aus", "off"):
         # Nothing is drawn in cloud sessions, so the person cannot see what plug-n-rag did.
-        _print("Anzeige: In dieser Cloud-Sitzung sieht die Nutzer:in nicht, was plug-n-rag tut. Beende "
-               "Antworten, die sich auf die Vault stützen, mit einer Zeile wie „— aus deiner Vault: "
-               "3 Abschnitte aus 2 Notizen“.")
+        _print(tr("Anzeige: In dieser Cloud-Sitzung sieht die Nutzer:in nicht, was plug-n-rag tut. Beende "
+                  "Antworten, die sich auf die Vault stützen, mit einer Zeile wie „— aus deiner Vault: "
+                  "3 Abschnitte aus 2 Notizen“.",
+                  "Display: in this cloud session the user cannot see what plug-n-rag does. End answers "
+                  "that rely on the vault with a line like “— from your vault: 3 sections from 2 notes”."))
 
 
 def cmd_stop(args):
@@ -414,14 +491,15 @@ def cmd_stop(args):
     except LockBusy:
         return
     except Exception as exc:  # noqa: BLE001 - a hook must not break the session
-        print(f"plug-n-rag: Abgleich fehlgeschlagen: {exc}", file=sys.stderr)
+        print(tr(f"plug-n-rag: Abgleich fehlgeschlagen: {exc}", f"plug-n-rag: sync failed: {exc}"), file=sys.stderr)
         return
     git_cfg = layout.config.get("git", {}) or {}
     if r.changed and git_cfg.get("auto_commit") == "index" and layout.location == "inside":
         from . import gitops
 
         if gitops.inside_repo(layout.root):
-            gitops.commit_paths(layout.root, gitops.index_paths(layout), "plug-n-rag: Index aktualisiert")
+            gitops.commit_paths(layout.root, gitops.index_paths(layout),
+                                tr("plug-n-rag: Index aktualisiert", "plug-n-rag: index updated"))
 
 
 def cmd_cloud(args):
@@ -449,7 +527,8 @@ def cmd_modell_laden(args):
     if not model:
         emb = (layout.config if layout and layout.configured else {}).get("embedding", {})
         if emb.get("provider", "local") != "local":
-            _print("Diese Vault nutzt Voyage AI, es gibt kein lokales Modell zu laden.")
+            _print(tr("Diese Vault nutzt Voyage AI, es gibt kein lokales Modell zu laden.",
+                      "This vault uses Voyage AI, there is no local model to load."))
             return
         model = emb.get("model", "intfloat/multilingual-e5-small")
     _print(preload_model(model))
@@ -461,10 +540,12 @@ def cmd_nach_main(args):
 
     layout = _layout(args)
     if layout.location != "inside" or not gitops.inside_repo(layout.root):
-        _print("Diese Vault ist kein Git-Repo, es gibt nichts nach main zu übernehmen.")
+        _print(tr("Diese Vault ist kein Git-Repo, es gibt nichts nach main zu übernehmen.",
+                  "This vault is not a git repository, there is nothing to publish to main."))
         return
     sync(layout)
-    msg = args.nachricht or "Notizen und Suchindex übernommen (plug-n-rag)"
+    msg = args.nachricht or tr("Notizen und Suchindex übernommen (plug-n-rag)",
+                               "Notes and search index published (plug-n-rag)")
     _print(gitops.publish_to_main(layout, msg, resync=lambda: sync(layout)))
 
 
@@ -477,8 +558,9 @@ def cmd_anleitung(args):
     root = plugin_root()
     skills = root / "skills"
     names = sorted(p.name for p in skills.iterdir() if (p / "SKILL.md").is_file()) if skills.is_dir() else []
+    args.name = SKILL_ALIASES.get(args.name or "", args.name)
     if not args.name or args.name not in names:
-        _print("Verfügbare Anleitungen: " + ", ".join(names))
+        _print(tr("Verfügbare Anleitungen: ", "Available guides: ") + ", ".join(names))
         return
     text = (skills / args.name / "SKILL.md").read_text(encoding="utf-8")
     if text.startswith("---"):
@@ -486,17 +568,26 @@ def cmd_anleitung(args):
         text = text[end + 4:].lstrip("\n") if end > 0 else text
     launcher = root / "scripts" / "plug-n-rag"
     text = text.replace("${CLAUDE_PLUGIN_ROOT}", str(root)).replace("$ARGUMENTS", " ".join(args.argumente))
-    _print(f"(Anleitung „{args.name}“ aus plug-n-rag. Ist `plug-n-rag` nicht auf dem PATH, "
-           f"den vollen Pfad verwenden: {launcher})\n\n" + text)
+    _print(tr(f"(Anleitung „{args.name}“ aus plug-n-rag. Ist `plug-n-rag` nicht auf dem PATH, "
+              f"den vollen Pfad verwenden: {launcher})",
+              f"(Guide “{args.name}” from plug-n-rag. If `plug-n-rag` is not on the PATH, "
+              f"use the full path: {launcher})") + "\n\n" + text)
+
+
+SKILL_ALIASES = {"search": "suche", "ingest": "aufnehmen", "to-main": "nach-main",
+                 "switch-model": "modell-wechseln", "reset-learning": "lernen-zuruecksetzen"}
 
 
 def cmd_umziehen(args):
     from .migrate import move
 
     layout = _layout(args)
+    args.nach = LOCATION_FROM_EN.get(args.nach, args.nach)
     if args.nach == "zentral" and layout.mode == "vault" and not args.trotzdem:
-        _print("Bei einer Vault gehört der Index in den Ordner .plug-n-rag/: nur dann funktionieren "
-               "Cloud-Sitzungen und mehrere Geräte. Wenn trotzdem zentral gewünscht: --trotzdem.")
+        _print(tr("Bei einer Vault gehört der Index in den Ordner .plug-n-rag/: nur dann funktionieren "
+                  "Cloud-Sitzungen und mehrere Geräte. Wenn trotzdem zentral gewünscht: --trotzdem.",
+                  "For a vault the index belongs in the folder .plug-n-rag/: only then do cloud sessions "
+                  "and several devices work. If central is wanted anyway: --anyway."))
         return
     for step in move(layout, args.nach):
         _print(step)
@@ -522,136 +613,195 @@ def cmd_mcp(args):
 
 # --- parser -------------------------------------------------------------------------------
 
+def _language_from_argv(argv: list[str]) -> None:
+    """Pick the language before parsing, so that --help already speaks it."""
+    start = None
+    for i, a in enumerate(argv):
+        if a in ("--ordner", "--folder") and i + 1 < len(argv):
+            start = Path(argv[i + 1]).expanduser()
+        elif a.startswith(("--ordner=", "--folder=")):
+            start = Path(a.split("=", 1)[1]).expanduser()
+    try:
+        layout = find_layout(start)
+    except OSError:
+        layout = None
+    i18n.use_layout(layout if layout is not None and layout.configured else None)
+
+
+def _cmd(sub, de: str, en: str, help_de: str | None, help_en: str | None, extra_aliases=()):
+    """A subcommand under its German and English name; the current language's name comes first."""
+    name, alias = (en, de) if i18n.is_en() else (de, en)
+    aliases = [a for a in (alias, *extra_aliases) if a != name]
+    if help_de is None:
+        return sub.add_parser(name, aliases=aliases)
+    return sub.add_parser(name, aliases=aliases, help=tr(help_de, help_en))
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="plug-n-rag", description="Semantische Suche in Vaults und Sammlungen.")
+    p = argparse.ArgumentParser(prog="plug-n-rag", description=tr(
+        "Semantische Suche in Vaults und Sammlungen.", "Semantic search in vaults and collections."))
     p.add_argument("--version", action="version", version=f"plug-n-rag {__version__}")
-    p.add_argument("--ordner", help="Vault oder Sammlung (Standard: aktueller Ordner)")
+    p.add_argument(*(("--folder", "--ordner") if i18n.is_en() else ("--ordner", "--folder")), dest="ordner", metavar=tr("ORDNER", "FOLDER"),
+                   help=tr("Vault oder Sammlung (Standard: aktueller Ordner)",
+                           "vault or collection (default: current folder)"))
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("karte", aliases=["map"], help="Überblick über Ordner und Schwerpunkte")
-    s.add_argument("--kurz", action="store_true")
+    s = _cmd(sub, "karte", "map", "Überblick über Ordner und Schwerpunkte", "overview of folders and topics")
+    s.add_argument("--kurz", "--short", dest="kurz", action="store_true")
     s.set_defaults(func=cmd_karte)
 
-    s = sub.add_parser("suche", aliases=["search"], help="Relevante Notizen finden")
+    s = _cmd(sub, "suche", "search", "Relevante Notizen finden", "find relevant notes")
     s.add_argument("frage", nargs="*")
-    s.add_argument("--zweck", choices=["frage", "recherche", "erstellen"], default="frage")
-    s.add_argument("--in", dest="in_", metavar="ORDNER")
+    s.add_argument("--zweck", "--purpose", dest="zweck", choices=PURPOSES, default="frage")
+    s.add_argument("--in", dest="in_", metavar=tr("ORDNER", "FOLDER"))
     s.add_argument("--tag")
-    s.add_argument("--seit", metavar="JJJJ-MM-TT")
-    s.add_argument("--weiter", action="store_true", help="nächste Seite der letzten Suche")
+    s.add_argument("--seit", "--since", dest="seit", metavar=tr("JJJJ-MM-TT", "YYYY-MM-DD"))
+    s.add_argument("--weiter", "--more", dest="weiter", action="store_true",
+                   help=tr("nächste Seite der letzten Suche", "next page of the last search"))
     s.set_defaults(func=cmd_suche)
 
-    s = sub.add_parser("gliederung", aliases=["outline"], help="Überschriften mit Positionen und Größe")
+    s = _cmd(sub, "gliederung", "outline", "Überschriften mit Positionen und Größe",
+             "headings with positions and size")
     s.add_argument("notiz", nargs="+")
     s.set_defaults(func=cmd_gliederung)
 
-    s = sub.add_parser("lesen", aliases=["read"], help="Abschnitt lesen: notiz#Überschrift oder notiz:45-80")
+    s = _cmd(sub, "lesen", "read", "Abschnitt lesen: notiz#Überschrift oder notiz:45-80",
+             "read a section: note#Heading or note:45-80")
     s.add_argument("ziel", nargs="+")
     s.set_defaults(func=cmd_lesen)
 
-    s = sub.add_parser("verwandt", aliases=["related"], help="Links, Backlinks, ähnliche Notizen")
+    s = _cmd(sub, "verwandt", "related", "Links, Backlinks, ähnliche Notizen", "links, backlinks, similar notes")
     s.add_argument("notiz", nargs="+")
     s.set_defaults(func=cmd_verwandt)
 
-    s = sub.add_parser("status", help="Zustand, Modell, Fehler, gelernte Werte, Ersparnis")
-    s.add_argument("--schnell", action="store_true", help="ohne GitHub-Abfrage")
+    s = sub.add_parser("status", help=tr("Zustand, Modell, Fehler, gelernte Werte, Ersparnis",
+                                         "state, model, errors, learned values, savings"))
+    s.add_argument("--schnell", "--quick", dest="schnell", action="store_true",
+                   help=tr("ohne GitHub-Abfrage", "without asking GitHub"))
     s.set_defaults(func=cmd_status)
 
-    s = sub.add_parser("sync", help="Abgleich Dateien ↔ Index")
+    s = sub.add_parser("sync", help=tr("Abgleich Dateien ↔ Index", "sync files ↔ index"))
     s.add_argument("--quiet", action="store_true")
-    s.add_argument("--budget", type=float, default=None, help="Zeitbudget in Sekunden, Rest im Hintergrund")
-    s.add_argument("--fortschritt", action="store_true")
+    s.add_argument("--budget", type=float, default=None,
+                   help=tr("Zeitbudget in Sekunden, Rest im Hintergrund", "time budget in seconds, rest in the background"))
+    s.add_argument("--fortschritt", "--progress", dest="fortschritt", action="store_true")
     s.set_defaults(func=cmd_sync)
 
-    s = sub.add_parser("hydrate", help="Suchdatenbank aus Index-Dateien bauen")
-    s.add_argument("--neu", action="store_true", help="komplett neu bauen")
+    s = sub.add_parser("hydrate", help=tr("Suchdatenbank aus Index-Dateien bauen", "build the search database from index files"))
+    s.add_argument("--neu", "--rebuild", dest="neu", action="store_true",
+                   help=tr("komplett neu bauen", "rebuild completely"))
     s.set_defaults(func=cmd_hydrate)
 
-    s = sub.add_parser("reindex", help="Vollständige Neuindexierung")
-    s.add_argument("--ja", action="store_true", help="bestätigt")
-    s.add_argument("--fortschritt", action="store_true")
+    s = sub.add_parser("reindex", help=tr("Vollständige Neuindexierung", "full reindex"))
+    s.add_argument("--ja", "--yes", dest="ja", action="store_true", help=tr("bestätigt", "confirmed"))
+    s.add_argument("--fortschritt", "--progress", dest="fortschritt", action="store_true")
     s.set_defaults(func=cmd_reindex)
 
-    s = sub.add_parser("init", help="Konfiguration anlegen (vom Setup genutzt)")
+    s = sub.add_parser("init", help=tr("Konfiguration anlegen (vom Setup genutzt)", "create the configuration (used by setup)"))
     s.add_argument("pfad", nargs="?")
-    s.add_argument("--modus", choices=["vault", "sammlung", "collection"], default="vault")
-    s.add_argument("--ort", choices=["ordner", "zentral"],
-                   help="Dateien von plug-n-rag im Ordner (.plug-n-rag/) oder zentral auf diesem Rechner")
+    s.add_argument("--modus", "--mode", dest="modus", choices=["vault", "sammlung", "collection"], default="vault")
+    s.add_argument("--ort", "--location", dest="ort", choices=["ordner", "zentral", "folder", "central"],
+                   help=tr("Dateien von plug-n-rag im Ordner (.plug-n-rag/) oder zentral auf diesem Rechner",
+                           "plug-n-rag's files inside the folder (.plug-n-rag/) or central on this computer"))
     s.add_argument("--extern", action="store_true", help=argparse.SUPPRESS)  # old name for --ort zentral
-    s.add_argument("--abschriften", choices=["neben_original", "ordner", "intern"],
-                   help="Ablage von Abschriften aus /plug-n-rag:aufnehmen")
-    s.add_argument("--abschriften-ordner", help="Ordner für Abschriften in einer Vault (Standard: Abschriften)")
+    s.add_argument("--abschriften", "--transcripts", dest="abschriften", choices=PLACE_CHOICES,
+                   help=tr("Ablage von Abschriften aus /plug-n-rag:aufnehmen",
+                           "where transcripts from /plug-n-rag:aufnehmen go"))
+    s.add_argument("--abschriften-ordner", "--transcripts-folder", dest="abschriften_ordner",
+                   help=tr("Ordner für Abschriften in einer Vault (Standard: Abschriften)",
+                           "folder for transcripts in a vault (default: Abschriften)"))
     s.add_argument("--provider", choices=["local", "voyage", "fake"], default="local")
-    s.add_argument("--modell")
-    s.add_argument("--privat", nargs="*", help="private Ordner, z. B. 'Tagebuch/**'")
-    s.add_argument("--ausschliessen", nargs="*")
-    s.add_argument("--formate", nargs="*", choices=["markdown", "text", "pdf"])
+    s.add_argument("--modell", "--model", dest="modell")
+    s.add_argument("--sprache", "--language", dest="sprache", choices=["de", "en"],
+                   help=tr("Sprache der Ausgaben (Standard: Systemsprache)",
+                           "language of messages (default: system language)"))
+    s.add_argument("--privat", "--private", dest="privat", nargs="*",
+                   help=tr("private Ordner, z. B. 'Tagebuch/**'", "private folders, e.g. 'Journal/**'"))
+    s.add_argument("--ausschliessen", "--exclude", dest="ausschliessen", nargs="*")
+    s.add_argument("--formate", "--formats", dest="formate", nargs="*", choices=["markdown", "text", "pdf"])
     s.set_defaults(func=cmd_init)
 
-    s = sub.add_parser("inventur", help="Bestandsaufnahme für das Setup")
+    s = _cmd(sub, "inventur", "inventory", "Bestandsaufnahme für das Setup", "inventory for the setup")
     s.add_argument("pfad", nargs="?")
     s.add_argument("--json", action="store_true")
+    s.add_argument("--sprache", "--language", dest="sprache", choices=["de", "en"])
     s.set_defaults(func=cmd_inventur)
 
-    s = sub.add_parser("konfig", help="Konfiguration anzeigen oder setzen (schluessel=wert)")
-    s.add_argument("--setzen", nargs="*")
+    s = _cmd(sub, "konfig", "config", "Konfiguration anzeigen oder setzen (schluessel=wert)",
+             "show or set the configuration (key=value)")
+    s.add_argument("--setzen", "--set", dest="setzen", nargs="*")
     s.set_defaults(func=cmd_config)
 
-    s = sub.add_parser("lernen", help="Token-Steuerung auswerten, Vorgaben setzen, zurücksetzen")
-    s.add_argument("--zuruecksetzen", action="store_true")
-    s.add_argument("--vorgaben-behalten", action="store_true")
-    s.add_argument("--tiefer", action="store_true", help="Feedback: zu oberflächlich")
-    s.add_argument("--knapper", action="store_true", help="Feedback: zu ausführlich")
-    s.add_argument("--zweck", choices=["frage", "recherche", "erstellen"], default="frage")
+    s = _cmd(sub, "lernen", "learn", "Token-Steuerung auswerten, Vorgaben setzen, zurücksetzen",
+             "evaluate token steering, set preferences, reset")
+    s.add_argument("--zuruecksetzen", "--reset", dest="zuruecksetzen", action="store_true")
+    s.add_argument("--vorgaben-behalten", "--keep-preferences", dest="vorgaben_behalten", action="store_true")
+    s.add_argument("--tiefer", "--deeper", dest="tiefer", action="store_true",
+                   help=tr("Feedback: zu oberflächlich", "feedback: too shallow"))
+    s.add_argument("--knapper", "--shorter", dest="knapper", action="store_true",
+                   help=tr("Feedback: zu ausführlich", "feedback: too long"))
+    s.add_argument("--zweck", "--purpose", dest="zweck", choices=PURPOSES, default="frage")
     s.set_defaults(func=cmd_lernen)
 
-    s = sub.add_parser("aufnehmen", aliases=["ingest"], help="PDFs in Text umwandeln (Kaskade)")
+    s = _cmd(sub, "aufnehmen", "ingest", "PDFs in Text umwandeln (Kaskade)", "turn PDFs into text (cascade)")
     s.add_argument("dateien", nargs="+")
-    s.add_argument("--transkription", choices=["fragen", "lokal", "erlaubt"], default="fragen")
-    s.add_argument("--abschliessen", choices=["haiku", "sonnet"], help="Transkription übernehmen und ablegen")
-    s.add_argument("--ablage", choices=["neben_original", "ordner", "intern"],
-                   help="Ablage der Abschriften festlegen (wird in der Konfiguration gemerkt)")
+    s.add_argument("--transkription", "--transcription", dest="transkription",
+                   choices=["fragen", "lokal", "erlaubt", "ask", "local", "allowed"], default="fragen")
+    s.add_argument("--abschliessen", "--finish", dest="abschliessen", choices=["haiku", "sonnet"],
+                   help=tr("Transkription übernehmen und ablegen", "take over the transcription and save it"))
+    s.add_argument("--ablage", "--place", dest="ablage", choices=PLACE_CHOICES,
+                   help=tr("Ablage der Abschriften festlegen (wird in der Konfiguration gemerkt)",
+                           "set where transcripts go (remembered in the configuration)"))
     s.set_defaults(func=cmd_aufnehmen)
 
-    s = sub.add_parser("git-hook", help="Git-pre-commit-Hook installieren")
+    s = sub.add_parser("git-hook", help=tr("Git-pre-commit-Hook installieren", "install the git pre-commit hook"))
     s.set_defaults(func=cmd_githook)
 
-    s = sub.add_parser("session-start", help=argparse.SUPPRESS)
+    s = sub.add_parser("session-start")  # hooks only, no help text
     s.add_argument("--budget", type=float, default=6.0)
     s.set_defaults(func=cmd_session_start)
 
-    s = sub.add_parser("stop", help=argparse.SUPPRESS)
+    s = sub.add_parser("stop")
     s.set_defaults(func=cmd_stop)
 
-    s = sub.add_parser("cloud", help="Einrichtung für Cloud-Sitzungen: Anleitung, Setup-Skript, Prüfung")
-    s.add_argument("--skript", action="store_true", help="nur das Setup-Skript ausgeben")
-    s.add_argument("--pruefen", action="store_true", help="prüfen, ob alles für Cloud-Sitzungen bereit ist")
-    s.add_argument("--hosts", action="store_true", help="tatsächlich nötige Download-Hosts ermitteln")
+    s = sub.add_parser("cloud", help=tr("Einrichtung für Cloud-Sitzungen: Anleitung, Setup-Skript, Prüfung",
+                                        "setup for cloud sessions: guide, setup script, check"))
+    s.add_argument("--skript", "--script", dest="skript", action="store_true",
+                   help=tr("nur das Setup-Skript ausgeben", "print only the setup script"))
+    s.add_argument("--pruefen", "--check", dest="pruefen", action="store_true",
+                   help=tr("prüfen, ob alles für Cloud-Sitzungen bereit ist", "check whether everything is ready for cloud sessions"))
+    s.add_argument("--hosts", action="store_true",
+                   help=tr("tatsächlich nötige Download-Hosts ermitteln", "find the download hosts actually needed"))
     s.add_argument("--offline", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_cloud)
 
-    s = sub.add_parser("modell-laden", help="Lokales Suchmodell herunterladen und prüfen")
-    s.add_argument("--modell")
+    s = _cmd(sub, "modell-laden", "load-model", "Lokales Suchmodell herunterladen und prüfen",
+             "download and check the local search model")
+    s.add_argument("--modell", "--model", dest="modell")
     s.set_defaults(func=cmd_modell_laden)
 
-    s = sub.add_parser("nach-main", help="Alle Änderungen (Notizen und Index) sicher nach main übernehmen")
-    s.add_argument("--nachricht", "-m", help="Commit-Nachricht")
+    s = _cmd(sub, "nach-main", "to-main", "Alle Änderungen (Notizen und Index) sicher nach main übernehmen",
+             "safely publish all changes (notes and index) to main")
+    s.add_argument("--nachricht", "--message", "-m", dest="nachricht", help=tr("Commit-Nachricht", "commit message"))
     s.set_defaults(func=cmd_nach_main)
 
-    s = sub.add_parser("anleitung", help="Leitfaden eines Skills ausgeben (z. B. setup, cloud, nach-main)")
+    s = _cmd(sub, "anleitung", "guide", "Leitfaden eines Skills ausgeben (z. B. setup, cloud, nach-main)",
+             "print a skill's guide (e.g. setup, cloud, to-main)")
     s.add_argument("name", nargs="?")
     s.add_argument("argumente", nargs="*")
     s.set_defaults(func=cmd_anleitung)
 
-    s = sub.add_parser("umziehen", help="Auf den aktuellen Ordneraufbau umstellen oder Ablageort wechseln")
-    s.add_argument("--nach", choices=["ordner", "zentral"], help="Ziel: im Ordner (.plug-n-rag/) oder zentral")
-    s.add_argument("--trotzdem", action="store_true", help=argparse.SUPPRESS)
+    s = _cmd(sub, "umziehen", "migrate", "Auf den aktuellen Ordneraufbau umstellen oder Ablageort wechseln",
+             "switch to the current folder layout or change where the index lives")
+    s.add_argument("--nach", "--to", dest="nach", choices=["ordner", "zentral", "folder", "central"],
+                   help=tr("Ziel: im Ordner (.plug-n-rag/) oder zentral", "target: inside the folder (.plug-n-rag/) or central"))
+    s.add_argument("--trotzdem", "--anyway", dest="trotzdem", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_umziehen)
 
-    s = sub.add_parser("anzeige-daten", help=argparse.SUPPRESS)  # JSON for the display mod
+    s = sub.add_parser("anzeige-daten", aliases=["display-data"])  # JSON for the mod
     s.set_defaults(func=cmd_anzeige_daten)
 
-    s = sub.add_parser("mcp", help="MCP-Server starten (stdio)")
+    s = sub.add_parser("mcp", help=tr("MCP-Server starten (stdio)", "start the MCP server (stdio)"))
     s.set_defaults(func=cmd_mcp)
     return p
 
@@ -663,6 +813,7 @@ def main(argv: list[str] | None = None) -> int:
                 stream.reconfigure(encoding="utf-8", errors="replace")
             except (OSError, ValueError):
                 pass
+    _language_from_argv(sys.argv[1:] if argv is None else argv)
     args = build_parser().parse_args(argv)
     try:
         args.func(args)

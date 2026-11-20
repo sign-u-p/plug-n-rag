@@ -16,6 +16,8 @@ export type Snapshot = {
   version: string
   configured: boolean
   vault_detected: boolean
+  /** language of plug-n-rag's texts for this folder (from 0.9) */
+  language?: 'de' | 'en'
   name?: string
   mode?: string
   location?: string

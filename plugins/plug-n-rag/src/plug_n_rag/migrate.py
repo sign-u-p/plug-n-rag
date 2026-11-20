@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .config import (CONFIG_NAME, STATE_DIR_NAME, Layout, external_state_dir, find_layout, load_config,
                      register_external, unregister_external)
+from .i18n import tr
 from .util import user_cache_dir
 
 OLD_GITIGNORE_MARK = "Lokaler Cache von plug-n-rag"
@@ -73,6 +74,7 @@ def move(layout: Layout, target: str | None = None) -> list[str]:
     steps: list[str] = []
     carry_over_old_cache(layout)
     root = layout.root
+    target = {"folder": "ordner", "central": "zentral"}.get(target or "", target)
     want = target or ("ordner" if layout.location == "inside" else "zentral")
 
     if want == "ordner":
@@ -80,17 +82,20 @@ def move(layout: Layout, target: str | None = None) -> list[str]:
         if layout.location == "external":
             _move_tree_contents(layout.state_dir, dest, skip=("cache",))
             unregister_external(root)
-            steps.append(f"Index und Konfiguration von {layout.state_dir} nach {dest} verschoben.")
+            steps.append(tr(f"Index und Konfiguration von {layout.state_dir} nach {dest} verschoben.",
+                            f"Index and configuration moved from {layout.state_dir} to {dest}."))
         legacy_cfg = root / CONFIG_NAME
         if legacy_cfg.exists():
             dest.mkdir(parents=True, exist_ok=True)
             if not (dest / CONFIG_NAME).exists():
                 shutil.move(str(legacy_cfg), str(dest / CONFIG_NAME))
-                steps.append("plug-n-rag.yml in den Ordner .plug-n-rag/ verschoben.")
+                steps.append(tr("plug-n-rag.yml in den Ordner .plug-n-rag/ verschoben.",
+                                "plug-n-rag.yml moved into the folder .plug-n-rag/."))
         old = dest / "cache"
         if old.is_dir():
             shutil.rmtree(old)
-            steps.append("Alten Cache aus .plug-n-rag/cache entfernt (Inhalte vorher übernommen).")
+            steps.append(tr("Alten Cache aus .plug-n-rag/cache entfernt (Inhalte vorher übernommen).",
+                            "Old cache removed from .plug-n-rag/cache (its contents were carried over first)."))
         gi = dest / ".gitignore"
         try:
             if gi.exists() and OLD_GITIGNORE_MARK in gi.read_text(encoding="utf-8"):
@@ -108,8 +113,10 @@ def move(layout: Layout, target: str | None = None) -> list[str]:
             if src.is_dir():
                 _move_tree_contents(src, dest, skip=("cache", ".gitignore"))
                 shutil.rmtree(src, ignore_errors=True)
-            steps.append(f"Index und Konfiguration aus dem Ordner nach {dest} verschoben; "
-                         "im Ordner liegt nichts mehr von plug-n-rag.")
+            steps.append(tr(f"Index und Konfiguration aus dem Ordner nach {dest} verschoben; "
+                            "im Ordner liegt nichts mehr von plug-n-rag.",
+                            f"Index and configuration moved out of the folder to {dest}; "
+                            "nothing of plug-n-rag is left in the folder."))
         elif layout.state_dir.resolve() != dest.resolve():
             # old central location below the user cache → durable data directory
             _move_tree_contents(layout.state_dir, dest, skip=("cache",))
@@ -120,12 +127,15 @@ def move(layout: Layout, target: str | None = None) -> list[str]:
                 layout.state_dir.rmdir()
             except OSError:
                 pass
-            steps.append(f"Zentralen Index aus dem Cache-Ordner nach {dest} verschoben "
-                         "(dort löschen Aufräumprogramme nichts).")
+            steps.append(tr(f"Zentralen Index aus dem Cache-Ordner nach {dest} verschoben "
+                            "(dort löschen Aufräumprogramme nichts).",
+                            f"Central index moved from the cache folder to {dest} "
+                            "(clean-up tools do not delete anything there)."))
         register_external(root, dest)
         _set_location(dest / CONFIG_NAME, "external")
     if not steps:
-        steps.append("Alles ist bereits im aktuellen Aufbau, nichts zu tun.")
+        steps.append(tr("Alles ist bereits im aktuellen Aufbau, nichts zu tun.",
+                        "Everything already uses the current layout, nothing to do."))
     return steps
 
 

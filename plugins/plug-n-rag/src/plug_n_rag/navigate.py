@@ -13,9 +13,11 @@ from .config import Layout
 from .db import open_db
 from .formats import read_units
 from .formats.base import format_range, printed_suffix
+from .i18n import tr
 from .util import estimate_tokens, fmt_int
 
-RANGE_RE = re.compile(r"^(?P<ref>.+?)(?::|#\s*(?:[ZzSs]\.?|Zeilen?|Seiten?)\s*)(?P<a>\d+)(?:\s*[-–]\s*(?P<b>\d+))?$")
+RANGE_RE = re.compile(r"^(?P<ref>.+?)(?::|#\s*(?:[ZzSsLlPp]\.?|Zeilen?|Seiten?|lines?|pages?)\s*)"
+                      r"(?P<a>\d+)(?:\s*[-–]\s*(?P<b>\d+))?$")
 
 
 class NotFound(LookupError):
@@ -54,8 +56,10 @@ def resolve_note(conn: sqlite3.Connection, ref: str) -> sqlite3.Row:
         return rows[0]
     if len(rows) > 1:
         names = ", ".join(r["path"] for r in rows[:6])
-        raise NotFound(f"„{ref}“ ist mehrdeutig: {names}. Bitte den Pfad angeben.")
-    raise NotFound(f"Keine Notiz „{ref}“ gefunden. Tipp: zuerst `plug-n-rag suche` nutzen.")
+        raise NotFound(tr(f"„{ref}“ ist mehrdeutig: {names}. Bitte den Pfad angeben.",
+                          f"“{ref}” is ambiguous: {names}. Please give the path."))
+    raise NotFound(tr(f"Keine Notiz „{ref}“ gefunden. Tipp: zuerst `plug-n-rag suche` nutzen.",
+                      f"No note “{ref}” found. Tip: use `plug-n-rag search` first."))
 
 
 def _split_ref(target: str) -> tuple[str, str | None, tuple[int, int] | None]:
@@ -80,7 +84,9 @@ def outline(layout: Layout, ref: str) -> str:
         items = json.loads(note["outline"] or "[]")
         unit = note["unit"]
         nmeta = _meta(note)
-        head = f"{note['path']} – „{note['title']}“ ({fmt_int(note['tokens'])} Tokens"
+        tok = tr("Tokens", "tokens")
+        head = tr(f"{note['path']} – „{note['title']}“ ({fmt_int(note['tokens'])} Tokens",
+                  f"{note['path']} – “{note['title']}” ({fmt_int(note['tokens'])} tokens")
         if note["tags"]:
             head += ", Tags: " + ", ".join(note["tags"].split())
         head += ")"
@@ -90,14 +96,14 @@ def outline(layout: Layout, ref: str) -> str:
                 indent = "  " * max(0, it["level"] - 1)
                 lines.append(f"{indent}{'#' * it['level']} {it['heading']} · "
                              f"{format_range(unit, it['start'], it['end'])}"
-                             f"{printed_suffix(nmeta, unit, it['start'], it['end'])} · {fmt_int(it['tokens'])} Tokens")
+                             f"{printed_suffix(nmeta, unit, it['start'], it['end'])} · {fmt_int(it['tokens'])} {tok}")
         else:
             rows = conn.execute('SELECT heading_path, start, "end", tokens FROM chunks WHERE note_id=? ORDER BY ord',
                                 (note["id"],)).fetchall()
-            lines.append("Keine Überschriften. Abschnitte:")
+            lines.append(tr("Keine Überschriften. Abschnitte:", "No headings. Sections:"))
             for r in rows:
                 lines.append(f"  {format_range(unit, r['start'], r['end'])}"
-                             f"{printed_suffix(nmeta, unit, r['start'], r['end'])} · {fmt_int(r['tokens'])} Tokens")
+                             f"{printed_suffix(nmeta, unit, r['start'], r['end'])} · {fmt_int(r['tokens'])} {tok}")
         links_out = [r[0] for r in conn.execute("SELECT DISTINCT dst FROM links WHERE src=?", (note["id"],))]
         back = _backlinks(conn, note)
         if links_out or back:
@@ -155,22 +161,23 @@ def read(layout: Layout, target: str) -> str:
             items = json.loads(note["outline"] or "[]")
             it = _find_heading(items, heading.split(">")[-1])
             if it is None:
-                avail = ", ".join(i["heading"] for i in items[:12]) or "keine"
-                return f"Überschrift „{heading}“ nicht gefunden in {note['path']}. Vorhanden: {avail}"
+                avail = ", ".join(i["heading"] for i in items[:12]) or tr("keine", "none")
+                return tr(f"Überschrift „{heading}“ nicht gefunden in {note['path']}. Vorhanden: {avail}",
+                          f"Heading “{heading}” not found in {note['path']}. Available: {avail}")
             start, end = it["start"], it["end"]
             label = f"{it['heading']}, {format_range(unit, start, end)}{printed_suffix(_meta(note), unit, start, end)}"
         else:
             whole = True
             start, end = 1, 10 ** 9
-            label = "ganze Notiz"
+            label = tr("ganze Notiz", "whole note")
         try:
             text = read_units(abs_path, note["format"], start, end, layout.cache_dir, layout.transcripts_dir,
                               rel=note["path"])
         except OSError as exc:
-            return f"Datei nicht lesbar: {exc}"
+            return tr(f"Datei nicht lesbar: {exc}", f"File not readable: {exc}")
         tok = estimate_tokens(text)
         tuning.log_event(layout, {"cmd": "lesen", "path": note["path"], "whole": whole, "tokens": tok})
-        return f"{note['path']} › {label} ({fmt_int(tok)} Tokens)\n\n{text}"
+        return f"{note['path']} › {label} ({fmt_int(tok)} {tr('Tokens', 'tokens')})\n\n{text}"
     finally:
         conn.close()
 
@@ -182,7 +189,7 @@ def related(layout: Layout, ref: str, limit: int = 5) -> str:
             note = resolve_note(conn, ref)
         except NotFound as exc:
             return str(exc)
-        lines = [f"Verwandt mit {note['path']}:"]
+        lines = [tr(f"Verwandt mit {note['path']}:", f"Related to {note['path']}:")]
         listed = {note["path"]}
         out_rows = []
         missing = []
@@ -195,24 +202,26 @@ def related(layout: Layout, ref: str, limit: int = 5) -> str:
                 missing.append(dst)
         back = _backlinks(conn, note)
         if out_rows:
-            lines.append("Verlinkt: " + ", ".join(out_rows))
+            lines.append(tr("Verlinkt: ", "Links to: ") + ", ".join(out_rows))
             listed.update(out_rows)
         if back:
-            lines.append("Verweist hierher: " + ", ".join(back))
+            lines.append(tr("Verweist hierher: ", "Linked from: ") + ", ".join(back))
             listed.update(back)
         if missing:
-            lines.append("Links ohne Notiz: " + ", ".join(missing[:8]))
+            lines.append(tr("Links ohne Notiz: ", "Links without a note: ") + ", ".join(missing[:8]))
         if note["vec"] is not None:
             me = np.frombuffer(note["vec"], dtype=np.float32)
             rows = conn.execute("SELECT path, vec FROM notes WHERE vec IS NOT NULL AND id != ?", (note["id"],)).fetchall()
             scored = sorted(((float(np.frombuffer(r[1], dtype=np.float32) @ me), r[0]) for r in rows), reverse=True)
             sem = [(s, p) for s, p in scored if p not in listed][:limit]
             if sem:
-                lines.append("Inhaltlich ähnlich:")
+                lines.append(tr("Inhaltlich ähnlich:", "Similar in content:"))
                 for s, p in sem:
-                    lines.append(f"  {p} ({'sehr ähnlich' if s >= 0.9 else 'ähnlich' if s >= 0.8 else 'entfernt ähnlich'})")
+                    sim = (tr("sehr ähnlich", "very similar") if s >= 0.9 else tr("ähnlich", "similar") if s >= 0.8
+                           else tr("entfernt ähnlich", "loosely similar"))
+                    lines.append(f"  {p} ({sim})")
         if len(lines) == 1:
-            lines.append("Nichts Verwandtes gefunden.")
+            lines.append(tr("Nichts Verwandtes gefunden.", "Nothing related found."))
         tuning.log_event(layout, {"cmd": "verwandt", "path": note["path"]})
         return "\n".join(lines)
     finally:

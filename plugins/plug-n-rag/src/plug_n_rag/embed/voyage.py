@@ -16,6 +16,7 @@ import numpy as np
 
 from ..util import user_config_dir
 from . import EmbeddingUnavailable, normalize
+from ..i18n import tr
 
 API_URL = "https://api.voyageai.com/v1/embeddings"
 DEFAULT_DIMS = 1024
@@ -70,24 +71,27 @@ class VoyageEmbedder:
                     delay *= 2
                     continue
                 if exc.code in (401, 403):
-                    raise EmbeddingUnavailable("Voyage lehnt den API-Key ab (401/403).") from exc
-                raise EmbeddingUnavailable(f"Voyage-Fehler {exc.code}") from exc
+                    raise EmbeddingUnavailable(tr("Voyage lehnt den API-Key ab (401/403).",
+                                                  "Voyage rejects the API key (401/403).")) from exc
+                raise EmbeddingUnavailable(tr(f"Voyage-Fehler {exc.code}", f"Voyage error {exc.code}")) from exc
             except (urllib.error.URLError, OSError, TimeoutError) as exc:
                 if attempt < 2:
                     time.sleep(delay)
                     continue
-                raise EmbeddingUnavailable(
+                raise EmbeddingUnavailable(tr(
                     f"Voyage nicht erreichbar ({exc}). In Cloud-Sitzungen muss api.voyageai.com "
-                    "freigegeben sein."
-                ) from exc
-        raise EmbeddingUnavailable("Voyage nicht erreichbar")
+                    "freigegeben sein.",
+                    f"Voyage not reachable ({exc}). In cloud sessions, api.voyageai.com must be allowed.",
+                )) from exc
+        raise EmbeddingUnavailable(tr("Voyage nicht erreichbar", "Voyage not reachable"))
 
     def embed(self, texts: list[str], kind: str = "document", batch_size: int = 64) -> np.ndarray:
         if not texts:
             return np.zeros((0, self.dims), dtype=np.float32)
         key = api_key()
         if not key:
-            raise EmbeddingUnavailable("Kein Voyage-API-Key gefunden (VOYAGE_API_KEY).")
+            raise EmbeddingUnavailable(tr("Kein Voyage-API-Key gefunden (VOYAGE_API_KEY).",
+                                          "No Voyage API key found (VOYAGE_API_KEY)."))
         out = []
         for b in range(0, len(texts), batch_size):
             payload = {

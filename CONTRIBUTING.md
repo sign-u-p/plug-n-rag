@@ -12,7 +12,7 @@ plug-n-rag/                         Repo sign-u-p/plug-n-rag
 │   ├── plug-n-rag/                  das Hauptplugin (Python über uv)
 │   └── plug-n-rag-anzeige/          optionale Anzeige im Chat (Mod, TypeScript)
 ├── tools/check.sh                   prüft Katalog und alle Plugins
-├── README.md                        Anleitung für Nutzer:innen
+├── README.md, README.de.md         Anleitung für Nutzer:innen (Englisch, Deutsch)
 ├── SPEC.md, DECISIONS.md, OPEN.md   Spezifikation, Entscheidungen, offene Punkte
 └── LICENSE, THIRD_PARTY_NOTICES.md
 ```
@@ -33,7 +33,9 @@ Installiert wird immer über den Marketplace:
 
 Regeln, die für alle Plugins gelten:
 - Kein Ordner `bin/` auf oberster Ebene eines Plugins (claude.ai lehnt solche Plugins ab).
-- Texte für Nutzer:innen auf Deutsch, gendergerecht mit Doppelpunkt; Code und Kommentare englisch.
+- Texte für Nutzer:innen zweisprachig, Englisch und Deutsch (Deutsch gendergerecht mit Doppelpunkt).
+  Im Python-Kern mit `tr("Deutsch", "English")` aus `i18n.py`, im Mod mit `T(…)` aus `parse.ts`.
+  Code und Kommentare englisch.
 - Keine API-Keys in Dateien; Notizen der Nutzer:innen nie ohne Zustimmung verändern.
 
 ## Versionen

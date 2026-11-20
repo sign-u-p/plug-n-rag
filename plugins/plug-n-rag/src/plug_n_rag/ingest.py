@@ -22,7 +22,8 @@ from pathlib import Path
 
 from .config import Layout
 from .formats.pdf import EXTRACT_VERSION, MIN_PAGE_CHARS, load_extract
-from .util import atomic_write_json, atomic_write_text, read_json, sha256_bytes
+from .i18n import tr
+from .util import fmt_int, atomic_write_json, atomic_write_text, read_json, sha256_bytes
 
 WORD_RE = re.compile(r"\S+")
 REAL_WORD_RE = re.compile(r"^[A-Za-zÄÖÜäöüßÀ-ÿ][A-Za-zÄÖÜäöüßÀ-ÿ\-]+[.,;:!?)]?$")
@@ -61,7 +62,7 @@ def _render_page(pdf: Path, page: int, out_png: Path, dpi: int = 200) -> None:
             doc.close()
         return
     except ImportError as exc:
-        reasons.append(f"Python-Paket fehlt ({exc.name or exc})")
+        reasons.append(tr(f"Python-Paket fehlt ({exc.name or exc})", f"Python package missing ({exc.name or exc})"))
     except Exception as exc:  # noqa: BLE001 - report and try poppler
         reasons.append(f"pypdfium2: {exc}")
     if shutil.which("pdftoppm"):
@@ -70,9 +71,9 @@ def _render_page(pdf: Path, page: int, out_png: Path, dpi: int = 200) -> None:
                             "-singlefile", str(pdf), str(stem)], capture_output=True, timeout=120)
         if r.returncode == 0 and out_png.exists():
             return
-        reasons.append("pdftoppm schlug fehl")
+        reasons.append(tr("pdftoppm schlug fehl", "pdftoppm failed"))
     else:
-        reasons.append("pdftoppm nicht installiert")
+        reasons.append(tr("pdftoppm nicht installiert", "pdftoppm not installed"))
     raise RenderError("; ".join(reasons))
 
 
@@ -176,12 +177,19 @@ def record_transcription(layout: Layout, stage: Path, method: str) -> int:
     return n
 
 
-PLACES = {
-    "vault": {"neben_original": "neben dem Original-PDF",
-              "ordner": "in einem eigenen Ordner (Standard „Abschriften/“, gleiche Unterordner wie die PDFs)"},
-    "collection": {"ordner": "als lesbare Markdown-Dateien in .plug-n-rag/abschriften/ (wandern mit dem Index mit)",
-                   "intern": "nur intern für die Suche, keine zusätzlichen Dateien"},
-}
+PLACES = {"vault": ("neben_original", "ordner"), "collection": ("ordner", "intern")}
+PLACE_FROM_EN = {"beside": "neben_original", "folder": "ordner", "internal": "intern"}
+PLACE_EN = {v: k for k, v in PLACE_FROM_EN.items()}
+
+
+def place_text(key: str) -> str:
+    return {
+        "neben_original": tr("neben dem Original-PDF", "next to the original PDF"),
+        "ordner": tr("in einem eigenen Ordner (Standard „Abschriften/“, gleiche Unterordner wie die PDFs)",
+                     "in a folder of their own (default “Abschriften/”, same subfolders as the PDFs)"),
+        "intern": tr("nur intern für die Suche, keine zusätzlichen Dateien",
+                     "only internally for search, no additional files"),
+    }[key]
 
 
 def transcript_place(layout: Layout) -> str | None:
@@ -193,10 +201,16 @@ def transcript_place(layout: Layout) -> str | None:
 
 def place_question(layout: Layout) -> str:
     opts = PLACES["collection" if layout.mode == "collection" else "vault"]
-    lines = ["FRAGE AN NUTZER:IN (einmalig, wird gemerkt): Wohin sollen Abschriften von PDFs?"]
-    for key, text in opts.items():
-        lines.append(f"  {key}: {text}")
-    lines.append("Danach denselben Befehl mit `--ablage <wahl>` ausführen.")
+    lines = [tr("FRAGE AN NUTZER:IN (einmalig, wird gemerkt): Wohin sollen Abschriften von PDFs?",
+                "QUESTION FOR THE USER (asked once, remembered): Where should transcripts of PDFs go?")]
+    for key in opts:
+        text = place_text(key)
+        if layout.mode == "collection" and key == "ordner":
+            text = tr("als lesbare Markdown-Dateien in .plug-n-rag/abschriften/ (wandern mit dem Index mit)",
+                      "as readable Markdown files in .plug-n-rag/abschriften/ (they travel with the index)")
+        lines.append(f"  {tr(key, PLACE_EN[key])}: {text}")
+    lines.append(tr("Danach denselben Befehl mit `--ablage <wahl>` ausführen.",
+                    "Then run the same command with `--place <choice>`."))
     return "\n".join(lines)
 
 
@@ -218,7 +232,7 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
             texts.append(p.read_text(encoding="utf-8").strip())
             methods.add(entry.get("method", "text"))
         else:
-            texts.append("[nicht erkannt]")
+            texts.append(tr("[nicht erkannt]", "[not recognised]"))
             missing.append(i)
     kind = "haiku" if "haiku" in methods else "sonnet" if "sonnet" in methods else (
         "lokal" if methods & {"ocr", "lokal-unsicher"} else "text")
@@ -227,21 +241,21 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
     place = transcript_place(layout)
     header = [
         "---",
-        f"quelle: \"{rel}\"",
-        f"datei_hash: \"{file_hash}\"",
-        f"transkription: {kind}",
-        f"aufgenommen: {_dt.date.today().isoformat()}",
+        f"{tr('quelle', 'source')}: \"{rel}\"",
+        f"{tr('datei_hash', 'file_hash')}: \"{file_hash}\"",
+        f"{tr('transkription', 'transcription')}: {kind}",
+        f"{tr('aufgenommen', 'ingested')}: {_dt.date.today().isoformat()}",
         "---",
         f"# {pdf.stem}",
         "",
     ]
     body = list(header)
     for i, t in enumerate(texts, start=1):
-        body += [f"<!-- Seite {i} -->", t, ""]
+        body += [f"<!-- {tr('Seite', 'Page')} {i} -->", t, ""]
     if layout.mode == "collection":
         # the index always uses the page texts (exact page citations) ...
         extract = load_extract(data, file_hash, layout.cache_dir)
-        extract["pages"] = [t if t != "[nicht erkannt]" else "" for t in texts]
+        extract["pages"] = [t if t not in ("[nicht erkannt]", "[not recognised]") else "" for t in texts]
         extract["version"] = EXTRACT_VERSION
         extract["transcription"] = kind
         atomic_write_json(layout.cache_dir / "extract" / (file_hash.replace("sha256:", "") + ".json"), extract,
@@ -251,9 +265,11 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
             target = layout.transcripts_dir / (rel + ".md")
             atomic_write_text(target, "\n".join(body))
             shown = (target.relative_to(layout.root).as_posix() if layout.location == "inside" else str(target))
-            where = f"als lesbare Abschrift {shown} (die Sammlung selbst bleibt unverändert)"
+            where = tr(f"als lesbare Abschrift {shown} (die Sammlung selbst bleibt unverändert)",
+                       f"as a readable transcript {shown} (the collection itself stays unchanged)")
         else:
-            where = "nur intern im lokalen Cache (die Sammlung bleibt unverändert)"
+            where = tr("nur intern im lokalen Cache (die Sammlung bleibt unverändert)",
+                       "only internally in the local cache (the collection stays unchanged)")
     else:
         if place == "ordner":
             folder = str(layout.config.get("abschriften", {}).get("ordner") or "Abschriften").strip("/")
@@ -263,13 +279,17 @@ def finalize(layout: Layout, pdf: Path, rel: str, *, accept_ocr: bool = False) -
             if target.exists():
                 target = pdf.with_name(pdf.stem + " (Transkription).md")
         if target.exists():
-            return f"{target.relative_to(layout.root).as_posix()} existiert bereits, nichts überschrieben."
+            return tr(f"{target.relative_to(layout.root).as_posix()} existiert bereits, nichts überschrieben.",
+                      f"{target.relative_to(layout.root).as_posix()} already exists, nothing overwritten.")
         target.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_text(target, "\n".join(body))
-        where = f"als neue Notiz {target.relative_to(layout.root).as_posix()}"
-    msg = f"{rel}: {n} Seiten abgelegt {where} (Transkription: {kind})."
+        where = tr(f"als neue Notiz {target.relative_to(layout.root).as_posix()}",
+                   f"as a new note {target.relative_to(layout.root).as_posix()}")
+    msg = tr(f"{rel}: {n} Seiten abgelegt {where} (Transkription: {kind}).",
+             f"{rel}: {n} pages saved {where} (transcription: {kind}).")
     if missing:
-        msg += f" Nicht erkannt: Seiten {', '.join(map(str, missing))}."
+        msg += tr(f" Nicht erkannt: Seiten {', '.join(map(str, missing))}.",
+                  f" Not recognised: pages {', '.join(map(str, missing))}.")
     return msg
 
 
@@ -281,10 +301,11 @@ def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", wri
     for f in files:
         f = f if f.is_absolute() else (Path.cwd() / f)
         if not f.exists():
-            out.append(f"{f}: Datei nicht gefunden.")
+            out.append(tr(f"{f}: Datei nicht gefunden.", f"{f}: file not found."))
             continue
         if f.suffix.lower() != ".pdf":
-            out.append(f"{f.name}: Nur PDF wird in Version 1 aufgenommen. Markdown und Text werden direkt indexiert.")
+            out.append(tr(f"{f.name}: Nur PDF wird in Version 1 aufgenommen. Markdown und Text werden direkt indexiert.",
+                          f"{f.name}: Only PDFs are ingested in version 1. Markdown and text are indexed directly."))
             continue
         try:
             rel = f.resolve().relative_to(layout.root.resolve()).as_posix()
@@ -296,10 +317,13 @@ def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", wri
         for e in pages.values():
             counts[e["method"]] = counts.get(e["method"], 0) + 1
         pending = sorted(int(k) for k, e in pages.items() if e["method"] == "pending")
-        line = (f"{rel}: {state['page_count']} Seiten · Textebene {counts.get('text', 0)} · "
-                f"lokal erkannt {counts.get('ocr', 0)} · offen {len(pending)}")
+        line = tr(f"{rel}: {state['page_count']} Seiten · Textebene {counts.get('text', 0)} · "
+                  f"lokal erkannt {counts.get('ocr', 0)} · offen {len(pending)}",
+                  f"{rel}: {state['page_count']} pages · text layer {counts.get('text', 0)} · "
+                  f"recognised locally {counts.get('ocr', 0)} · open {len(pending)}")
         if not tesseract_available() and pending:
-            line += " (lokale Texterkennung nicht installiert: Tesseract mit Sprachpaket deu)"
+            line += tr(" (lokale Texterkennung nicht installiert: Tesseract mit den Sprachpaketen deu und eng)",
+                       " (local text recognition not installed: Tesseract with language packs eng/deu)")
         out.append(line)
         if not pending:
             out.append(finalize(layout, f, rel))
@@ -308,24 +332,35 @@ def ingest(layout: Layout, files: list[Path], *, transcribe: str = "fragen", wri
             out.append(finalize(layout, f, rel, accept_ocr=True))
             continue
         if transcribe == "fragen":
-            out.append(f"FRAGE AN NUTZER:IN: {len(pending)} Seiten sind eingescannt oder schlecht lesbar. "
-                       "Soll Claude sie vollständig lesen und abschreiben? Dann gehen diese Seiten an Anthropic "
-                       f"(geschätzt {len(pending) * 2500:,} Tokens mit Haiku). Alternativ erkenne ich den Text "
-                       "nur lokal, das ist aber ungenauer.".replace(",", "."))
-            out.append(f"Danach: `plug-n-rag aufnehmen \"{rel}\" --transkription erlaubt` oder `--transkription lokal`.")
+            est = fmt_int(len(pending) * 2500)
+            out.append(tr(f"FRAGE AN NUTZER:IN: {len(pending)} Seiten sind eingescannt oder schlecht lesbar. "
+                          "Soll Claude sie vollständig lesen und abschreiben? Dann gehen diese Seiten an Anthropic "
+                          f"(geschätzt {est} Tokens mit Haiku). Alternativ erkenne ich den Text "
+                          "nur lokal, das ist aber ungenauer.",
+                          f"QUESTION FOR THE USER: {len(pending)} pages are scanned or hard to read. "
+                          "Should Claude read and transcribe them completely? Then these pages go to Anthropic "
+                          f"(about {est} tokens with Haiku). Alternatively the text is recognised "
+                          "locally only, which is less accurate."))
+            out.append(tr(f"Danach: `plug-n-rag aufnehmen \"{rel}\" --transkription erlaubt` oder `--transkription lokal`.",
+                          f"Then: `plug-n-rag ingest \"{rel}\" --transcription allowed` or `--transcription local`."))
             continue
         batches, failed, reason = prepare_images(layout, f, state)
         if failed:
-            out.append(f"FEHLER: Für {len(failed)} Seiten konnten keine Seitenbilder erzeugt werden ({reason}). "
-                       "Ohne Bilder ist kein Abschreiben möglich. Lösung: plug-n-rag über den Starter neu aufrufen "
-                       "(er installiert pypdfium2 und Pillow) oder Poppler (pdftoppm) installieren.")
+            out.append(tr(f"FEHLER: Für {len(failed)} Seiten konnten keine Seitenbilder erzeugt werden ({reason}). "
+                          "Ohne Bilder ist kein Abschreiben möglich. Lösung: plug-n-rag über den Starter neu aufrufen "
+                          "(er installiert pypdfium2 und Pillow) oder Poppler (pdftoppm) installieren.",
+                          f"ERROR: No page images could be created for {len(failed)} pages ({reason}). "
+                          "Without images no transcription is possible. Fix: call plug-n-rag through its launcher "
+                          "(it installs pypdfium2 and Pillow) or install Poppler (pdftoppm)."))
             if not batches:
                 continue
         plan = {"source": rel, "stage": state["stage"], "pages_dir": str(Path(state["stage"]) / "pages"),
                 "batches": batches}
-        out.append("TRANSKRIPTION: Bitte den Subagenten `transkription` je Bündel aufrufen. Plan:")
+        out.append(tr("TRANSKRIPTION: Bitte den Subagenten `transkription` je Bündel aufrufen. Plan:",
+                      "TRANSCRIPTION: Please call the subagent `transkription` for each batch. Plan:"))
         out.append(json.dumps(plan, ensure_ascii=False))
-        out.append(f"Danach: `plug-n-rag aufnehmen \"{rel}\" --abschliessen haiku` (oder sonnet).")
+        out.append(tr(f"Danach: `plug-n-rag aufnehmen \"{rel}\" --abschliessen haiku` (oder sonnet).",
+                      f"Then: `plug-n-rag ingest \"{rel}\" --finish haiku` (or sonnet)."))
     return "\n".join(out)
 
 
@@ -337,6 +372,6 @@ def complete(layout: Layout, files: list[Path], method: str) -> str:
             layout.root.resolve()) else f.name
         stage = _stage_dir(layout, sha256_bytes(f.read_bytes()))
         n = record_transcription(layout, stage, method)
-        out.append(f"{rel}: {n} transkribierte Seiten übernommen.")
+        out.append(tr(f"{rel}: {n} transkribierte Seiten übernommen.", f"{rel}: {n} transcribed pages taken over."))
         out.append(finalize(layout, f, rel))
     return "\n".join(out)

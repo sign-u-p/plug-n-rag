@@ -69,8 +69,14 @@ class NeedsTranscription(ExtractionError):
     """A scanned document without text layer: not an error, it waits for ``aufnehmen``."""
 
 
-UNIT_LABEL = {"lines": ("Z.", "Zeile", "Zeilen"), "pages": ("S.", "Seite", "Seiten"),
-              "paragraphs": ("Abs.", "Absatz", "Absätze")}
+UNIT_SHORT = {"de": {"lines": "Z.", "pages": "S.", "paragraphs": "Abs."},
+              "en": {"lines": "l.", "pages": "p.", "paragraphs": "para."}}
+
+
+def unit_short(unit: str) -> str:
+    from ..i18n import language
+
+    return UNIT_SHORT[language()].get(unit, UNIT_SHORT[language()]["lines"])
 
 
 def printed_suffix(meta: dict | None, unit: str, start: int, end: int) -> str:
@@ -84,12 +90,15 @@ def printed_suffix(meta: dict | None, unit: str, start: int, end: int) -> str:
         return ""
     if a == str(start) and (b or a) == str(end):
         return ""
-    return f" (gedruckt S. {a})" if start == end or not b or a == b else f" (gedruckt S. {a}–{b})"
+    from ..i18n import tr
+
+    word = tr("gedruckt S.", "printed p.")
+    return f" ({word} {a})" if start == end or not b or a == b else f" ({word} {a}–{b})"
 
 
 def format_range(unit: str, start: int, end: int) -> str:
-    """'Z. 45–80', 'S. 3', 'S. 3–5'."""
-    short = UNIT_LABEL.get(unit, ("Z.",))[0]
+    """'Z. 45–80', 'S. 3', 'S. 3–5' (German) or 'l. 45–80', 'p. 3' (English)."""
+    short = unit_short(unit)
     if start == end:
         return f"{short} {start}"
     return f"{short} {start}–{end}"

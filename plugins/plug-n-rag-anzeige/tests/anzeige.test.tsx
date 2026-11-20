@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { parseCommand, parseSearch, summarize } from '../hooks/parse'
+import { detectLang, parseCommand, parseSearch, setLang, summarize } from '../hooks/parse'
 
 // Real output of `plug-n-rag suche` (0.6.0).
 const SEARCH = `3 Notizen zu „Wie unterstütze ich ein Kind, das morgens beim Anziehen eskaliert?“
@@ -193,4 +193,39 @@ test('in a subfolder of a vault it does ask', async ($, on) => {
   for (let i = 0; i < 50 && runs === 0; i++) await new Promise(r => setTimeout(r, 10))
   expect(asked[3]).toBe('{"path":"/home/ich/vault/.obsidian"}')
   expect(runs).toBe(1)
+})
+
+// Real output of `plug-n-rag search` in an English vault (0.9.0).
+const SEARCH_EN = `2 notes for “How often should I water the vegetables?”
+
+1. home/Garden plan.md (1,051 tokens)
+   › Watering, l. 7–9 (relevant)
+   “Drip irrigation every morning in July and August, mulch against evaporation.”
+
+2. reading/Deep Work.md (43 tokens)
+   › Key idea, p. 3–5 (printed p. 12–14) (marginal)
+
+[--more: 1 more note]
+Read: plug-n-rag read "home/Garden plan.md#Watering" (only matching sections, not whole files)`
+
+test('reads English output and answers in English', async () => {
+  expect(detectLang(SEARCH_EN)).toBe('en')
+  expect(detectLang(SEARCH)).toBe('de')
+  const s = parseSearch(SEARCH_EN)
+  expect(s.query).toBe('How often should I water the vegetables?')
+  expect(s.hits[0]?.tokens).toBe(1051)
+  expect(s.hits[1]?.sections[0]?.range).toBe('p. 3–5 (printed p. 12–14)')
+  expect(s.more).toBe(1)
+  const call = parseCommand('plug-n-rag --folder ~/Vault search "water" --purpose question')!
+  expect(call.kind).toBe('suche')
+  expect(parseCommand('plug-n-rag display-data')).toBeNull()
+  setLang('en')
+  try {
+    expect(summarize(call, SEARCH_EN, false, false)).toBe('Searched: 2 notes · best relevant · 1 more')
+    expect(summarize(call, 'Nothing relevant found for “apple pie”.', false, false))
+      .toBe('Searched: nothing relevant for “apple pie”')
+    expect(summarize(call, undefined, true, false)).toBe('searching your vault …')
+  } finally {
+    setLang('de')
+  }
 })

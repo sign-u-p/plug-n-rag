@@ -15,7 +15,7 @@ Du transkribierst Seitenbilder eines Dokuments. Du bekommst eine Liste von PNG-P
 - Sprache der Vorlage beibehalten. Nichts übersetzen.
 - Überschriften als Markdown-Überschriften (`#`, `##`), wenn sie als solche erkennbar sind.
 - Tabellen als Markdown-Tabellen. Aufzählungen als Markdown-Listen.
-- Unleserliches als `[unleserlich]`. **Nie raten.** Unsichere Wörter mit `[?]` markieren.
+- Unleserliches als `[unleserlich]` (bei englischen Vorlagen `[illegible]`). **Nie raten.** Unsichere Wörter mit `[?]` markieren.
 - Handschrift, sehr komplexe Tabellen oder Formeln, die du nicht sicher erfassen kannst:
   im Bericht unter „Unsicherheiten“ nennen (der Hauptagent entscheidet über Sonnet).
 - Kopf- und Fußzeilen mit Seitenzahlen weglassen, wenn sie sich wiederholen.

@@ -1,84 +1,101 @@
 # plug-n-rag
 
-**Claude kennt deine Notizen und liest nur, was es für deine Frage wirklich braucht.**
+**English** · [Deutsch](README.de.md)
 
-plug-n-rag ist eine Erweiterung für [Claude Code](https://code.claude.com). Sie macht deine
-Obsidian-Notizen (und auf Wunsch andere Ordner mit Dokumenten) für Claude durchsuchbar. Wenn du
-Claude etwas fragst, sucht es zuerst in deinen eigenen Notizen, liest nur die passenden Stellen und
-sagt dir, woher eine Aussage stammt.
+**Claude knows your notes and reads only what it really needs for your question.**
 
-Gedacht ist plug-n-rag für alle, die mit einer gewachsenen Sammlung arbeiten: Projekt- und
-Besprechungsnotizen, Lesenotizen, ein Zettelkasten, Unterlagen aus Studium und Weiterbildung oder
-ein Ordner voller Fachbücher als PDF. Programmierkenntnisse brauchst du nicht. Deutschsprachige
-Texte funktionieren ausdrücklich gut.
+plug-n-rag is an extension for [Claude Code](https://code.claude.com). It makes your Obsidian
+notes (and, if you like, other folders full of documents) searchable for Claude. When you ask
+Claude something, it first looks in your own notes, reads only the matching passages and tells you
+where each statement comes from.
 
-## Was hast du davon?
+plug-n-rag is meant for anyone who works with a collection that has grown over time: project and
+meeting notes, reading notes, a Zettelkasten, material from studies and training, or a folder of
+reference books as PDFs. You don't need to know how to program. plug-n-rag speaks English and
+German.
 
-- **Antworten aus deinem eigenen Wissen, mit Quelle.** Claude nennt bei jeder Aussage die Notiz
-  und die Zeilen, aus denen sie stammt. Du kannst alles nachprüfen.
-- **Treffer auch bei anderen Worten.** Du fragst nach den „Kosten“ eines Projekts, gefunden wird
-  auch die Notiz, in der vom „Budget“ die Rede ist. Und „Datenschutz“ findet auch
-  „Datenschutzbeauftragte“ oder „Datenschutzerklärung“.
-- **Weniger Verbrauch.** Claude liest nicht mehr ganze Notizen, sondern die zwei, drei passenden
-  Abschnitte. Das schont dein Nutzungskontingent (bzw. die Kosten) und lässt mehr Platz für deine
-  eigentliche Aufgabe.
-- **Ehrliche Antworten.** Steht etwas nicht in deinen Notizen, sagt Claude das, statt etwas
-  hinzuzudichten.
-- **Deine Notizen bleiben, wie sie sind.** plug-n-rag verändert keine Notiz und schickt ohne deine
-  Zustimmung nichts an zusätzliche Dienste.
+## What's in it for you?
 
-### So sieht das aus
+- **Answers from your own knowledge, with sources.** For every statement Claude names the note and
+  the lines it comes from. You can check everything.
+- **Hits even when the words differ.** You ask about the "cost" of a project and also get the note
+  that talks about the "budget".
+- **Fewer tokens.** Claude no longer reads whole notes, just the two or three matching sections.
+  That spares your usage limits (or costs) and leaves more room for the actual task. Fewer tokens
+  also means less computing power and energy.
+- **Honest answers.** If something isn't in your notes, Claude says so instead of making it up.
+- **Your notes stay as they are.** plug-n-rag never changes a note and sends nothing to additional
+  services without your consent.
 
-**In deiner Vault**, zum Beispiel mit Projekt- und Besprechungsnotizen:
+### What it looks like
 
-> **Du:** Was haben wir beim Website-Relaunch zum Budget entschieden?
+**In your vault**, for example with project and meeting notes:
+
+> **You:** What did we decide about the budget for the website relaunch?
 >
-> **Claude:** Laut deinen Notizen:
-> – Im Kick-off wurde ein Rahmen von 12.000 € festgelegt, davon 2.000 € als Reserve
-> (besprechungen/2026-09-03 Kick-off Relaunch.md, Z. 14–22).
-> – Im Oktober wurde die Reserve für die barrierefreie Umsetzung freigegeben
-> (projekte/Website-Relaunch.md › Entscheidungen, Z. 40–47).
-> Wer die Freigabe erteilt hat, steht nicht in deinen Notizen.
+> **Claude:** According to your notes:
+> – At the kick-off a frame of €12,000 was set, €2,000 of it as a reserve
+> (meetings/2026-09-03 Kick-off relaunch.md, l. 14–22).
+> – In October the reserve was released for the accessible implementation
+> (projects/Website relaunch.md › Decisions, l. 40–47).
+> Who gave the approval is not in your notes.
 
-Gelesen hat Claude dafür zwei kurze Abschnitte statt aller Notizen zum Projekt.
+Claude read two short sections for this instead of every note about the project.
 
-**In einer Bibliothek**, zum Beispiel einem Ordner mit Fachbüchern als PDF:
+**In a library**, for example a folder of reference books as PDFs:
 
-> **Du:** Was sagen meine Bücher dazu, wie man Feedback-Gespräche vorbereitet?
+> **You:** What do my books say about preparing feedback conversations?
 >
-> **Claude:** Zwei deiner Bücher behandeln das:
-> – Ziel und Beobachtungen vorher schriftlich festhalten, Bewertungen davon trennen
-> (Fuehrung/Gespraechsfuehrung.pdf, S. 45, gedruckt S. 37).
-> – Dem Gegenüber vorab ankündigen, worum es geht, damit es sich vorbereiten kann
-> (Fuehrung/Teams leiten.pdf, S. 112–113).
+> **Claude:** Two of your books cover this:
+> – Write down the goal and your observations beforehand, and keep judgements separate
+> (Leadership/Conversations.pdf, p. 45, printed p. 37).
+> – Tell the other person in advance what it will be about, so they can prepare
+> (Leadership/Leading teams.pdf, p. 112–113).
 
-Die Zahlen und Inhalte sind ausgedacht; so sehen die Quellenangaben aus.
+The figures and contents are made up; this is what the source references look like.
 
-## Begriffe in einer Minute
+## English and German
 
-Du brauchst diese Wörter nicht zu kennen, um plug-n-rag zu nutzen. Sie helfen aber beim Lesen.
+plug-n-rag works equally well with English and German notes, even mixed in one vault. The search
+model (multilingual-e5-small) was chosen on purpose because it handles German texts and compounds
+such as "Datenschutzbeauftragte" especially well, but it handles English just as well, plus about
+100 other languages. An English question can also find a German note and vice versa; it is most
+reliable in the language of the notes.
 
-| Begriff | Bedeutung |
+- **Claude answers in your language**, whatever language the notes are in.
+- **plug-n-rag's fixed texts** (search results, status, overview, the display in the chat) follow
+  the language chosen during setup. To switch: ask Claude, or run
+  `plug-n-rag config --set language=de` (or `language=en`).
+- **Every command exists in both languages**, e.g. `plug-n-rag search` and `plug-n-rag suche`,
+  `/plug-n-rag:ingest` and `/plug-n-rag:aufnehmen`.
+
+Why this matters: plug-n-rag saves tokens, and with them computing power and energy. That should
+not stop at a language border.
+
+## Terms in one minute
+
+You don't need to know these words to use plug-n-rag, but they help when reading on.
+
+| Term | Meaning |
 | --- | --- |
-| **Claude Code** | Claude als Arbeitsumgebung auf deinem Rechner (Desktop-App oder Terminal) oder im Browser. Anders als im normalen Chat darf Claude dort mit deinen Dateien arbeiten. |
-| **Plugin** | Eine Erweiterung, die Claude Code neue Fähigkeiten gibt. plug-n-rag ist ein Plugin. |
-| **Marketplace** | Ein Verzeichnis, aus dem man Plugins installiert. Dieses Repository ist so ein Verzeichnis. |
-| **Vault** | Ein Ordner mit Obsidian-Notizen (erkennbar am versteckten Unterordner `.obsidian`). |
-| **Sammlung** | Ein anderer Ordner mit Dokumenten (Text, Markdown, PDF), den du durchsuchbar machen willst. |
-| **Token** | Die Einheit, in der Claude Text liest und abrechnet, grob vier Buchstaben. Weniger gelesene Tokens heißt: weniger Verbrauch. |
-| **Index** | Ein Verzeichnis zum schnellen Finden, wie das Stichwortverzeichnis eines Buchs. plug-n-rag legt einen für deine Notizen an. |
-| **Git, GitHub, Repo** | Git speichert Versionen von Dateien, GitHub bewahrt sie online auf. Ein Repo (Repository) ist ein so verwalteter Ordner. Für plug-n-rag optional, aber nötig, wenn du auf mehreren Geräten oder im Browser arbeiten willst. |
-| **Cloud-Sitzung** | Claude Code im Browser (claude.ai/code) oder in der Handy-App. Claude arbeitet dann auf einem Rechner von Anthropic mit einer Kopie deines Repos. |
+| **Claude Code** | Claude as a workspace on your computer (desktop app or terminal) or in the browser. Unlike the normal chat, Claude may work with your files there. |
+| **Plugin** | An extension that gives Claude Code new abilities. plug-n-rag is a plugin. |
+| **Marketplace** | A directory you install plugins from. This repository is such a directory. |
+| **Vault** | A folder of Obsidian notes (recognisable by the hidden subfolder `.obsidian`). |
+| **Collection** | Any other folder of documents (text, Markdown, PDF) you want to make searchable. |
+| **Token** | The unit in which Claude reads and bills text, roughly four letters. Fewer tokens read means less usage. |
+| **Index** | A directory for finding things quickly, like the index of a book. plug-n-rag builds one for your notes. |
+| **Git, GitHub, repo** | Git stores versions of files, GitHub keeps them online. A repo (repository) is a folder managed this way. Optional for plug-n-rag, but needed if you want to work on several devices or in the browser. |
+| **Cloud session** | Claude Code in the browser (claude.ai/code) or in the mobile app. Claude then works on a computer run by Anthropic, with a copy of your repo. |
 
-## Loslegen in drei Schritten
+## Get started in three steps
 
-### 1. Vorbereiten
+### 1. Prepare
 
-- **Claude Code** installieren und anmelden: [Anleitung](https://code.claude.com/docs/de/quickstart).
-- **uv** installieren. uv ist ein kleines Hilfsprogramm, das plug-n-rag startet und alles Nötige
-  (z. B. Python) selbst mitbringt. Du kannst diesen Punkt auch überspringen: Fehlt uv, bietet
-  Claude an, es zu installieren.
-  - macOS oder Linux, im Terminal:
+- Install **Claude Code** and sign in: [guide](https://code.claude.com/docs/en/quickstart).
+- Install **uv**. uv is a small helper that starts plug-n-rag and brings everything it needs
+  (such as Python) by itself. You can also skip this: if uv is missing, Claude offers to install it.
+  - macOS or Linux, in the terminal:
 
     ```bash
     curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -90,21 +107,20 @@ Du brauchst diese Wörter nicht zu kennen, um plug-n-rag zu nutzen. Sie helfen a
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
     ```
 
-### 2. Installieren
+### 2. Install
 
-Wähle einen Weg. Am einfachsten ist A.
+Pick one way. A is the easiest.
 
-**A: Über die Plugin-Seite** (Desktop-App oder claude.ai)
+**A: Through the plugin page** (desktop app or claude.ai)
 
-1. **Einstellungen → Plugins** öffnen (auf claude.ai: „Anpassen“ → „Plugins“). In der Desktop-App
-   öffnet sich diese Seite auch, wenn du `/plugin` eingibst.
-2. Oben rechts **Hinzufügen → Marketplace hinzufügen** wählen, `sign-u-p/plug-n-rag` eintragen,
-   bestätigen.
-3. Bei **plug-n-rag** auf **Hinzufügen** klicken.
-4. Fertig. Das Plugin gehört jetzt zu deinem Claude-Konto und ist ab der nächsten Sitzung da (in
-   einer offenen Sitzung: `/reload-plugins` eingeben).
+1. Open **Settings → Plugins** (on claude.ai: "Customize" → "Plugins"). In the desktop app this
+   page also opens when you type `/plugin`.
+2. Top right, choose **Add → Add marketplace**, enter `sign-u-p/plug-n-rag` and confirm.
+3. Click **Add** next to **plug-n-rag**.
+4. Done. The plugin now belongs to your Claude account and is there from the next session (in an
+   open session: type `/reload-plugins`).
 
-**B: Im Terminal**
+**B: In the terminal**
 
 ```bash
 claude plugin marketplace add sign-u-p/plug-n-rag
@@ -114,297 +130,286 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
 ```
 
-**C: Claude machen lassen.** In einer Sitzung schreiben: „Bitte führe aus:
-`claude plugin marketplace add sign-u-p/plug-n-rag` und
-`claude plugin install plug-n-rag@plug-n-rag`.“ Danach `/reload-plugins` eingeben.
+**C: Let Claude do it.** Write in a session: "Please run
+`claude plugin marketplace add sign-u-p/plug-n-rag` and
+`claude plugin install plug-n-rag@plug-n-rag`." Then type `/reload-plugins`.
 
-Für den Browser (claude.ai/code) gibt es einen eigenen Weg, siehe [In der Cloud nutzen](#in-der-cloud-nutzen).
+For the browser (claude.ai/code) there is a way of its own, see [Use it in the cloud](#use-it-in-the-cloud).
 
-### 3. Einrichten
+### 3. Set up
 
-1. Claude Code **im Ordner deiner Vault** öffnen (in der Desktop-App: diesen Ordner als Projekt
-   wählen). Claude meldet dann: „Obsidian-Vault erkannt, aber noch nicht eingerichtet.“
-2. `/plug-n-rag:setup` eingeben.
-3. Claude führt dich in Ruhe durch die Einrichtung und erklärt jeden Schritt. Du entscheidest,
-   Claude erledigt:
-   - eine Bestandsaufnahme deiner Notizen,
-   - einen kurzen Hinweis, welche Daten wohin gehen,
-   - die Frage, welche Ordner privat bleiben sollen (z. B. ein Tagebuch),
-   - auf Wunsch ein privates Repo auf GitHub, damit es auf mehreren Geräten klappt,
-   - eine Schätzung, wie lange das Einrichten dauert und was es kostet (lokal: nichts),
-   - das erste Durchsuchbar-Machen, eine Übersicht deiner Vault und eine Probesuche.
-4. Beim ersten Start fragt Claude Code eventuell, ob plug-n-rag automatisch mitlaufen darf.
-   Bitte erlauben, sonst bleibt die Suche nicht aktuell.
+1. Open Claude Code **in your vault's folder** (in the desktop app: choose this folder as the
+   project). Claude then reports: "Obsidian vault detected, but not set up yet."
+2. Type `/plug-n-rag:setup`.
+3. Claude calmly walks you through the setup and explains each step. You decide, Claude does the
+   work:
+   - an inventory of your notes,
+   - a short note on which data goes where,
+   - the question which folders stay private (e.g. a journal),
+   - if you like, a private repo on GitHub so it works on several devices,
+   - an estimate of how long the setup takes and what it costs (locally: nothing),
+   - the first indexing, an overview of your vault and a test search.
+4. On the first start Claude Code may ask whether plug-n-rag may run automatically. Please allow
+   it, otherwise the search does not stay up to date.
 
-Beim ersten Einrichten lädt plug-n-rag einmalig ein Sprachmodell herunter (etwa 470 MB, je nach
-Verbindung ein paar Minuten). Die Suche nach Stichworten funktioniert schon vorher.
+During the first setup plug-n-rag downloads a language model once (about 470 MB, a few minutes
+depending on your connection). Keyword search works before that.
 
-### Und dann: einfach fragen
+### And then: just ask
 
-- „Was habe ich mir zum Thema Zeitmanagement notiert?“
-- „Fass meine Besprechungsnotizen vom Oktober zusammen. Welche Aufgaben sind noch offen?“
-- „Recherchiere in meiner Vault alles, was ich zu Datenschutz in Vereinen gesammelt habe.“
-- „Was steht in meinen Fachbüchern zu Nebenkostenabrechnungen?“
-- „Schreib mir aus meinen Lesenotizen eine Zusammenfassung für das Team.“
+- "What did I note down about time management?"
+- "Summarise my meeting notes from October. Which tasks are still open?"
+- "Research everything in my vault I collected about data protection in associations."
+- "What do my reference books say about service charge statements?"
+- "Write a summary for the team from my reading notes."
 
-War dir eine Antwort zu knapp oder zu ausführlich, sag es einfach („Das war mir zu oberflächlich“).
-plug-n-rag merkt sich das für diese Art von Aufgabe.
+If an answer was too short or too long, just say so ("that was too shallow"). plug-n-rag remembers
+that for this kind of task.
 
-## Was du wissen solltest
+## Good to know
 
-**Datenschutz in Kürze**
+**Privacy in brief**
 
-- Was Claude liest, geht an Anthropic, wie bei jeder Nutzung von Claude. Mit plug-n-rag ist das
-  in der Regel *weniger* als ohne, weil Claude nur passende Abschnitte liest.
-- Die Suche selbst läuft auf deinem Rechner. Ohne deine Zustimmung geht nichts an weitere Dienste.
-- Ordner und Notizen, die du als privat markierst, werden nie durchsucht und nie gespeichert.
+- What Claude reads goes to Anthropic, as with any use of Claude. With plug-n-rag that is usually
+  *less* than without, because Claude reads only matching sections.
+- The search itself runs on your computer. Nothing goes to other services without your consent.
+- Folders and notes you mark as private are never searched and never stored.
 
 <details>
-<summary>Datenschutz im Detail</summary>
+<summary>Privacy in detail</summary>
 
-- **Wohin was geht:**
+- **What goes where:**
 
-  | Dienst | Was | Wann |
+  | Service | What | When |
   | --- | --- | --- |
-  | Anthropic | die Abschnitte, die Claude liest, und deine Fragen | bei jeder Nutzung von Claude |
-  | Anthropic | ganze eingescannte Dokumente zum Abschreiben | nur nach ausdrücklicher Rückfrage |
-  | Hugging Face | nichts von dir: von dort wird nur einmal das Sprachmodell heruntergeladen | beim ersten Einrichten |
-  | Voyage AI | Notiztexte zum Berechnen der Suchdaten | nur wenn du diesen Dienst ausdrücklich wählst |
-  | GitHub | Notizen und Suchindex in **deinem privaten** Repo | nur wenn du ein Repo nutzt |
+  | Anthropic | the sections Claude reads, and your questions | whenever you use Claude |
+  | Anthropic | whole scanned documents for transcription | only after asking you explicitly |
+  | Hugging Face | nothing of yours: only the language model is downloaded from there, once | during the first setup |
+  | Voyage AI | note texts for computing the search data | only if you explicitly choose this service |
+  | GitHub | notes and search index in **your private** repo | only if you use a repo |
 
-- **Der Suchindex enthält keinen Notiztext**, aber er bildet Inhalte als Zahlen ab. Behandle ihn
-  deshalb so vertraulich wie die Notizen selbst. Ein Repo muss privat sein; Einrichtung und
-  Statusanzeige prüfen das und warnen, wenn nicht.
-- **Private Bereiche:** Ordner, die du als privat einträgst (`private_folders`), und Notizen mit
-  `privat: true` in den Eigenschaften oben in der Notiz (Frontmatter) werden vollständig
-  ausgelassen. Wird eine Notiz später privat, entfernt plug-n-rag ihre Suchdaten beim nächsten
-  Abgleich.
-- **Protokoll:** Damit plug-n-rag mitlernen kann, merkt es sich, welche Notizen gefunden und
-  gelesen wurden (Pfade und Zahlen), aber nie deine Fragen und nie Notizinhalte. Das Protokoll
-  bleibt auf deinem Rechner.
-- **Schlüssel für Voyage AI** gehören nur in die Umgebungsvariable `VOYAGE_API_KEY` (in der Cloud
-  in ein „Netzwerk-Secret“), nie in eine Datei im Repo.
+- **The search index contains no note text**, but it represents content as numbers. Treat it as
+  confidentially as the notes themselves. A repo must be private; setup and status check this and
+  warn if not.
+- **Private areas:** folders you enter as private (`private_folders`) and notes with
+  `privat: true` in the properties at the top of the note (frontmatter) are left out completely.
+  If a note becomes private later, plug-n-rag removes its search data at the next sync.
+- **Log:** so that plug-n-rag can learn, it remembers which notes were found and read (paths and
+  numbers), but never your questions and never note contents. The log stays on your computer.
+- **Keys for Voyage AI** belong only in the environment variable `VOYAGE_API_KEY` (in the cloud: in
+  a "network secret"), never in a file in the repo.
 
 </details>
 
-**Kosten:** Mit dem lokalen Sprachmodell kostet plug-n-rag nichts außer deinem normalen
-Claude-Verbrauch, und den senkt es. Der optionale Dienst Voyage AI rechnet nach Textmenge ab;
-Claude nennt dir den aktuellen Preis vorher.
+**Cost:** with the local language model plug-n-rag costs nothing beyond your normal Claude usage,
+and it lowers that. The optional service Voyage AI charges by amount of text; Claude tells you the
+current price beforehand.
 
-**Was plug-n-rag anlegt:**
+**What plug-n-rag creates:**
 
-| Was | Wo |
+| What | Where |
 | --- | --- |
-| Einstellungen und Suchindex (auf Wunsch auch Abschriften) | ein Ordner `.plug-n-rag/` in deiner Vault. Obsidian blendet ihn aus. |
-| Arbeitsdateien (die eigentliche Suchdatenbank, Protokoll, Zwischenstände) | im Zwischenspeicher deines Benutzerkontos, nie in der Vault, nie online |
-| Abschriften von PDFs | als normale Notizen, neben dem PDF oder in einem Ordner „Abschriften/“ (du wählst) |
+| settings and search index (transcripts too, if you like) | a folder `.plug-n-rag/` in your vault. Obsidian hides it. |
+| working files (the actual search database, log, intermediate states) | in your user account's cache, never in the vault, never online |
+| transcripts of PDFs | as normal notes, next to the PDF or in a folder "Abschriften/" (your choice) |
 
-plug-n-rag wieder loswerden: Plugin deinstallieren und den Ordner `.plug-n-rag/` löschen.
+To get rid of plug-n-rag: uninstall the plugin and delete the folder `.plug-n-rag/`.
 
-## Wie plug-n-rag funktioniert
+## How plug-n-rag works
 
-Für alle, die es genau wissen wollen. Zum Benutzen ist nichts davon nötig. Jeder Abschnitt lässt
-sich aufklappen.
+For everyone who wants to know exactly. None of this is needed to use it. Each section expands.
 
 <details>
-<summary><b>1. Notizen in Abschnitte zerlegen</b></summary>
+<summary><b>1. Splitting notes into sections</b></summary>
 
-plug-n-rag teilt jede Notiz an ihren Überschriften in Abschnitte. Sehr lange Abschnitte werden
-zusätzlich an Absätzen geteilt (Richtwert: etwa 500 Tokens, mit etwas Überlappung, damit kein
-Gedanke an einer Schnittstelle verloren geht). Jeder Abschnitt kennt seinen Ort in der Notiz,
-z. B. „Website-Relaunch › Entscheidungen“, und seine Zeilen. PDFs werden nach Seiten geteilt, damit Quellen
-immer eine genaue Seite nennen.
+plug-n-rag splits each note at its headings. Very long sections are also split at paragraphs (guide
+value: about 500 tokens, with some overlap so that no thought gets lost at a cut). Each section
+knows its place in the note, e.g. "Website relaunch › Decisions", and its lines. PDFs are split by
+page, so that sources always name an exact page.
 
-Eigenschaften oben in der Notiz (Frontmatter), Tags und Verknüpfungen (`[[…]]`) werden nicht
-mitgesucht, sondern als Zusatzinformation gespeichert, z. B. für die Frage „Was ist mit dieser
-Notiz verknüpft?“.
+Properties at the top of the note (frontmatter), tags and links (`[[…]]`) are not searched as text
+but stored as extra information, e.g. for the question "What is linked to this note?".
 </details>
 
 <details>
-<summary><b>2. Bedeutung als Zahlen: der „Fingerabdruck“ eines Abschnitts</b></summary>
+<summary><b>2. Meaning as numbers: a section's "fingerprint"</b></summary>
 
-Damit Claude auch bei anderen Worten fündig wird, berechnet ein **Sprachmodell** für jeden
-Abschnitt eine Reihe von 384 Zahlen, eine Art Fingerabdruck seiner Bedeutung (Fachbegriff:
-*Embedding*). Abschnitte mit ähnlicher Bedeutung bekommen ähnliche Zahlenreihen, egal mit welchen
-Worten sie formuliert sind. Bei einer Frage berechnet plug-n-rag denselben Fingerabdruck für die
-Frage und sucht die ähnlichsten Abschnitte.
+So that Claude finds things even when the words differ, a **language model** computes a series of
+384 numbers for each section, a kind of fingerprint of its meaning (technical term: *embedding*).
+Sections with similar meaning get similar series of numbers, whatever words they use. For a
+question plug-n-rag computes the same fingerprint for the question and looks for the most similar
+sections.
 
-Standardmäßig rechnet das Modell **auf deinem Rechner** („multilingual-e5-small“, gut für Deutsch,
-einmalig etwa 470 MB). Es ist auf eine feste Version festgelegt, damit sich Ergebnisse nie
-unbemerkt ändern. Wer will, kann stattdessen den Dienst Voyage AI nutzen: schneller auf schwachen
-Rechnern, kostet aber und schickt Texte dorthin.
+By default the model runs **on your computer** ("multilingual-e5-small", about 470 MB once). It was
+chosen for its especially good German and understands English and about 100 other languages just
+as well. It is pinned to a fixed version so that results never change unnoticed. If you prefer,
+you can use the Voyage AI service instead: faster on weak computers, but it costs money and sends
+texts there.
 
-Aus den Zahlen lässt sich der Text nicht einfach zurückgewinnen, aber sie verraten, worum es
-ungefähr geht. Deshalb gelten sie als vertraulich.
+The text cannot simply be recovered from the numbers, but they reveal roughly what it is about.
+That is why they count as confidential.
 </details>
 
 <details>
-<summary><b>3. Drei Suchwege, eine Rangliste</b></summary>
+<summary><b>3. Three ways of searching, one ranking</b></summary>
 
-Jede Suche läuft auf drei Wegen gleichzeitig:
+Every search runs three ways at once:
 
-1. **ganze Wörter**, wie eine klassische Stichwortsuche,
-2. **Wortteile**, damit „Datenschutz“ auch „Datenschutzbeauftragte“ findet; das ist für deutsche
-   Zusammensetzungen wichtig,
-3. **Bedeutung**, über die Fingerabdrücke aus Schritt 2.
+1. **whole words**, like a classic keyword search,
+2. **word parts**, so that "privacy" also finds "privacy-friendly", and German compounds such as
+   "Datenschutz" find "Datenschutzbeauftragte",
+3. **meaning**, using the fingerprints from step 2.
 
-Die drei Ranglisten werden zu einer zusammengeführt: Ein Abschnitt, der auf mehreren Wegen weit
-oben steht, landet ganz oben (Fachbegriff: *Reciprocal Rank Fusion*). Lange, seltene Wörter aus
-deiner Frage zählen dabei mehr als häufige. Literaturverzeichnisse werden abgewertet, weil sie
-viele Fachwörter enthalten, aber selten die Antwort.
+The three rankings are merged into one: a section that ranks high on several ways ends up at the
+top (technical term: *reciprocal rank fusion*). Long, rare words from your question count more
+than frequent ones. Reference lists are ranked down, because they contain many technical terms but
+rarely the answer.
 
-Dann entscheidet plug-n-rag, **wie viele** Treffer es zeigt: Es schneidet dort ab, wo die
-Relevanz deutlich abfällt, statt immer eine feste Zahl zu liefern. Liegt nichts über einer
-Mindestschwelle, lautet das Ergebnis „Nichts Passendes gefunden“, und Claude soll dann nicht so
-tun, als stünde es in deinen Notizen.
+Then plug-n-rag decides **how many** hits to show: it cuts where relevance drops clearly, instead
+of always returning a fixed number. If nothing is above a minimum threshold, the result is "Nothing
+relevant found", and Claude should then not pretend it is in your notes.
 
-Die Relevanz zeigt plug-n-rag in Worten an („sehr passend“, „passend“, „am Rande“), nicht als
-Zahl.
+plug-n-rag shows relevance in words ("very relevant", "relevant", "marginal"), not as a number.
 </details>
 
 <details>
-<summary><b>4. Stufenweise lesen: so entsteht die Ersparnis</b></summary>
+<summary><b>4. Reading step by step: where the savings come from</b></summary>
 
-Claude geht vor wie bei einer guten Recherche:
+Claude works like a good researcher:
 
-1. **Überblick:** Beim Start bekommt Claude eine Kurzübersicht deiner Vault (Bereiche, Anzahl).
-2. **Suche:** Eine Trefferliste nennt Notiz, Abschnitt, Zeilen und Relevanz, aber noch keinen
-   ganzen Text.
-3. **Gliederung:** Bei langen Notizen schaut Claude zuerst die Überschriften an.
-4. **Abschnitt lesen:** Erst jetzt liest Claude genau die passenden Stellen.
+1. **Overview:** at the start Claude gets a short overview of your vault (areas, counts).
+2. **Search:** a list of hits names note, section, lines and relevance, but no full text yet.
+3. **Outline:** for long notes Claude first looks at the headings.
+4. **Read a section:** only now does Claude read exactly the matching passages.
 
-Ganze Notizen liest Claude nur, wenn der Zusammenhang wirklich nötig ist, etwa wenn du einen Text
-aus deinen Notizen schreiben lässt. Die Ersparnis schätzt plug-n-rag laufend: gelesene Tokens im
-Vergleich dazu, was das vollständige Lesen aller Trefferdateien gekostet hätte.
-`/plug-n-rag:status` zeigt sie an.
+Claude reads whole notes only when the context is really needed, for example when you have it write
+a text from your notes. plug-n-rag keeps estimating the savings: tokens read compared to what
+reading all hit files completely would have cost. `/plug-n-rag:status` shows them.
 </details>
 
 <details>
-<summary><b>5. Immer aktuell, ohne dass du etwas tun musst</b></summary>
+<summary><b>5. Always up to date, without you doing anything</b></summary>
 
-plug-n-rag läuft an zwei Stellen automatisch mit:
+plug-n-rag runs automatically at two points:
 
-- **Beim Start jeder Sitzung:** neuesten Stand holen (falls du ein Repo nutzt), Notizen abgleichen,
-  Suchdatenbank aufbauen, Claude die Kurzübersicht geben. Das dauert meist wenige Sekunden; was
-  länger dauern würde, läuft im Hintergrund weiter.
-- **Nach jeder Antwort von Claude:** ein kurzer Abgleich im Hintergrund, falls sich etwas geändert
-  hat, auch wenn du zwischendurch in Obsidian geschrieben hast.
+- **At the start of every session:** fetch the newest state (if you use a repo), sync the notes,
+  build the search database, give Claude the short overview. This usually takes a few seconds;
+  anything longer continues in the background.
+- **After each of Claude's answers:** a short sync in the background in case something changed,
+  even if you wrote in Obsidian in the meantime.
 
-Der Abgleich erkennt Änderungen über eine Prüfsumme (einen eindeutigen Kennwert pro Datei). Nur
-neue oder geänderte Abschnitte werden neu berechnet. Benennst du eine Notiz um oder verschiebst sie,
-erkennt plug-n-rag die Abschnitte wieder und rechnet gar nichts neu. Gelöschte Notizen verschwinden
-aus der Suche.
+The sync recognises changes by a checksum (a unique value per file). Only new or changed sections
+are recomputed. If you rename or move a note, plug-n-rag recognises the sections and recomputes
+nothing at all. Deleted notes disappear from the search.
 
-In einem Projekt ohne Vault tut plug-n-rag nichts: Es prüft in wenigen Millisekunden, ob eine Vault
-da ist, und beendet sich sonst sofort.
+In a project without a vault plug-n-rag does nothing: it checks within a few milliseconds whether
+there is a vault and otherwise exits immediately.
 </details>
 
 <details>
-<summary><b>6. Warum der Suchindex in deiner Vault liegt</b></summary>
+<summary><b>6. Why the search index lives in your vault</b></summary>
 
-Die Fingerabdrücke zu berechnen kostet Zeit (und mit Voyage AI Geld). Deshalb speichert
-plug-n-rag sie als kleine Dateien in `.plug-n-rag/index/`, eine pro Notiz, ohne Notiztext. Liegt
-deine Vault in einem Repo, wandern sie mit: Auf einem zweiten Rechner oder in einer Cloud-Sitzung
-ist alles sofort suchbereit, ohne neu zu rechnen.
+Computing the fingerprints takes time (and, with Voyage AI, money). That is why plug-n-rag stores
+them as small files in `.plug-n-rag/index/`, one per note, without note text. If your vault is in a
+repo, they travel with it: on a second computer or in a cloud session everything is ready to search
+at once, without recomputing.
 
-Die eigentliche Suchdatenbank (SQLite mit Volltext- und Vektorsuche) baut plug-n-rag dagegen bei
-jedem Start aus diesen Dateien und deinen Notizen neu auf, auf deinem Rechner. Sie wird nie
-hochgeladen und nie synchronisiert. Es gibt keinen Server und keine Datenbank im Internet.
+The actual search database (SQLite with full-text and vector search), by contrast, is rebuilt from
+these files and your notes at every start, on your computer. It is never uploaded and never synced.
+There is no server and no database on the internet.
 </details>
 
 <details>
-<summary><b>7. Mitlernen, mit Leitplanken</b></summary>
+<summary><b>7. Learning, with guard rails</b></summary>
 
-Claude gibt bei jeder Suche an, wofür es sucht: eine **Frage** (wenige, präzise Treffer), eine
-**Recherche** (mehr Breite) oder etwas zu **erstellen** (wenige Notizen, dafür vollständiger).
-plug-n-rag beobachtet, wie tief Claude danach liest, und passt langsam an, wie viele Treffer eine
-Suche liefert: höchstens einen Schritt pro Sitzung und immer innerhalb fester Grenzen. Deine eigenen
-Rückmeldungen („zu oberflächlich“) haben Vorrang. Zurücksetzen geht mit
-`/plug-n-rag:lernen-zuruecksetzen`.
+With every search Claude states what it is searching for: a **question** (few, precise hits),
+**research** (more breadth) or something to **create** (few notes, but more complete). plug-n-rag
+observes how deeply Claude reads afterwards and slowly adjusts how many hits a search returns: at
+most one step per session and always within fixed limits. Your own feedback ("too shallow") takes
+precedence. Reset with `/plug-n-rag:reset-learning`.
 </details>
 
 <details>
-<summary><b>8. PDFs und eingescannte Seiten</b></summary>
+<summary><b>8. PDFs and scanned pages</b></summary>
 
-`/plug-n-rag:aufnehmen` holt den Text aus PDFs, Seite für Seite, und versucht dabei nacheinander:
+`/plug-n-rag:ingest` gets the text out of PDFs, page by page, trying in turn:
 
-1. den eingebetteten Text des PDFs (kostenlos, exakt),
-2. eine Texterkennung auf deinem Rechner (Tesseract, falls installiert),
-3. eine Qualitätsprüfung (wie sicher war die Erkennung, wie viele echte Wörter),
-4. nur wenn das nicht reicht und **du zustimmst**: Claude liest die Seitenbilder und schreibt sie
-   wortgetreu ab, mit dem günstigen Modell Haiku, bei Handschrift auf Wunsch mit Sonnet.
+1. the PDF's embedded text (free, exact),
+2. text recognition on your computer (Tesseract, if installed),
+3. a quality check (how confident was the recognition, how many real words),
+4. only if that is not enough and **you agree**: Claude reads the page images and transcribes them
+   word for word, with the inexpensive model Haiku, for handwriting with Sonnet if you wish.
 
-Das Ergebnis wird eine neue Notiz (Vault) oder eine lesbare Abschrift in `.plug-n-rag/abschriften/`
-(Sammlung). Bestehende Dateien werden nie überschrieben. Gedruckte Seitenzahlen erkennt plug-n-rag,
-wenn möglich, und gibt sie bei Quellen mit an.
+The result becomes a new note (vault) or a readable transcript in `.plug-n-rag/abschriften/`
+(collection). Existing files are never overwritten. plug-n-rag recognises printed page numbers
+where possible and includes them in sources.
 </details>
 
-## Weitere Möglichkeiten
+## More options
 
-### Sehen, was plug-n-rag tut
+### See what plug-n-rag does
 
-Der Zusatz **plug-n-rag Anzeige** zeigt im Chat eine ruhige Zeile pro Schritt (z. B. „Gesucht:
-3 Notizen · beste sehr passend“), die du aufklappen kannst. Ein schmales Band über dem Eingabefeld
-erscheint nur, wenn im Hintergrund gearbeitet wird oder etwas auf dich wartet. Auf Wunsch (`/pnr`)
-gibt es eine Seitenleiste mit Verlauf, Zustand und geschätzter Ersparnis. Claude sieht davon
-nichts, es kostet also nichts.
+The add-on **plug-n-rag Anzeige** (display) shows a calm line per step in the chat (e.g.
+"Searched: 3 notes · best very relevant") that you can expand. A narrow band above the prompt only
+appears while work runs in the background or something is waiting for you. On request (`/pnr`)
+there is a side pane with history, state and estimated savings. Claude sees none of it, so it costs
+nothing. It follows the vault's language.
 
 ```
 /plugin install plug-n-rag-anzeige@plug-n-rag
 ```
 
-Das funktioniert in der Desktop-App, im Terminal und in VS Code, in der Handy-App als eine ruhige
-Zeile. Mehr dazu: [plugins/plug-n-rag-anzeige/README.md](plugins/plug-n-rag-anzeige/README.md).
+It works in the desktop app, the terminal and VS Code, and in the mobile app as one quiet line. More:
+[plugins/plug-n-rag-anzeige/README.md](plugins/plug-n-rag-anzeige/README.md).
 
-### Andere Ordner durchsuchbar machen
+### Make other folders searchable
 
-Das eignet sich für Bibliotheken mit Fachbüchern, Seminar- und Kursunterlagen, Vertragsordner
-oder Projektablagen. Sag Claude zum Beispiel: „Mach meinen Ordner Fachliteratur durchsuchbar“.
-Das geht mit Markdown, Text und PDFs, deren Text sich markieren lässt. Deine Dateien werden nie verändert. Claude fragt
-dich, wo plug-n-rag seine eigenen Dateien ablegen soll:
+This suits libraries of reference books, course material, contract folders or project archives.
+Tell Claude, for example: "Make my folder Reference searchable". It works with Markdown, text and
+PDFs whose text can be selected. Your files are never changed. Claude asks you where plug-n-rag
+should keep its own files:
 
-- **im Ordner** (Unterordner `.plug-n-rag`): gut, wenn du den Ordner teilst oder synchronisierst,
-  z. B. über Nextcloud oder ein Netzlaufwerk; der Index wandert dann mit,
-- **zentral auf deinem Rechner:** im Ordner ändert sich gar nichts.
+- **in the folder** (subfolder `.plug-n-rag`): good if you share or sync the folder, e.g. via
+  Nextcloud or a network drive; the index then travels with it,
+- **central on your computer:** nothing changes in the folder at all.
 
-### In der Cloud nutzen
+### Use it in the cloud
 
-Mit einer Vault in einem privaten GitHub-Repo funktioniert plug-n-rag auch in Cloud-Sitzungen
-(Browser, Handy-App). Das lässt sich sogar komplett dort einrichten: Starte unter claude.ai/code
-eine Sitzung mit deinem Vault-Repo und schreib:
+With a vault in a private GitHub repo, plug-n-rag also works in cloud sessions (browser, mobile
+app). It can even be set up entirely there: start a session at claude.ai/code with your vault repo
+and write:
 
 ```text
-Bitte installiere das Claude-Code-Plugin plug-n-rag:
+Please install the Claude Code plugin plug-n-rag:
 claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
-Richte danach meine Vault mit /plug-n-rag:setup ein. Ist der Befehl in dieser Sitzung noch
-nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
-und folge der Anleitung aus „plug-n-rag anleitung setup“.
+Then set up my vault with /plug-n-rag:setup. If that command is not available in this session
+yet, use ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
+and follow the guide from "plug-n-rag guide setup".
 ```
 
-Claude richtet die Vault ein und sorgt dafür, dass künftige Cloud-Sitzungen plug-n-rag automatisch
-haben. Dafür braucht die **Cloud-Umgebung** (die Einstellungen des Rechners, auf dem Claude in der
-Cloud arbeitet) zwei Dinge: eine Freigabe für den Modell-Download und ein kleines Skript, das
-plug-n-rag beim Start installiert. Claude schlägt beides vor oder erklärt, wo du es einträgst
-(`/plug-n-rag:cloud`).
+Claude sets up the vault and makes sure future cloud sessions have plug-n-rag automatically. For
+that the **cloud environment** (the settings of the computer Claude works on in the cloud) needs two
+things: permission for the model download and a small script that installs plug-n-rag at start.
+Claude proposes both or explains where to enter them (`/plug-n-rag:cloud`).
 
 <details>
-<summary>Cloud-Umgebung von Hand einrichten</summary>
+<summary>Set up the cloud environment by hand</summary>
 
-Warum nicht einfach über das Repo? Cloud-Sitzungen installieren keine Plugins, die ein Repo selbst
-anfordert (`.claude/settings.json`). Deshalb gehört die Installation in die Cloud-Umgebung.
+Why not simply through the repo? Cloud sessions do not install plugins that a repo requests itself
+(`.claude/settings.json`). That is why the installation belongs in the cloud environment.
 
-1. In der Sitzungsleiste auf den Namen der Cloud-Umgebung tippen, „Bearbeiten“ (oder eine eigene
-   Umgebung „Hinzufügen“, z. B. „Vault“).
-2. **Network access:** „Limited“, „Allow package managers“ angehakt lassen. Unter
-   **Allowed domains** eintragen:
+1. In the session bar, tap the cloud environment's name, then "Edit" (or "Add" an environment of
+   your own, e.g. "Vault").
+2. **Network access:** "Limited", keep "Allow package managers" ticked. Under
+   **Allowed domains** enter:
 
    ```text
    huggingface.co
    *.hf.co
    ```
 
-3. **Setup script** einfügen:
+3. Paste the **setup script**:
 
    ```bash
    #!/bin/bash
@@ -413,90 +418,92 @@ anfordert (`.claude/settings.json`). Deshalb gehört die Installation in die Clo
      || claude plugin marketplace update plug-n-rag >/dev/null 2>&1 || true
    claude plugin install plug-n-rag@plug-n-rag >/dev/null 2>&1 || true
    P=$(ls -d "$HOME"/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ 2>/dev/null | sort -V | tail -1)
-   if [ -n "$P" ]; then "${P}scripts/plug-n-rag" modell-laden --modell intfloat/multilingual-e5-small || true; fi
+   if [ -n "$P" ]; then "${P}scripts/plug-n-rag" load-model --model intfloat/multilingual-e5-small || true; fi
    exit 0
    ```
 
-4. Speichern und eine neue Sitzung mit dem Vault-Repo in dieser Umgebung starten. Der erste Start
-   dauert einige Minuten (Modell-Download). Danach speichert die Cloud die fertige Umgebung, und
-   neue Sitzungen sind sofort suchbereit.
-5. Prüfen: Claude bitten, `plug-n-rag cloud --pruefen` auszuführen.
+4. Save and start a new session with the vault repo in this environment. The first start takes a
+   few minutes (model download). After that the cloud keeps the finished environment, and new
+   sessions are ready to search at once.
+5. Check: ask Claude to run `plug-n-rag cloud --check`.
 
-Gut zu wissen:
-- Der Suchindex (`.plug-n-rag/index/`) muss im Repo liegen, sonst rechnet jede Cloud-Sitzung neu.
-- Mit Voyage AI statt lokalem Modell entfällt die Freigabe für Hugging Face. Den Voyage-Schlüssel
-  trägst du als **Netzwerk-Secret** der Umgebung für `api.voyageai.com` ein.
-- Neue Versionen von plug-n-rag kommen in die Cloud-Umgebung, wenn sie neu gebaut wird (spätestens
-  nach etwa sieben Tagen oder nach einer Änderung am Skript).
+Good to know:
+- The search index (`.plug-n-rag/index/`) must be in the repo, otherwise every cloud session
+  recomputes it.
+- With Voyage AI instead of the local model the Hugging Face permission is not needed. Enter the
+  Voyage key as a **network secret** of the environment for `api.voyageai.com`.
+- New versions of plug-n-rag reach the cloud environment when it is rebuilt (after about seven
+  days at the latest, or after a change to the script).
 
 </details>
 
-### Änderungen aus dem Chat übernehmen („nach main“)
+### Publish changes from the chat ("to main")
 
-Cloud-Sitzungen arbeiten auf einem eigenen Arbeitszweig (Branch) deines Repos. Was Claude dort an
-Notizen ändert, landet erst im Hauptstand (`main`), wenn du es übernimmst. Das geht direkt aus
-dem Chat: Sag „leg das nach main“ (oder `/plug-n-rag:nach-main`). Danach siehst du die Änderungen
-auch in Obsidian.
+Cloud sessions work on a branch of their own in your repo. What Claude changes in notes there only
+reaches the main state (`main`) when you take it over. You can do that right from the chat: say
+"put it on main" (or `/plug-n-rag:to-main`). Then you also see the changes in Obsidian.
 
-Dabei wird nichts überschrieben: Hat sich der Hauptstand inzwischen geändert (z. B. durch Obsidian
-auf deinem Rechner), wird zuerst zusammengeführt. Haben du und Claude **dieselbe Notiz** verschieden
-geändert, fragt Claude dich, welche Fassung gelten soll. Sieht etwas wie ein geheimer Schlüssel
-aus, wird gar nichts übernommen.
+Nothing gets overwritten: if the main state has changed in the meantime (e.g. through Obsidian on
+your computer), it is merged first. If you and Claude changed **the same note** differently, Claude
+asks you which version should count. If something looks like a secret key, nothing is published at
+all.
 
-## Nachschlagen
+## Reference
 
-### Befehle
+### Commands
 
-| Befehl | Wofür |
+| Command | What for |
 | --- | --- |
-| `/plug-n-rag:setup` | geführte Einrichtung (auch zum Fortsetzen oder Prüfen) |
-| `/plug-n-rag:status` | Ist alles aktuell? Gibt es Fehler? Wie viel wurde gespart? |
-| `/plug-n-rag:aufnehmen` | PDFs und eingescannte Dokumente in durchsuchbaren Text umwandeln |
-| `/plug-n-rag:cloud` | Nutzung in Cloud-Sitzungen einrichten und prüfen |
-| `/plug-n-rag:nach-main` | Änderungen aus dem Chat in den Hauptstand des Repos übernehmen |
-| `/plug-n-rag:reindex` | alles neu berechnen, z. B. nach einem Modellwechsel |
-| `/plug-n-rag:modell-wechseln` | lokales Modell oder Voyage AI wählen |
-| `/plug-n-rag:lernen-zuruecksetzen` | gelernte Suchgewohnheiten zurücksetzen |
+| `/plug-n-rag:setup` | guided setup (also to continue or check) |
+| `/plug-n-rag:status` | Is everything up to date? Any errors? How much was saved? |
+| `/plug-n-rag:ingest` (`aufnehmen`) | turn PDFs and scanned documents into searchable text |
+| `/plug-n-rag:cloud` | set up and check use in cloud sessions |
+| `/plug-n-rag:to-main` (`nach-main`) | publish changes from the chat to the repo's main state |
+| `/plug-n-rag:reindex` | recompute everything, e.g. after switching the model |
+| `/plug-n-rag:switch-model` (`modell-wechseln`) | choose the local model or Voyage AI |
+| `/plug-n-rag:reset-learning` (`lernen-zuruecksetzen`) | reset learned search habits |
 
-Im Hintergrund benutzt Claude die Werkzeuge `plug-n-rag suche`, `gliederung`, `lesen`,
-`verwandt` und `karte`. Du kannst sie auch selbst im Terminal aufrufen (`plug-n-rag --help`).
+In the background Claude uses the tools `plug-n-rag search`, `outline`, `read`, `related` and `map`
+(German: `suche`, `gliederung`, `lesen`, `verwandt`, `karte`). You can also call them yourself in
+the terminal (`plug-n-rag --help`).
 
 <details>
-<summary>Einstellungen (<code>.plug-n-rag/plug-n-rag.yml</code>)</summary>
+<summary>Settings (<code>.plug-n-rag/plug-n-rag.yml</code>)</summary>
 
-Am bequemsten änderst du Einstellungen, indem du Claude darum bittest. Die wichtigsten:
+The easiest way to change settings is to ask Claude. The most important ones:
 
-| Einstellung | Bedeutung | Standard |
+| Setting | Meaning | Default |
 | --- | --- | --- |
-| `embedding.provider`, `embedding.model` | welches Sprachmodell die Fingerabdrücke berechnet (`local` oder `voyage`) | `local`, `intfloat/multilingual-e5-small` |
-| `private_folders` | Ordner, die nie durchsucht werden, z. B. `["Tagebuch/**"]` | leer |
-| `exclude` | weitere ausgeschlossene Ordner (z. B. Vorlagen) | Systemordner, erkannte Vorlagen |
-| `folders` | kurze Beschreibung je Ordner für die Übersicht | leer |
-| `formats` | welche Dateitypen gelesen werden (`markdown`, `text`, `pdf`) | Vault: `markdown` |
-| `abschriften.ort` | wohin Abschriften von PDFs kommen | wird beim ersten Mal gefragt |
-| `transcription` | ob vor dem Abschreiben gefragt wird (`ask`, `allow`, `local_only`) | `ask` |
-| `anzeige` | Quellenzeile in Cloud-Sitzungen (`kompakt`, `aus`) | `kompakt` |
-| `tuning.commit_learning` | Gelerntes mit ins Repo legen (sonst nur lokal) | `false` |
-| `git.auto_commit`, `git.auto_push` | Änderungen beim Start automatisch sichern bzw. hochladen | aus |
+| `language` | language of the fixed texts (`en`, `de`); an older configuration without it counts as German | chosen during setup |
+| `embedding.provider`, `embedding.model` | which language model computes the fingerprints (`local` or `voyage`) | `local`, `intfloat/multilingual-e5-small` |
+| `private_folders` | folders that are never searched, e.g. `["Journal/**"]` | empty |
+| `exclude` | further excluded folders (e.g. templates) | system folders, detected templates |
+| `folders` | a short description per folder for the overview | empty |
+| `formats` | which file types are read (`markdown`, `text`, `pdf`) | vault: `markdown` |
+| `abschriften.ort` | where transcripts of PDFs go | asked the first time |
+| `transcription` | whether to ask before transcribing (`ask`, `allow`, `local_only`) | `ask` |
+| `anzeige` | source line in cloud sessions (`kompakt`, `aus`) | `kompakt` |
+| `tuning.commit_learning` | put what was learned into the repo too (otherwise local only) | `false` |
+| `git.auto_commit`, `git.auto_push` | automatically save or upload changes at start | off |
 
 </details>
 
 <details>
-<summary>Von einer älteren Version umsteigen</summary>
+<summary>Moving from an older version</summary>
 
-Bis Version 0.5 lagen die Einstellungen in `plug-n-rag.yml` im Hauptordner und Arbeitsdateien in
-`.plug-n-rag/cache`. Das funktioniert weiter. Beim Start weist plug-n-rag auf den aufgeräumten
-Aufbau hin; `plug-n-rag umziehen` (oder Claude darum bitten) stellt um, ohne etwas neu zu
-berechnen. Bereits abgeschriebene Seiten bleiben erhalten.
+Up to version 0.5 the settings were in `plug-n-rag.yml` in the main folder and working files in
+`.plug-n-rag/cache`. That keeps working. At start plug-n-rag points out the tidier layout;
+`plug-n-rag migrate` (or asking Claude) switches over without recomputing anything. Pages already
+transcribed are kept. Configurations from before 0.9 have no `language` and stay German.
 
 </details>
 
 <details>
-<summary>Für Fortgeschrittene: MCP-Server</summary>
+<summary>For advanced users: MCP server</summary>
 
-plug-n-rag bringt die Suchwerkzeuge auch als MCP-Server mit (eine Standard-Schnittstelle, über die
-Claude Werkzeuge anderer Programme nutzt). Er ist nicht automatisch aktiv. Nach der ersten Sitzung
-mit plug-n-rag lässt er sich so anmelden:
+plug-n-rag also ships the search tools as an MCP server (a standard interface through which Claude
+uses other programs' tools). It is not active automatically. After the first session with
+plug-n-rag you can register it like this:
 
 ```bash
 claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
@@ -504,59 +511,59 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 
 </details>
 
-## Bekannte Grenzen
+## Known limits
 
-- Gelesen werden Markdown, Text und PDFs mit markierbarem Text. Word, HTML und E-Books folgen.
-- Die Texterkennung für eingescannte Seiten auf deinem Rechner braucht das Programm Tesseract
-  (Claude bietet die Installation an). Ohne Tesseract bleibt das Abschreiben durch Claude, nur nach
-  Rückfrage.
-- Der einmalige Modell-Download ist mit etwa 470 MB groß.
-- Wie streng „passend“ ist, ist an einer kleinen Beispiel-Vault eingestellt und wird mit echten
-  Vaults nachjustiert. Rückmeldungen helfen.
-- Unter Windows wird Git Bash benötigt (kommt mit „Git für Windows“).
-- Mehrere Sammlungen lassen sich noch nicht gemeinsam durchsuchen.
-- Obsidian Git ist auf dem Handy eingeschränkt. Empfehlung: Obsidian Sync für die Geräte, Git nur
-  auf dem Rechner.
+- Markdown, text and PDFs with selectable text are read. Word, HTML and e-books will follow.
+- Text recognition for scanned pages on your computer needs the program Tesseract (Claude offers to
+  install it). Without Tesseract, transcription by Claude remains, only after asking you.
+- The one-time model download is large, about 470 MB.
+- How strict "relevant" is was tuned on a small sample vault and will be adjusted with real vaults.
+  Feedback helps.
+- On Windows, Git Bash is needed (it comes with "Git for Windows").
+- Several collections cannot be searched together yet.
+- Obsidian Git is limited on phones. Recommendation: Obsidian Sync for the devices, Git only on the
+  computer.
 
-## Wenn etwas hakt
+## If something gets stuck
 
-| Was du siehst | Was hilft |
+| What you see | What helps |
 | --- | --- |
-| „uv fehlt“ beim Start | Schritt 1 oben, oder Claude die Installation erledigen lassen |
-| Neue Notizen werden nicht gefunden | `/plug-n-rag:status` zeigt, ob noch etwas aussteht |
-| „nur Stichwortsuche“ | Das Sprachmodell ist (noch) nicht da oder passt nicht; `/plug-n-rag:status` erklärt, warum |
-| In der Cloud fehlt plug-n-rag | Die Sitzung läuft in einer anderen Umgebung, oder das Setup-Skript fehlt (`/plug-n-rag:cloud`) |
-| Eingescannte PDFs „warten auf Aufnahme“ | `/plug-n-rag:aufnehmen` |
+| "uv missing" at start | step 1 above, or let Claude do the installation |
+| New notes are not found | `/plug-n-rag:status` shows whether something is still pending |
+| "keyword search only" | the language model is not there (yet) or does not fit; `/plug-n-rag:status` explains why |
+| plug-n-rag is missing in the cloud | the session runs in a different environment, or the setup script is missing (`/plug-n-rag:cloud`) |
+| Scanned PDFs are "waiting for ingestion" | `/plug-n-rag:ingest` |
 
-Weitere Hintergründe: [DECISIONS.md](DECISIONS.md) (warum etwas so gebaut ist),
-[OPEN.md](OPEN.md) (offene Punkte), [SPEC.md](SPEC.md) (ursprüngliche Spezifikation).
+More background (in German): [DECISIONS.md](DECISIONS.md) (why things are built this way),
+[OPEN.md](OPEN.md) (open points), [SPEC.md](SPEC.md) (original specification).
 
-## Für Entwickler:innen
+## For developers
 
-Dieses Repository ist ein Marketplace mit mehreren Plugins, jedes in einem eigenen Ordner:
+This repository is a marketplace with several plugins, each in a folder of its own:
 
 ```
-.claude-plugin/marketplace.json   Katalog: plug-n-rag und plug-n-rag-anzeige
-plugins/plug-n-rag/               das Hauptplugin
+.claude-plugin/marketplace.json   catalogue: plug-n-rag and plug-n-rag-anzeige
+plugins/plug-n-rag/               the main plugin
   .claude-plugin/plugin.json
-  scripts/plug-n-rag              Starter (uv, Umgebung im Nutzer-Cache; der Sitzungsstart legt ihn auf den PATH)
-  hooks/hooks.json                automatische Abläufe beim Start und nach jeder Antwort
-  skills/                         suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln, lernen-zuruecksetzen
+  scripts/plug-n-rag              launcher (uv, environment in the user cache; session start puts it on the PATH)
+  hooks/hooks.json                automatic runs at start and after each answer
+  skills/                         suche, setup, cloud, nach-main, status, reindex, aufnehmen, modell-wechseln,
+                                  lernen-zuruecksetzen; English names: ingest, to-main, switch-model, reset-learning
   agents/                         transkription (Haiku)
-  src/plug_n_rag/                 Python-Kern
-  tests/                          pytest, Beispiel-Vault, PDF-Generator
-plugins/plug-n-rag-anzeige/       optionaler Mod: Anzeige im Chat (TypeScript)
-tools/check.sh                    prüft Katalog und alle Plugins
+  src/plug_n_rag/                 Python core (i18n.py: English/German)
+  tests/                          pytest, sample vault, PDF generator
+plugins/plug-n-rag-anzeige/       optional mod: display in the chat (TypeScript)
+tools/check.sh                    checks the catalogue and all plugins
 ```
 
-Alles prüfen:
+Check everything:
 
 ```bash
 tools/check.sh --schnell
 ```
 
-Ohne `--schnell` laufen auch die Tests mit dem echten Sprachmodell (einmalig etwa 470 MB).
-Tests gegen Voyage AI laufen nur mit gesetztem `VOYAGE_API_KEY`. Wie ein weiteres Plugin dazukommt,
-steht in [CONTRIBUTING.md](CONTRIBUTING.md).
+Without `--schnell` the tests with the real language model run too (about 470 MB once), including
+English and cross-language searches. Tests against Voyage AI only run with `VOYAGE_API_KEY` set. How
+to add another plugin: [CONTRIBUTING.md](CONTRIBUTING.md) (German).
 
-Lizenz: MIT. Übernommene Ideen und ihre Lizenzen: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Licence: MIT. Ideas taken over and their licences: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -10,6 +10,7 @@ from .markdown import parse_markdown
 from .pdf import EXTRACT_VERSION as PDF_EXTRACT_VERSION
 from .pdf import load_extract, parse_pdf
 from .text import parse_text
+from ..i18n import tr
 
 EXTENSIONS = {
     ".md": "markdown",
@@ -53,7 +54,7 @@ def parse_bytes(data: bytes, rel: str, fmt: str, file_hash: str, cache_dir: Path
         return parse_text(rel, decode_text(data))
     if fmt == "pdf":
         return parse_pdf(rel, pdf_extract(data, rel, file_hash, cache_dir, transcripts_dir))
-    raise ExtractionError(f"Unbekanntes Format: {fmt}")
+    raise ExtractionError(tr(f"Unbekanntes Format: {fmt}", f"Unknown format: {fmt}"))
 
 
 def pdf_extract(data: bytes, rel: str, file_hash: str, cache_dir: Path | None,
@@ -81,14 +82,14 @@ def read_transcript(path: Path, file_hash: str) -> list[str] | None:
         text = path.read_text(encoding="utf-8")
     except OSError:
         return None
-    m = re.search(r"^datei_hash:\s*\"?([^\"\n]+)\"?\s*$", text, re.MULTILINE)
+    m = re.search(r"^(?:datei_hash|file_hash):\s*\"?([^\"\n]+)\"?\s*$", text, re.MULTILINE)
     if not m or m.group(1).strip() != file_hash:
         return None
-    parts = re.split(r"^<!-- Seite (\d+) -->\s*$", text, flags=re.MULTILINE)
+    parts = re.split(r"^<!-- (?:Seite|Page) (\d+) -->\s*$", text, flags=re.MULTILINE)
     pages: dict[int, str] = {}
     for i in range(1, len(parts) - 1, 2):
         body = parts[i + 1].strip()
-        pages[int(parts[i])] = "" if body == "[nicht erkannt]" else body
+        pages[int(parts[i])] = "" if body in ("[nicht erkannt]", "[not recognised]") else body
     if not pages:
         return None
     return [pages.get(n, "") for n in range(1, max(pages) + 1)]
@@ -107,6 +108,6 @@ def read_units(abs_path: Path, fmt: str, start: int, end: int, cache_dir: Path |
         pages = extract.get("pages", [])
         parts = []
         for p in range(start, min(end, len(pages)) + 1):
-            parts.append(f"<!-- Seite {p} -->\n{pages[p - 1]}")
+            parts.append(f"<!-- {tr('Seite', 'Page')} {p} -->\n{pages[p - 1]}")
         return "\n\n".join(parts)
-    raise ExtractionError(f"Unbekanntes Format: {fmt}")
+    raise ExtractionError(tr(f"Unbekanntes Format: {fmt}", f"Unknown format: {fmt}"))

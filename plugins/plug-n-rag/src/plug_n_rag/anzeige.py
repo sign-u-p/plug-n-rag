@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import time
 
-from . import __version__, tuning
+from . import __version__, i18n, tuning
 from .config import Layout, find_layout
 from .embed import model_id_for
 from .index_store import read_meta
@@ -26,7 +26,9 @@ def _indexing(layout: Layout) -> dict:
 
 
 def snapshot(layout: Layout | None) -> dict:
-    out: dict = {"version": __version__, "configured": False, "vault_detected": False}
+    i18n.use_layout(layout if layout is not None and layout.configured else None)
+    out: dict = {"version": __version__, "configured": False, "vault_detected": False,
+                 "language": i18n.language()}
     if layout is None:
         return out
     if not layout.configured:

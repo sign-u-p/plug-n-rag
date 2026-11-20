@@ -1,8 +1,8 @@
 {
   "name": "plug-n-rag-anzeige",
-  "displayName": "plug-n-rag Anzeige",
-  "version": "0.1.2",
-  "description": "Zeigt im Chat ruhig und auf Klick ausführlicher, was plug-n-rag tut: gefundene Notizen, gelesene Abschnitte, ob alles aktuell ist und wie viel gespart wurde. Optionaler Zusatz zu plug-n-rag.",
+  "displayName": "plug-n-rag Anzeige (display)",
+  "version": "0.2.0",
+  "description": "Shows calmly in the chat, and in detail on click, what plug-n-rag does: notes found, sections read, whether everything is up to date and how much was saved. Optional add-on to plug-n-rag. Deutsch: Zeigt im Chat ruhig, was plug-n-rag tut.",
   "author": {
     "name": "sign-u-p"
   },
@@ -13,6 +13,7 @@
     "plug-n-rag",
     "obsidian",
     "mod",
+    "display",
     "anzeige"
   ],
   "dependencies": [

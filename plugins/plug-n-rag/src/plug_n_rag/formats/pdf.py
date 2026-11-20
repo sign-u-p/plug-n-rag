@@ -15,6 +15,7 @@ from pathlib import Path
 
 from ..util import atomic_write_json, estimate_tokens, read_json
 from .base import Block, Document, ExtractionError, NeedsTranscription, OutlineItem, Section
+from ..i18n import tr
 
 EXTRACT_VERSION = "pdf-v2"  # v2: printed page numbers
 MIN_PAGE_CHARS = 25  # below this a page counts as "no text layer" (likely scanned)
@@ -94,14 +95,14 @@ def extract_pdf(data: bytes) -> dict:
     try:
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover
-        raise ExtractionError("pypdf ist nicht installiert") from exc
+        raise ExtractionError(tr("pypdf ist nicht installiert", "pypdf is not installed")) from exc
     try:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:
             try:
                 reader.decrypt("")
             except Exception as exc:  # noqa: BLE001
-                raise ExtractionError("PDF ist verschlüsselt") from exc
+                raise ExtractionError(tr("PDF ist verschlüsselt", "PDF is encrypted")) from exc
         pages = []
         for page in reader.pages:
             try:
@@ -125,7 +126,7 @@ def extract_pdf(data: bytes) -> dict:
     except ExtractionError:
         raise
     except Exception as exc:  # noqa: BLE001
-        raise ExtractionError(f"PDF konnte nicht gelesen werden: {exc}") from exc
+        raise ExtractionError(tr(f"PDF konnte nicht gelesen werden: {exc}", f"PDF could not be read: {exc}")) from exc
     try:
         labels = printed_page_labels(reader, pages)
     except Exception:  # noqa: BLE001
@@ -155,7 +156,8 @@ def parse_pdf(source: str, extract: dict) -> Document:
     empty = [i + 1 for i, p in enumerate(pages) if len(p) < MIN_PAGE_CHARS]
     if n == 0 or len(empty) == n:
         raise NeedsTranscription(
-            f"wartet auf Aufnahme: keine Textebene ({n} Seiten, eingescannt), /plug-n-rag:aufnehmen"
+            tr(f"wartet auf Aufnahme: keine Textebene ({n} Seiten, eingescannt), /plug-n-rag:aufnehmen",
+               f"waiting for ingestion: no text layer ({n} pages, scanned), /plug-n-rag:ingest")
         )
     meta = dict(extract.get("meta", {}))
     if extract.get("labels"):

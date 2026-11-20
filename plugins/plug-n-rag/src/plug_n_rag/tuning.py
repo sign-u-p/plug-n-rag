@@ -15,9 +15,12 @@ import time
 from pathlib import Path
 
 from .config import Layout
+from .i18n import tr
 from .util import atomic_write_json, read_json
 
 PURPOSES = ("frage", "recherche", "erstellen")
+PURPOSE_EN = {"frage": "question", "recherche": "research", "erstellen": "create"}
+PURPOSE_FROM_EN = {v: k for k, v in PURPOSE_EN.items()}
 DEFAULT_PURPOSE = "frage"
 
 START = {
@@ -84,6 +87,7 @@ def _clamp(name: str, value: float, bounds: dict) -> int:
 
 def params(layout: Layout, purpose: str) -> dict:
     """Effective parameters for a purpose: overrides > learned values > start values."""
+    purpose = PURPOSE_FROM_EN.get(purpose, purpose)
     purpose = purpose if purpose in PURPOSES else DEFAULT_PURPOSE
     t = load_tuning(layout)
     out = dict(START[purpose])
@@ -256,14 +260,19 @@ def describe(layout: Layout) -> list[str]:
     lines = []
     for p in PURPOSES:
         eff = params(layout, p)
-        src = "eigene Vorgabe" if t["user_overrides"].get(p) else (
-            f"gelernt aus {t['learned_from'].get(p, 0)} Suchen"
-            if t["learned_from"].get(p, 0) >= MIN_OBS else "Startwert")
-        extra = f", Nachbarabschnitte {eff['neighbors']}" if eff["neighbors"] else ""
-        lines.append(f"{p.capitalize()}: bis zu {eff['max_notes']} Notizen{extra} ({src})")
+        n = t["learned_from"].get(p, 0)
+        src = tr("eigene Vorgabe", "your setting") if t["user_overrides"].get(p) else (
+            tr(f"gelernt aus {n} Suchen", f"learned from {n} searches")
+            if n >= MIN_OBS else tr("Startwert", "default"))
+        extra = tr(f", Nachbarabschnitte {eff['neighbors']}", f", neighbouring sections {eff['neighbors']}") \
+            if eff["neighbors"] else ""
+        name = tr(p.capitalize(), PURPOSE_EN[p].capitalize())
+        lines.append(tr(f"{name}: bis zu {eff['max_notes']} Notizen{extra} ({src})",
+                        f"{name}: up to {eff['max_notes']} notes{extra} ({src})"))
     return lines
 
 
 def tuning_location_note(layout: Layout) -> str:
     p: Path = layout.tuning_path
-    return "im Repo (wird committet)" if p.parent == layout.state_dir else "nur lokal"
+    return tr("im Repo (wird committet)", "in the repo (committed)") if p.parent == layout.state_dir \
+        else tr("nur lokal", "local only")

@@ -115,8 +115,10 @@ def file_lock(path: Path, *, wait: float = 0.0, stale_after: float = 1800.0) -> 
 
 
 def fmt_int(n: int) -> str:
-    """German thousands separator: 2400 -> '2.400'."""
-    return f"{n:,}".replace(",", ".")
+    """Thousands separator of the current language: 2400 -> '2.400' (de) or '2,400' (en)."""
+    from .i18n import is_en
+
+    return f"{n:,}" if is_en() else f"{n:,}".replace(",", ".")
 
 
 def plural(n: int, one: str, many: str) -> str:

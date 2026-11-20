@@ -17,6 +17,7 @@ import numpy as np
 
 from ..util import user_cache_dir
 from . import EmbeddingUnavailable, normalize
+from ..i18n import tr
 
 LOCAL_MODELS: dict[str, dict] = {
     "intfloat/multilingual-e5-small": {
@@ -62,18 +63,22 @@ def _download(url: str, dest: Path, quiet: bool) -> None:
                     pct = done * 100 // total
                     if pct // 10 != last:
                         last = pct // 10
-                        print(f"  Modell-Download: {pct} % von {total // 1_000_000} MB", file=sys.stderr)
+                        print(tr(f"  Modell-Download: {pct} % von {total // 1_000_000} MB",
+                                 f"  Model download: {pct} % of {total // 1_000_000} MB"), file=sys.stderr)
         os.replace(tmp, dest)
     except (urllib.error.URLError, OSError, TimeoutError) as exc:
         try:
             tmp.unlink()
         except OSError:
             pass
-        raise EmbeddingUnavailable(
+        raise EmbeddingUnavailable(tr(
             f"Modell konnte nicht von Hugging Face geladen werden ({exc}). "
             "In Cloud-Sitzungen muss huggingface.co in der Netzwerkfreigabe stehen. "
-            "Bis dahin funktioniert nur die Stichwortsuche."
-        ) from exc
+            "Bis dahin funktioniert nur die Stichwortsuche.",
+            f"The model could not be downloaded from Hugging Face ({exc}). "
+            "In cloud sessions, huggingface.co must be in the network allowlist. "
+            "Until then, only keyword search works.",
+        )) from exc
 
 
 def ensure_model_files(name: str, revision: str, spec: dict, quiet: bool = True) -> Path:
@@ -108,9 +113,10 @@ class LocalEmbedder:
     def __init__(self, name: str, revision: str | None = None, quiet: bool | None = None):
         spec = LOCAL_MODELS.get(name)
         if spec is None:
-            raise EmbeddingUnavailable(
-                f"Lokales Modell '{name}' ist nicht bekannt. Bekannt: {', '.join(LOCAL_MODELS)}"
-            )
+            raise EmbeddingUnavailable(tr(
+                f"Lokales Modell '{name}' ist nicht bekannt. Bekannt: {', '.join(LOCAL_MODELS)}",
+                f"Unknown local model '{name}'. Known: {', '.join(LOCAL_MODELS)}",
+            ))
         self.name = name
         self.spec = spec
         self.revision = revision or spec["revision"]
@@ -131,7 +137,8 @@ class LocalEmbedder:
             import onnxruntime as ort
             from tokenizers import Tokenizer
         except ImportError as exc:  # pragma: no cover
-            raise EmbeddingUnavailable(f"onnxruntime/tokenizers fehlen: {exc}") from exc
+            raise EmbeddingUnavailable(tr(f"onnxruntime/tokenizers fehlen: {exc}",
+                                          f"onnxruntime/tokenizers missing: {exc}")) from exc
         d = ensure_model_files(self.name, self.revision, self.spec, quiet=self._quiet)
         tok = Tokenizer.from_file(str(d / self.spec["tokenizer"]))
         tok.enable_truncation(max_length=self.spec["max_length"])
@@ -141,7 +148,8 @@ class LocalEmbedder:
         try:
             sess = ort.InferenceSession(str(d / self.spec["onnx"]), opts, providers=["CPUExecutionProvider"])
         except Exception as exc:  # noqa: BLE001 - corrupt download etc.
-            raise EmbeddingUnavailable(f"Modell konnte nicht geladen werden: {exc}") from exc
+            raise EmbeddingUnavailable(tr(f"Modell konnte nicht geladen werden: {exc}",
+                                          f"Model could not be loaded: {exc}")) from exc
         inputs = {i.name for i in sess.get_inputs()}
         LocalEmbedder._cache[key] = (tok, sess, inputs)
         self._tokenizer, self._session, self._inputs = tok, sess, inputs

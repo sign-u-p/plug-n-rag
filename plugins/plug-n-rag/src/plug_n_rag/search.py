@@ -21,6 +21,7 @@ from .config import Layout
 from .db import chunk_vectors, open_db, vector_search
 from .embed import EmbeddingUnavailable, get_embedder, model_id_for
 from .formats.base import format_range, printed_suffix
+from .i18n import tr
 from .index_store import read_meta
 from .util import atomic_write_json, estimate_tokens, fmt_int, read_json
 
@@ -247,7 +248,8 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         n_vec = conn.execute("SELECT count(*) FROM vecs").fetchone()[0]
         if meta.get("model") and meta.get("model") != model_id_for(layout.config):
             keyword_only = True
-            notices.append("Index passt nicht zum Modell: nur Stichwortsuche. Neuindexierung mit /plug-n-rag:reindex.")
+            notices.append(tr("Index passt nicht zum Modell: nur Stichwortsuche. Neuindexierung mit /plug-n-rag:reindex.",
+                              "Index does not match the model: keyword search only. Rebuild with /plug-n-rag:reindex."))
         elif n_vec == 0:
             keyword_only = True
         else:
@@ -257,7 +259,8 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
                 qvec = emb.embed([query], "query")[0]
             except EmbeddingUnavailable as exc:
                 keyword_only = True
-                notices.append(f"Semantische Suche nicht verfügbar, nur Stichwortsuche ({exc}).")
+                notices.append(tr(f"Semantische Suche nicht verfügbar, nur Stichwortsuche ({exc}).",
+                                  f"Search by meaning not available, keyword search only ({exc})."))
             if qvec is not None:
                 vres = vector_search(conn, has_vec, qvec, k)
                 lists.append([cid for cid, _ in vres])
@@ -341,10 +344,10 @@ def knee_cut(scores: list[float], max_notes: int, *, min_notes: int = 1, ratio: 
 
 def label(strength: float) -> str:
     if strength >= 0.75:
-        return "sehr passend"
+        return tr("sehr passend", "very relevant")
     if strength >= 0.4:
-        return "passend"
-    return "am Rande"
+        return tr("passend", "relevant")
+    return tr("am Rande", "marginal")
 
 
 def _snippet(body: str, terms: list[str], width: int = 160) -> str:
@@ -367,7 +370,7 @@ def _section_label(h: Hit, unit: str) -> str:
         return h.heading_path.split(" > ")[-1]
     if unit == "pages":
         return "Text"
-    return "Anfang" if h.start <= 3 else "Abschnitt"
+    return tr("Anfang", "Beginning") if h.start <= 3 else tr("Abschnitt", "Section")
 
 
 def _cache_key(query: str, folder, tag, since, purpose) -> str:
@@ -386,11 +389,12 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
         key = _cache_key(query, folder, tag, since, purpose) if query else cached.get("key")
         if cached.get("key") != key or not cached.get("notes"):
             if not query:
-                return "Keine vorherige Suche zum Weiterblättern. Bitte zuerst suchen."
+                return tr("Keine vorherige Suche zum Weiterblättern. Bitte zuerst suchen.",
+                          "No previous search to continue. Please search first.")
         else:
             return _render_cached(layout, cached, params)
     if not query or not query.strip():
-        return "Bitte eine Suchanfrage angeben."
+        return tr("Bitte eine Suchanfrage angeben.", "Please give a search query.")
     relaxed = params["purpose"] == "recherche"
     notes, keyword_only, notices = run_query(layout, query, folder=folder, tag=tag, since=since,
                                              embedder=embedder, relaxed=relaxed)
@@ -398,8 +402,9 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
         notes, keyword_only, n2 = run_query(layout, query, embedder=embedder, relaxed=relaxed)
         notices += [n for n in n2 if n not in notices]
         if notes:
-            where = folder.strip("/") + "/" if folder else (f"Tag #{tag}" if tag else f"seit {since}")
-            fallback = f"Außerhalb von {where} gefunden" if folder else f"Ohne Filter ({where}) gefunden"
+            where = folder.strip("/") + "/" if folder else (f"Tag #{tag}" if tag else tr(f"seit {since}", f"since {since}"))
+            fallback = tr(f"Außerhalb von {where} gefunden", f"Found outside {where}") if folder \
+                else tr(f"Ohne Filter ({where}) gefunden", f"Found without filter ({where})")
     terms = query_terms(query)
     pending = _pending_notice(layout)
     if pending:
@@ -430,7 +435,7 @@ def _note_to_json(n: NoteResult, params: dict) -> dict:
     for h in n.hits[: params["chunks_per_note"]]:
         hits.append({"heading": h.heading_path, "start": h.start, "end": h.end, "tokens": h.tokens,
                      "strength": round(h.strength, 3), "snippet_src": h.body[:1200],
-                     "label": _section_label(h, n.unit) + (" · Literaturliste" if h.reference_list else ""),
+                     "label": _section_label(h, n.unit) + (tr(" · Literaturliste", " · reference list") if h.reference_list else ""),
                      "printed": printed_suffix(n.meta, n.unit, h.start, h.end)})
     return {"path": n.path, "title": n.title, "unit": n.unit, "tokens": n.tokens,
             "score": round(n.score, 5), "hits": hits}
@@ -460,46 +465,53 @@ def _render(layout: Layout, data: dict, offset: int, count: int, params: dict) -
     notes = data["notes"]
     lines: list[str] = []
     for n in data.get("notices", []):
-        lines.append(f"Hinweis: {n}")
+        lines.append(tr("Hinweis: ", "Note: ") + n)
     if not notes:
-        lines.append(f"Nichts Passendes gefunden zu „{data['title']}“.")
-        lines.append("Bitte nicht aus Allgemeinwissen antworten, als stünde es in den Notizen.")
+        lines.append(tr(f"Nichts Passendes gefunden zu „{data['title']}“.",
+                        f"Nothing relevant found for “{data['title']}”."))
+        lines.append(tr("Bitte nicht aus Allgemeinwissen antworten, als stünde es in den Notizen.",
+                        "Do not answer from general knowledge as if it came from the notes."))
         return "\n".join(lines)
     shown = notes[offset:offset + count]
-    head = f"{len(shown)} {'Notiz' if len(shown) == 1 else 'Notizen'} zu „{data['title']}“"
+    k = len(shown)
+    head = tr(f"{k} {'Notiz' if k == 1 else 'Notizen'} zu „{data['title']}“",
+              f"{k} {'note' if k == 1 else 'notes'} for “{data['title']}”")
     if offset:
-        head += f" (weiter ab Nr. {offset + 1})"
+        head += tr(f" (weiter ab Nr. {offset + 1})", f" (continued from no. {offset + 1})")
     if data.get("fallback"):
         head += f" – {data['fallback']}"
     if data.get("keyword_only"):
-        head += " (nur Stichwortsuche)"
+        head += tr(" (nur Stichwortsuche)", " (keyword search only)")
     lines += [head, ""]
     for i, n in enumerate(shown, start=offset + 1):
-        lines.append(f"{i}. {n['path']} ({fmt_int(n['tokens'])} Tokens)")
+        lines.append(f"{i}. {n['path']} ({fmt_int(n['tokens'])} {tr('Tokens', 'tokens')})")
         for j, h in enumerate(n["hits"]):
             s, e = _neighbors(layout, n["path"], h["start"], h["end"], params.get("neighbors", 0))
             printed = h.get("printed", "") if (s, e) == (h["start"], h["end"]) else ""
             lines.append(f"   › {h['label']}, {format_range(n['unit'], s, e)}{printed} ({label(h['strength'])})")
             if i == offset + 1 and j == 0:
-                lines.append(f"   „{_snippet(h['snippet_src'], data.get('terms', []))}“")
+                snip = _snippet(h['snippet_src'], data.get('terms', []))
+                lines.append(tr(f"   „{snip}“", f"   “{snip}”"))
         lines.append("")
     rest = len(notes) - (offset + len(shown))
     if rest > 0:
-        lines.append(f"[--weiter: {rest} weitere {'Notiz' if rest == 1 else 'Notizen'}]")
+        lines.append(tr(f"[--weiter: {rest} weitere {'Notiz' if rest == 1 else 'Notizen'}]",
+                        f"[--more: {rest} more {'note' if rest == 1 else 'notes'}]"))
     else:
         while lines and not lines[-1]:
             lines.pop()
     best = shown[0]
     h0 = best["hits"][0]
     anchor = f"#{h0['heading'].split(' > ')[-1]}" if h0["heading"] else f":{h0['start']}-{h0['end']}"
-    lines.append(f'Lesen: plug-n-rag lesen "{best["path"]}{anchor}" (nur passende Abschnitte, nicht ganze Dateien)')
+    lines.append(tr(f'Lesen: plug-n-rag lesen "{best["path"]}{anchor}" (nur passende Abschnitte, nicht ganze Dateien)',
+                    f'Read: plug-n-rag read "{best["path"]}{anchor}" (only matching sections, not whole files)'))
     return "\n".join(lines)
 
 
 def _render_cached(layout: Layout, cached: dict, params: dict) -> str:
     offset = cached.get("first", 0) + cached.get("page", 0) * cached.get("page_size", 3)
     if offset >= len(cached["notes"]):
-        return "Keine weiteren Treffer."
+        return tr("Keine weiteren Treffer.", "No more results.")
     count = cached.get("page_size", 3)
     cached["page"] = cached.get("page", 0) + 1
     atomic_write_json(layout.cache_dir / "last_search.json", cached, indent=None)
@@ -527,5 +539,6 @@ def _pending_notice(layout: Layout) -> str | None:
     errors_or_pending = read_json(layout.cache_dir / "pending.json", {}) or {}
     n = len(errors_or_pending.get("pending", []))
     if n:
-        return f"{n} Dateien sind noch nicht semantisch indexiert (Stichwortsuche deckt sie ab)."
+        return tr(f"{n} Dateien sind noch nicht semantisch indexiert (Stichwortsuche deckt sie ab).",
+                  f"{n} files are not yet indexed by meaning (keyword search covers them).")
     return None

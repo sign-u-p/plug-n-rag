@@ -17,7 +17,8 @@ import numpy as np
 from .config import Layout
 from .db import open_db
 from .search import STOPWORDS
-from .util import atomic_write_json, fmt_int, read_json
+from .i18n import tr
+from .util import atomic_write_json, fmt_int, plural, read_json
 
 WORD_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
 
@@ -76,7 +77,7 @@ def compute_map(layout: Layout) -> dict:
         conn.close()
     by_folder: dict[str, list] = collections.defaultdict(list)
     for r in rows:
-        by_folder[r["folder"] or "(Hauptordner)"].append(r)
+        by_folder[r["folder"] or tr("(Hauptordner)", "(top level)")].append(r)
     folders = []
     for folder in sorted(by_folder):
         items = by_folder[folder]
@@ -114,23 +115,29 @@ def compute_map(layout: Layout) -> dict:
 
 def karte(layout: Layout, short: bool = False) -> str:
     data = compute_map(layout)
-    kind = "Vault" if layout.mode == "vault" else "Sammlung"
+    kind = "Vault" if layout.mode == "vault" else tr("Sammlung", "Collection")
     names = [f["folder"] for f in data["folders"]]
+    n = data["notes"]
     if short:
         shown = ", ".join(names[:6]) + (" …" if len(names) > 6 else "")
-        return (f"{kind}: {fmt_int(data['notes'])} {'Datei' if data['notes'] == 1 else 'Dateien'} in "
-                f"{len(names)} {'Bereich' if len(names) == 1 else 'Bereichen'} ({shown}). "
-                "`plug-n-rag karte` für Details, `plug-n-rag suche \"…\" --zweck frage` zum Suchen.")
-    lines = [f"{kind} {layout.root.name}: {fmt_int(data['notes'])} Dateien", ""]
+        k = len(names)
+        return tr(f"{kind}: {fmt_int(n)} {'Datei' if n == 1 else 'Dateien'} in "
+                  f"{k} {'Bereich' if k == 1 else 'Bereichen'} ({shown}). "
+                  "`plug-n-rag karte` für Details, `plug-n-rag suche \"…\" --zweck frage` zum Suchen.",
+                  f"{kind}: {fmt_int(n)} {'file' if n == 1 else 'files'} in "
+                  f"{k} {'area' if k == 1 else 'areas'} ({shown}). "
+                  "`plug-n-rag map` for details, `plug-n-rag search \"…\" --purpose question` to search.")
+    lines = [tr(f"{kind} {layout.root.name}: {fmt_int(n)} Dateien", f"{kind} {layout.root.name}: {plural(n, 'file', 'files')}"), ""]
     for f in data["folders"]:
-        line = f"{f['folder']}/ · {f['count']} Dateien · {fmt_int(f['tokens'])} Tokens"
+        line = tr(f"{f['folder']}/ · {f['count']} Dateien · {fmt_int(f['tokens'])} Tokens",
+                  f"{f['folder']}/ · {plural(f['count'], 'file', 'files')} · {fmt_int(f['tokens'])} tokens")
         if f["span"]:
             line += f" · {f['span']}"
         lines.append(line)
         if f["desc"]:
             lines.append(f"  {f['desc']}")
         if f["topics"]:
-            lines.append("  Schwerpunkte: " + "; ".join(f["topics"]))
+            lines.append(tr("  Schwerpunkte: ", "  Main topics: ") + "; ".join(f["topics"]))
     if data["tags"]:
-        lines += ["", "Häufige Tags: " + ", ".join(f"#{t} ({n})" for t, n in data["tags"])]
+        lines += ["", tr("Häufige Tags: ", "Frequent tags: ") + ", ".join(f"#{t} ({c})" for t, c in data["tags"])]
     return "\n".join(lines)

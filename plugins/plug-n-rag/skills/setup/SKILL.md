@@ -1,14 +1,19 @@
 ---
 name: setup
-description: Geführte Einrichtung von plug-n-rag für eine Obsidian-Vault oder auf ausdrücklichen Wunsch für einen anderen Ordner (Dokumentensammlung, Bibliothek), inklusive Datenschutz-Hinweis, Git/GitHub, Kostenvoranschlag, erster Indexierung, Karte und optional Obsidian Git. Verwenden, wenn jemand die Vault oder einen Ordner durchsuchbar machen will oder der Sitzungsstart „noch nicht eingerichtet“ meldet.
+description: Geführte Einrichtung von plug-n-rag für eine Obsidian-Vault oder auf ausdrücklichen Wunsch für einen anderen Ordner (Dokumentensammlung, Bibliothek), inklusive Datenschutz-Hinweis, Git/GitHub, Kostenvoranschlag, erster Indexierung, Karte und optional Obsidian Git. Verwenden, wenn jemand die Vault oder einen Ordner durchsuchbar machen will oder der Sitzungsstart „noch nicht eingerichtet“ meldet. English: guided setup of plug-n-rag for an Obsidian vault or, on request, any folder (document collection, library); use when someone wants to make their vault or folder searchable.
 argument-hint: "[pfad zum ordner]"
 ---
+
+> **Sprache / language:** Antworte in der Sprache, in der die Nutzer:in schreibt; auf Deutsch
+> gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
+> gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
+> von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
 
 # Einrichtung von plug-n-rag (Gesprächsleitfaden)
 
 Du führst ein ruhiges, verständliches Gespräch. Die Nutzer:in hat keinen Entwicklungshintergrund.
-Keine Git-, Terminal- oder Datenbankbegriffe, außer auf Nachfrage. Deutsch, gendergerecht mit
-Doppelpunkt, kurze Absätze, eine Frage pro Nachricht (höchstens zwei eng verwandte).
+Keine Git-, Terminal- oder Datenbankbegriffe, außer auf Nachfrage. In der Sprache der Nutzer:in
+(Deutsch gendergerecht mit Doppelpunkt; englisch, wenn sie englisch schreibt), kurze Absätze, eine Frage pro Nachricht (höchstens zwei eng verwandte).
 
 Argument (optional): `$ARGUMENTS` – ein Ordner, der eingerichtet werden soll. Ohne Argument gilt
 der aktuelle Projektordner.
@@ -189,8 +194,8 @@ Zuerst dieser Hinweis, sinngemäß und kurz:
 
 Dann die Frage: **„Dürfen deine Inhalte zusätzlich an einen weiteren Dienst außer Anthropic gehen?“**
 
-- **Nein** (Standard) → lokales Modell (`--provider local`, intfloat/multilingual-e5-small, gut für
-  Deutsch). Einmaliger Download von etwa 470 MB von Hugging Face. Keine externe Texterkennung.
+- **Nein** (Standard) → lokales Modell (`--provider local`, intfloat/multilingual-e5-small, ausgewählt,
+  weil es Deutsch besonders gut kann; Englisch und rund 100 weitere Sprachen genauso). Einmaliger Download von etwa 470 MB von Hugging Face. Keine externe Texterkennung.
 - **Ja** → Voyage AI möglich (`--provider voyage`, Modell `voyage-3.5-lite`): schneller auf schwachen
   Rechnern, kostet pro Token. Der API-Key gehört **nur** in die Umgebungsvariable `VOYAGE_API_KEY`
   oder in die Datei `~/.config/plug-n-rag/voyage_api_key` außerhalb des Repos. Erkläre, wie die
@@ -209,8 +214,13 @@ die Transkriptionsfrage stellen oder ausdrücklich auf später verschieben.
 
 ```
 plug-n-rag init <pfad> --modus vault|sammlung [--ort ordner|zentral] --provider local|voyage \
-  --privat "Tagebuch/**" --ausschliessen "Archiv/**" [--abschriften neben_original|ordner|intern]
+  --privat "Tagebuch/**" --ausschliessen "Archiv/**" [--abschriften neben_original|ordner|intern] \
+  --sprache de|en
 ```
+
+`--sprache` (englisch `--language`) ist die Sprache, in der die Nutzer:in mit dir schreibt: `de` oder
+`en`. Sie bestimmt die festen Texte von plug-n-rag (Suchergebnisse, Status, Karte). Später änderbar
+mit `plug-n-rag konfig --setzen language=en`.
 
 `init` überschreibt nie eine bestehende Konfiguration. Anpassungen später mit
 `plug-n-rag konfig --setzen schluessel=wert` (z. B. `private_folders=["Tagebuch/**"]`).

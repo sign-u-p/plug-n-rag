@@ -1,8 +1,8 @@
 {
   "name": "plug-n-rag",
   "displayName": "plug-n-rag",
-  "version": "0.8.0",
-  "description": "Claude findet in deinen Obsidian-Notizen und Dokumenten, was zu deiner Frage passt, auch bei anderen Worten, und liest nur die passenden Abschnitte. Antworten mit Quellenangabe, weniger Verbrauch, deine Notizen bleiben unverändert und privat.",
+  "version": "0.9.0",
+  "description": "Claude finds what fits your question in your Obsidian notes and documents, even in other words, and reads only the matching sections: answers with sources, fewer tokens, your notes stay unchanged and private. English and German (search model chosen for its especially good German). Deutsch: Claude findet in deinen Obsidian-Notizen und Dokumenten, was zu deiner Frage passt, auch bei anderen Worten, und liest nur die passenden Abschnitte.",
   "author": {
     "name": "sign-u-p"
   },
@@ -12,9 +12,11 @@
   "keywords": [
     "obsidian",
     "rag",
+    "search",
     "suche",
     "embeddings",
     "vault",
+    "english",
     "deutsch"
   ]
 }

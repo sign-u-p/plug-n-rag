@@ -1,4 +1,4 @@
-// plug-n-rag Anzeige: shows quietly in the chat what plug-n-rag does.
+// plug-n-rag Anzeige (display): shows quietly in the chat what plug-n-rag does.
 //
 // * a compact, expandable row in place of each `plug-n-rag …` Bash call (search, read, sync …)
 // * a short word on the spinner while plug-n-rag works
@@ -14,8 +14,8 @@ import type { Register } from 'claude-code'
 
 import type { Entry, Snapshot, Tab } from '../types'
 import {
-  ICON, RELEVANCE_MARK, estimateTokens, parseCommand, parseRead, parseSearch, summarize,
-  type Call,
+  ICON, RELEVANCE_MARK, T, detectLang, estimateTokens, isMarginal, lang, parseCommand, parseRead, parseSearch,
+  setLang, summarize, type Call,
 } from './parse'
 
 const PANE = 'plug-n-rag'
@@ -27,7 +27,8 @@ const openRows = atom({ plugin: 'plug-n-rag-anzeige', key: 'open' } as const, []
 const bandHidden = atom({ plugin: 'plug-n-rag-anzeige', key: 'bandHidden' } as const, false)
 const active = atom({ plugin: 'plug-n-rag-anzeige', key: 'active' } as const, null as string | null)
 
-const fmt = (n: number) => n.toLocaleString('de-DE')
+const locale = () => (lang() === 'en' ? 'en-GB' : 'de-DE')
+const fmt = (n: number) => n.toLocaleString(locale())
 
 type Out = { stdout?: string; stderr?: string }
 
@@ -125,6 +126,7 @@ async function refresh($: Engine): Promise<void> {
     if (run.exitCode !== 0) return
     const data = JSON.parse(run.stdout.trim().split('\n').pop() ?? 'null') as Snapshot | null
     if (!data) return
+    setLang(data.language)
     await update($, snap, () => data)
     const isRunning = Boolean(data.indexing?.running)
     if (isRunning && !ticker) {
@@ -141,6 +143,7 @@ async function refresh($: Engine): Promise<void> {
 async function record(
   $: Engine, id: string, call: Call, out: string, isOk: boolean,
 ): Promise<void> {
+  setLang(detectLang(out))
   let fullTokens = 0
   if (call.kind === 'suche') fullTokens = parseSearch(out).hits.reduce((sum, x) => sum + x.tokens, 0)
   const entry: Entry = {
@@ -160,36 +163,36 @@ function details($: any, e: any, call: Call, out: string) {
   const rows: any[] = []
   if (call.kind === 'suche') {
     const s = parseSearch(out)
-    if (s.query) rows.push(<Text>{`„${s.query}“`}</Text>)
-    for (const n of s.notices) rows.push(<Text dimColor>{`Hinweis: ${n}`}</Text>)
+    if (s.query) rows.push(<Text>{T(`„${s.query}“`, `“${s.query}”`)}</Text>)
+    for (const n of s.notices) rows.push(<Text dimColor>{T('Hinweis: ', 'Note: ') + n}</Text>)
     if (s.outside) rows.push(<Text dimColor>{s.outside}</Text>)
-    if (s.isNothing) rows.push(<Text>Nichts Passendes in deinen Notizen. Claude soll dann nicht so tun, als stünde es dort.</Text>)
+    if (s.isNothing) rows.push(<Text>{T('Nichts Passendes in deinen Notizen. Claude soll dann nicht so tun, als stünde es dort.', 'Nothing relevant in your notes. Claude should then not pretend it is in there.')}</Text>)
     for (const hit of s.hits) {  // never name a variable `h`: JSX compiles to h(...)
-      rows.push(<Text>{`${hit.rank}. ${hit.path}  (${fmt(hit.tokens)} Tokens)`}</Text>)
+      rows.push(<Text>{`${hit.rank}. ${hit.path}  (${fmt(hit.tokens)} ${T('Tokens', 'tokens')})`}</Text>)
       for (const sec of hit.sections) {
         rows.push(
-          <Text dimColor={sec.relevance === 'am Rande'}>
+          <Text dimColor={isMarginal(sec.relevance)}>
             {`    ${RELEVANCE_MARK[sec.relevance] ?? ''} ${sec.relevance} · ${sec.label}, ${sec.range}`}
           </Text>,
         )
       }
     }
-    if (s.more) rows.push(<Text dimColor>{`+ ${s.more} weitere unter dem Schnitt (Claude kann sie mit --weiter holen)`}</Text>)
+    if (s.more) rows.push(<Text dimColor>{T(`+ ${s.more} weitere unter dem Schnitt (Claude kann sie mit --weiter holen)`, `+ ${s.more} more below the cut (Claude can fetch them with --more)`)}</Text>)
     const full = s.hits.reduce((sum, x) => sum + x.tokens, 0)
     if (full) {
-      rows.push(<Text dimColor>{`Trefferliste: ca. ${fmt(estimateTokens(out))} Tokens statt ${fmt(full)} für alle Treffer ganz (geschätzt)`}</Text>)
+      rows.push(<Text dimColor>{T(`Trefferliste: ca. ${fmt(estimateTokens(out))} Tokens statt ${fmt(full)} für alle Treffer ganz (geschätzt)`, `Result list: about ${fmt(estimateTokens(out))} tokens instead of ${fmt(full)} for all hits in full (estimate)`)}</Text>)
     }
   } else {
     const lines = out.split('\n').filter(l => l.trim()).slice(0, 12)
     for (const l of lines) rows.push(<Text dimColor wrap="truncate-end">{l}</Text>)
     if (out.split('\n').length > 12) rows.push(<Text dimColor>…</Text>)
   }
-  rows.push(<Text dimColor wrap="truncate-end">{`Befehl: plug-n-rag ${call.sub} ${call.rest}`.trim()}</Text>)
+  rows.push(<Text dimColor wrap="truncate-end">{`${T('Befehl', 'Command')}: plug-n-rag ${call.sub} ${call.rest}`.trim()}</Text>)
   return (
     <Box flexDirection="column" paddingLeft={2}>
       {rows}
       <Box>
-        <Button key={`pane-${e.props.tool_use_id}`} plain dimColor onPress={openPane} label="Seitenleiste öffnen" />
+        <Button key={`pane-${e.props.tool_use_id}`} plain dimColor onPress={openPane} label={T('Seitenleiste öffnen', 'Open side pane')} />
       </Box>
     </Box>
   )
@@ -199,7 +202,7 @@ async function paneAsText($: any): Promise<string> {
   const s: Snapshot | null = await read($, snap)
   const list: Entry[] = await read($, history)
   const lines = ['plug-n-rag']
-  if (s?.configured) lines.push(`${fmt(s.indexed ?? 0)} von ${fmt(s.files ?? 0)} Dateien semantisch durchsuchbar`)
+  if (s?.configured) lines.push(T(`${fmt(s.indexed ?? 0)} von ${fmt(s.files ?? 0)} Dateien semantisch durchsuchbar`, `${fmt(s.indexed ?? 0)} of ${fmt(s.files ?? 0)} files searchable by meaning`))
   for (const x of list.slice(-10)) lines.push(`- ${x.summary}`)
   return lines.join('\n')
 }
@@ -207,7 +210,7 @@ export const register: Register = on => {
   // --- session --------------------------------------------------------------------------------
   on('session.start', async ($, e, next) => {
     cwd = e.cwd
-    await $.command.register({ name: 'pnr', description: 'plug-n-rag: Verlauf, Vault und Ersparnis anzeigen' })
+    await $.command.register({ name: 'pnr', description: 'plug-n-rag: Verlauf, Vault und Ersparnis / history, vault and savings' })
     const started = await next(e)
     if (await isRelevant($, cwd)) void refresh($)
     return started
@@ -216,7 +219,7 @@ export const register: Register = on => {
   on('command.run', { command: 'pnr' }, async $ => {
     void refresh($)
     const opened = await $.ui.open({ id: PANE, title: 'plug-n-rag' })
-    if (opened.isPlaced) return { text: 'plug-n-rag: Seitenleiste geöffnet.' }
+    if (opened.isPlaced) return { text: T('plug-n-rag: Seitenleiste geöffnet.', 'plug-n-rag: side pane opened.') }
     return { text: await paneAsText($) }
   })
 
@@ -270,7 +273,7 @@ export const register: Register = on => {
           <Text color={e.props.isErrored ? 'error' : undefined} wrap="truncate-end">{line}</Text>
           {canExpand && (
             <Button key={`toggle-${id}`} plain dimColor onPress={toggle}
-              label={isOpen ? 'Details ausblenden' : 'Details'} />
+              label={isOpen ? T('Details ausblenden', 'Hide details') : 'Details'} />
           )}
         </Box>
         {isOpen && out ? details($, e, call, out) : null}
@@ -279,14 +282,17 @@ export const register: Register = on => {
   })
 
   // --- spinner ----------------------------------------------------------------------------
-  const SPIN: Record<string, string> = {
-    suche: 'Durchsucht deine Vault', lesen: 'Liest einen Abschnitt', gliederung: 'Liest die Gliederung',
-    verwandt: 'Sucht Verwandtes', karte: 'Erstellt den Überblick', sync: 'Gleicht die Vault ab',
-    aufnehmen: 'Nimmt PDFs auf', 'nach-main': 'Übernimmt nach main', umziehen: 'Stellt den Ordner um',
+  const SPIN: Record<string, [string, string]> = {
+    suche: ['Durchsucht deine Vault', 'Searching your vault'], lesen: ['Liest einen Abschnitt', 'Reading a section'],
+    gliederung: ['Liest die Gliederung', 'Reading the outline'], verwandt: ['Sucht Verwandtes', 'Finding related notes'],
+    karte: ['Erstellt den Überblick', 'Building the overview'], sync: ['Gleicht die Vault ab', 'Syncing the vault'],
+    aufnehmen: ['Nimmt PDFs auf', 'Ingesting PDFs'], 'nach-main': ['Übernimmt nach main', 'Publishing to main'],
+    umziehen: ['Stellt den Ordner um', 'Switching the folder layout'],
   }
   on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
     const kind = await read($, active)
-    const word = kind ? SPIN[kind] : undefined
+    const pair = kind ? SPIN[kind] : undefined
+    const word = pair ? T(pair[0], pair[1]) : undefined
     if (!word || e.props.mode !== 'tool-use') return next(e)
     return next({ ...e, props: { ...e.props, message: word } })
   })
@@ -310,19 +316,23 @@ export const register: Register = on => {
     if (s.indexing?.running) {
       const done = s.indexing.done ?? 0
       const total = s.indexing.total ?? 0
-      message = total ? `indexiert im Hintergrund: ${fmt(done)} von ${fmt(total)} Dateien · Stichwortsuche geht schon`
-        : 'indexiert im Hintergrund · Stichwortsuche geht schon'
+      message = total
+        ? T(`indexiert im Hintergrund: ${fmt(done)} von ${fmt(total)} Dateien · Stichwortsuche geht schon`,
+          `indexing in the background: ${fmt(done)} of ${fmt(total)} files · keyword search already works`)
+        : T('indexiert im Hintergrund · Stichwortsuche geht schon', 'indexing in the background · keyword search already works')
       if (total) progress = { done, total }
     } else if (s.model_mismatch) {
-      message = 'Index passt nicht zum Modell: nur Stichwortsuche'
-      suggestion = 'Bitte baue den plug-n-rag-Index neu auf (/plug-n-rag:reindex).'
+      message = T('Index passt nicht zum Modell: nur Stichwortsuche', 'Index does not match the model: keyword search only')
+      suggestion = T('Bitte baue den plug-n-rag-Index neu auf (/plug-n-rag:reindex).', 'Please rebuild the plug-n-rag index (/plug-n-rag:reindex).')
     } else if (s.awaiting?.length) {
       const n = s.awaiting.length
-      message = `${n} ${n === 1 ? 'eingescannte Datei wartet' : 'eingescannte Dateien warten'} auf Aufnahme`
-      suggestion = 'Bitte nimm die eingescannten PDFs mit /plug-n-rag:aufnehmen auf.'
+      message = T(`${n} ${n === 1 ? 'eingescannte Datei wartet' : 'eingescannte Dateien warten'} auf Aufnahme`,
+        `${n} ${n === 1 ? 'scanned file is' : 'scanned files are'} waiting for ingestion`)
+      suggestion = T('Bitte nimm die eingescannten PDFs mit /plug-n-rag:aufnehmen auf.', 'Please ingest the scanned PDFs with /plug-n-rag:ingest.')
     } else if (s.needs_update) {
-      message = 'aufgeräumter Ordneraufbau verfügbar'
-      suggestion = 'Bitte stelle plug-n-rag mit `plug-n-rag umziehen` auf den neuen Ordneraufbau um.'
+      message = T('aufgeräumter Ordneraufbau verfügbar', 'tidier folder layout available')
+      suggestion = T('Bitte stelle plug-n-rag mit `plug-n-rag umziehen` auf den neuen Ordneraufbau um.',
+        'Please switch plug-n-rag to the new folder layout with `plug-n-rag migrate`.')
     } else {
       return next(e)
     }
@@ -331,13 +341,13 @@ export const register: Register = on => {
         <Box gap={1}>
           <Text dimColor>plug-n-rag</Text>
           <Text wrap="truncate-end">{message}</Text>
-          {suggestion ? <Button key="band-do" plain onPress={ask(suggestion)} label="Vorschlag ins Eingabefeld" /> : null}
+          {suggestion ? <Button key="band-do" plain onPress={ask(suggestion)} label={T('Vorschlag ins Eingabefeld', 'Put suggestion in the prompt')} /> : null}
           <Button key="band-pane" plain dimColor onPress={openPane} label="Details" />
-          <Button key="band-hide" plain dimColor role="dismiss" onPress={hide} label="Ausblenden" />
+          <Button key="band-hide" plain dimColor role="dismiss" onPress={hide} label={T('Ausblenden', 'Hide')} />
         </Box>
         {progress ? (
-          <Progress label="Fortschritt der Indexierung" value={progress.done} max={progress.total}
-            valueText={`${fmt(progress.done)} von ${fmt(progress.total)}`} />
+          <Progress label={T('Fortschritt der Indexierung', 'Indexing progress')} value={progress.done} max={progress.total}
+            valueText={T(`${fmt(progress.done)} von ${fmt(progress.total)}`, `${fmt(progress.done)} of ${fmt(progress.total)}`)} />
         ) : null}
       </Box>
     )
@@ -352,7 +362,7 @@ export const register: Register = on => {
     const choose = (t: Tab) => () => update($, tab, () => t)
     const tabButton = (t: Tab, label: string, key: string) => (
       <Button key={`tab-${t}`} hotkey={key} variant={current === t ? 'primary' : 'secondary'}
-        onPress={choose(t)} label={current === t ? `${label} (gewählt)` : label} />
+        onPress={choose(t)} label={current === t ? `${label} ${T('(gewählt)', '(selected)')}` : label} />
     )
     const body = current === 'verlauf' ? historyView(Text, Box, list)
       : current === 'vault' ? vaultView(Text, Box, s)
@@ -360,10 +370,10 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" gap={1}>
         <Box gap={1}>
-          {tabButton('verlauf', 'Verlauf', '1')}
+          {tabButton('verlauf', T('Verlauf', 'History'), '1')}
           {tabButton('vault', 'Vault', '2')}
-          {tabButton('ersparnis', 'Ersparnis', '3')}
-          <Button key="refresh" plain dimColor hotkey="r" onPress={() => refresh($)} label="Aktualisieren" />
+          {tabButton('ersparnis', T('Ersparnis', 'Savings'), '3')}
+          <Button key="refresh" plain dimColor hotkey="r" onPress={() => refresh($)} label={T('Aktualisieren', 'Refresh')} />
         </Box>
         {body}
       </Box>
@@ -372,13 +382,13 @@ export const register: Register = on => {
 
   function historyView(Text: any, Box: any, list: Entry[]) {
     if (!list.length) {
-      return <Text dimColor>In dieser Sitzung hat plug-n-rag noch nichts getan. Frag Claude etwas zu deinen Notizen.</Text>
+      return <Text dimColor>{T('In dieser Sitzung hat plug-n-rag noch nichts getan. Frag Claude etwas zu deinen Notizen.', 'plug-n-rag has not done anything in this session yet. Ask Claude something about your notes.')}</Text>
     }
     return (
       <Box flexDirection="column">
         {[...list].reverse().slice(0, 60).map(x => (
           <Text color={x.isOk ? undefined : 'error'} wrap="truncate-end">
-            {`${new Date(x.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}  ${ICON[x.kind as keyof typeof ICON] ?? '•'} ${x.summary}`}
+            {`${new Date(x.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}  ${ICON[x.kind as keyof typeof ICON] ?? '•'} ${x.summary}`}
           </Text>
         ))}
       </Box>
@@ -386,26 +396,26 @@ export const register: Register = on => {
   }
 
   function vaultView(Text: any, Box: any, s: Snapshot | null) {
-    if (!s) return <Text dimColor>Noch keine Daten. „Aktualisieren“ wählen.</Text>
+    if (!s) return <Text dimColor>{T('Noch keine Daten. „Aktualisieren“ wählen.', 'No data yet. Choose “Refresh”.')}</Text>
     if (!s.configured) {
       return s.vault_detected
-        ? <Text>Obsidian-Vault erkannt, aber noch nicht eingerichtet. Schreib Claude: /plug-n-rag:setup</Text>
-        : <Text dimColor>Hier ist keine Vault oder Sammlung eingerichtet.</Text>
+        ? <Text>{T('Obsidian-Vault erkannt, aber noch nicht eingerichtet. Schreib Claude: /plug-n-rag:setup', 'Obsidian vault detected, but not set up yet. Write to Claude: /plug-n-rag:setup')}</Text>
+        : <Text dimColor>{T('Hier ist keine Vault oder Sammlung eingerichtet.', 'No vault or collection is set up here.')}</Text>
     }
     const rows: any[] = [
-      <Text bold>{`${s.mode === 'collection' ? 'Sammlung' : 'Vault'} „${s.name}“`}</Text>,
-      <Text>{`${fmt(s.indexed ?? 0)} von ${fmt(s.files ?? 0)} Dateien semantisch durchsuchbar`}</Text>,
+      <Text bold>{T(`${s.mode === 'collection' ? 'Sammlung' : 'Vault'} „${s.name}“`, `${s.mode === 'collection' ? 'Collection' : 'Vault'} “${s.name}”`)}</Text>,
+      <Text>{T(`${fmt(s.indexed ?? 0)} von ${fmt(s.files ?? 0)} Dateien semantisch durchsuchbar`, `${fmt(s.indexed ?? 0)} of ${fmt(s.files ?? 0)} files searchable by meaning`)}</Text>,
     ]
-    if (s.pending) rows.push(<Text>{`${fmt(s.pending)} warten noch (Stichwortsuche deckt sie ab)`}</Text>)
-    if (s.indexing?.running) rows.push(<Text>Indexierung läuft im Hintergrund</Text>)
-    if (s.awaiting?.length) rows.push(<Text>{`${s.awaiting.length} Scans warten auf Aufnahme: ${s.awaiting.slice(0, 3).join(', ')}${s.awaiting.length > 3 ? ' …' : ''}`}</Text>)
-    if (s.errors) rows.push(<Text color="error">{`${s.errors} Dateien konnten nicht gelesen werden (Claude: plug-n-rag status)`}</Text>)
-    if (s.embed_error) rows.push(<Text color="warning">{`Suche nach Bedeutung gerade nicht möglich: ${s.embed_error}`}</Text>)
-    if (s.model_mismatch) rows.push(<Text color="warning">Index passt nicht zum Modell: nur Stichwortsuche</Text>)
-    rows.push(<Text dimColor>{`Modell: ${s.model ?? '?'}`}</Text>)
-    rows.push(<Text dimColor>{s.location === 'inside' ? 'Index im Ordner (.plug-n-rag/)' : 'Index zentral auf diesem Rechner'}</Text>)
+    if (s.pending) rows.push(<Text>{T(`${fmt(s.pending)} warten noch (Stichwortsuche deckt sie ab)`, `${fmt(s.pending)} still waiting (keyword search covers them)`)}</Text>)
+    if (s.indexing?.running) rows.push(<Text>{T('Indexierung läuft im Hintergrund', 'Indexing runs in the background')}</Text>)
+    if (s.awaiting?.length) rows.push(<Text>{T(`${s.awaiting.length} Scans warten auf Aufnahme: `, `${s.awaiting.length} scans waiting for ingestion: `) + `${s.awaiting.slice(0, 3).join(', ')}${s.awaiting.length > 3 ? ' …' : ''}`}</Text>)
+    if (s.errors) rows.push(<Text color="error">{T(`${s.errors} Dateien konnten nicht gelesen werden (Claude: plug-n-rag status)`, `${s.errors} files could not be read (Claude: plug-n-rag status)`)}</Text>)
+    if (s.embed_error) rows.push(<Text color="warning">{T('Suche nach Bedeutung gerade nicht möglich: ', 'Search by meaning not possible right now: ') + s.embed_error}</Text>)
+    if (s.model_mismatch) rows.push(<Text color="warning">{T('Index passt nicht zum Modell: nur Stichwortsuche', 'Index does not match the model: keyword search only')}</Text>)
+    rows.push(<Text dimColor>{`${T('Modell', 'Model')}: ${s.model ?? '?'}`}</Text>)
+    rows.push(<Text dimColor>{s.location === 'inside' ? T('Index im Ordner (.plug-n-rag/)', 'Index inside the folder (.plug-n-rag/)') : T('Index zentral auf diesem Rechner', 'Index central on this computer')}</Text>)
     if (s.map?.length) {
-      rows.push(<Text bold>Bereiche</Text>)
+      rows.push(<Text bold>{T('Bereiche', 'Areas')}</Text>)
       for (const f of s.map) {
         rows.push(<Text wrap="truncate-end">{`${f.folder}/ · ${f.count}${f.desc ? ` · ${f.desc}` : ''}${f.topics.length ? ` · ${f.topics.join('; ')}` : ''}`}</Text>)
       }
@@ -419,23 +429,23 @@ export const register: Register = on => {
     const reads = list.filter(x => x.kind === 'lesen')
     const got = searches.reduce((n, x) => n + x.tokens, 0) + reads.reduce((n, x) => n + x.tokens, 0)
     const full = searches.reduce((n, x) => n + x.fullTokens, 0)
-    const rows: any[] = [<Text bold>Diese Sitzung</Text>]
-    rows.push(<Text>{`${searches.length} Suchen, ${reads.length} gezielt gelesene Abschnitte`}</Text>)
+    const rows: any[] = [<Text bold>{T('Diese Sitzung', 'This session')}</Text>]
+    rows.push(<Text>{T(`${searches.length} Suchen, ${reads.length} gezielt gelesene Abschnitte`, `${searches.length} searches, ${reads.length} sections read selectively`)}</Text>)
     if (full) {
       const pct = Math.max(0, Math.round(100 * (1 - got / full)))
-      rows.push(<Text>{`ca. ${fmt(got)} Tokens gelesen statt ${fmt(full)} für alle Trefferdateien ganz (−${pct} %)`}</Text>)
+      rows.push(<Text>{T(`ca. ${fmt(got)} Tokens gelesen statt ${fmt(full)} für alle Trefferdateien ganz (−${pct} %)`, `about ${fmt(got)} tokens read instead of ${fmt(full)} for all hit files in full (−${pct}%)`)}</Text>)
     }
     if (s?.savings?.searches) {
       const t = s.savings
       const pct = t.full ? Math.max(0, Math.round(100 * (1 - t.delivered / t.full))) : 0
-      rows.push(<Text bold>Insgesamt</Text>)
-      rows.push(<Text>{`${fmt(t.searches)} Suchen: ${fmt(t.delivered)} statt ${fmt(t.full)} Tokens (−${pct} %)`}</Text>)
+      rows.push(<Text bold>{T('Insgesamt', 'Overall')}</Text>)
+      rows.push(<Text>{T(`${fmt(t.searches)} Suchen: ${fmt(t.delivered)} statt ${fmt(t.full)} Tokens (−${pct} %)`, `${fmt(t.searches)} searches: ${fmt(t.delivered)} instead of ${fmt(t.full)} tokens (−${pct}%)`)}</Text>)
     }
     if (s?.tuning?.length) {
-      rows.push(<Text bold>Wie viel eine Suche liefert</Text>)
+      rows.push(<Text bold>{T('Wie viel eine Suche liefert', 'How much a search returns')}</Text>)
       for (const l of s.tuning) rows.push(<Text dimColor>{l}</Text>)
     }
-    rows.push(<Text dimColor>Alle Zahlen sind Schätzungen (etwa 4 Zeichen pro Token).</Text>)
+    rows.push(<Text dimColor>{T('Alle Zahlen sind Schätzungen (etwa 4 Zeichen pro Token).', 'All numbers are estimates (about 4 characters per token).')}</Text>)
     return <Box flexDirection="column">{rows}</Box>
   }
 

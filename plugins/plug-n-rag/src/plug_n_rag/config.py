@@ -154,8 +154,8 @@ def load_config(path: Path) -> dict:
 
 def save_config(path: Path, cfg: dict) -> None:
     header = (
-        "# Konfiguration von plug-n-rag. Änderungen am besten über den Chat mit Claude.\n"
-        "# Hier stehen nie API-Keys. Der Voyage-Key kommt aus VOYAGE_API_KEY.\n"
+        "# plug-n-rag – Konfiguration / configuration. Am besten über den Chat mit Claude ändern /\n"
+        "# best changed by asking Claude. Nie API-Keys hier / never API keys here (VOYAGE_API_KEY).\n"
     )
     body = yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False, default_flow_style=False)
     atomic_write_text(path, header + body)

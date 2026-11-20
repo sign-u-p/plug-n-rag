@@ -1,9 +1,14 @@
 ---
 name: aufnehmen
-description: Wandelt PDFs (auch eingescannte) mit plug-n-rag in durchsuchbaren Text um, Seite für Seite über eine Kaskade aus Textebene, lokaler Texterkennung und – nur mit Zustimmung – Transkription durch den Subagenten transkription. Verwenden, wenn neue PDFs in die Vault oder Sammlung sollen.
+description: Wandelt PDFs (auch eingescannte) mit plug-n-rag in durchsuchbaren Text um, Seite für Seite über eine Kaskade aus Textebene, lokaler Texterkennung und – nur mit Zustimmung – Transkription durch den Subagenten transkription. Verwenden, wenn neue PDFs in die Vault oder Sammlung sollen. English: turns PDFs, including scans, into searchable text (/plug-n-rag:ingest).
 argument-hint: "<pdf-datei> [weitere]"
-allowed-tools: Bash(plug-n-rag aufnehmen*) Bash(plug-n-rag sync*)
+allowed-tools: Bash(plug-n-rag aufnehmen*) Bash(plug-n-rag sync*) Bash(plug-n-rag ingest*)
 ---
+
+> **Sprache / language:** Antworte in der Sprache, in der die Nutzer:in schreibt; auf Deutsch
+> gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
+> gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
+> von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
 
 # PDFs aufnehmen
 

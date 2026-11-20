@@ -13,6 +13,7 @@ from pathlib import Path
 from . import gitops
 from .config import CONFIG_NAME, STATE_DIR_NAME, find_layout
 from .scan import detect_template_folders
+from .i18n import tr
 from .util import estimate_tokens, fmt_int
 
 PRIVATE_HINT_RE = re.compile(r"(tagebuch|journal|privat|private|personal|diary|persönlich)", re.I)
@@ -154,51 +155,75 @@ def inventory(root: Path) -> dict:
 
 
 def render(inv: dict) -> str:
-    lines = [f"Bestandsaufnahme von {inv['root']}"]
-    lines.append(f"Obsidian-Vault: {'ja' if inv['is_vault'] else 'nein'} · bereits eingerichtet: "
-                 f"{'ja' if inv['configured'] else 'nein'}")
-    lines.append(f"Markdown-Notizen: {fmt_int(inv['markdown_files'])} ({inv['markdown_mb']} MB, "
-                 f"ca. {fmt_int(inv['tokens'])} Tokens)")
+    yes, no = tr("ja", "yes"), tr("nein", "no")
+    lines = [tr(f"Bestandsaufnahme von {inv['root']}", f"Inventory of {inv['root']}")]
+    lines.append(tr(f"Obsidian-Vault: {yes if inv['is_vault'] else no} · bereits eingerichtet: "
+                    f"{yes if inv['configured'] else no}",
+                    f"Obsidian vault: {yes if inv['is_vault'] else no} · already set up: "
+                    f"{yes if inv['configured'] else no}"))
+    lines.append(tr(f"Markdown-Notizen: {fmt_int(inv['markdown_files'])} ({inv['markdown_mb']} MB, "
+                    f"ca. {fmt_int(inv['tokens'])} Tokens)",
+                    f"Markdown notes: {fmt_int(inv['markdown_files'])} ({inv['markdown_mb']} MB, "
+                    f"about {fmt_int(inv['tokens'])} tokens)"))
     if inv["markdown_files"]:
-        lines.append(f"Frontmatter in {round(inv['frontmatter_share'] * 100)} % der Notizen, "
-                     f"{inv['wikilinks_per_note']} Wikilinks pro Notiz")
+        lines.append(tr(f"Frontmatter in {round(inv['frontmatter_share'] * 100)} % der Notizen, "
+                        f"{inv['wikilinks_per_note']} Wikilinks pro Notiz",
+                        f"Frontmatter in {round(inv['frontmatter_share'] * 100)} % of the notes, "
+                        f"{inv['wikilinks_per_note']} wikilinks per note"))
     if inv["folders"]:
-        lines.append("Ordner: " + ", ".join(f"{f} ({n})" for f, n in inv["folders"][:12]))
+        lines.append(tr("Ordner: ", "Folders: ") + ", ".join(f"{f} ({n})" for f, n in inv["folders"][:12]))
     if inv["other_files"]:
-        lines.append("Andere Dateien: " + ", ".join(f"{e} ({n})" for e, n in inv["other_files"][:10]))
+        lines.append(tr("Andere Dateien: ", "Other files: ") + ", ".join(f"{e} ({n})" for e, n in inv["other_files"][:10]))
     if inv["pdfs"]:
         scans = inv["scanned_pdfs"]
         pages = sum(p["pages"] for p in scans)
         text_pages = sum(p["pages"] for p in inv["pdfs"] if p["text_layer"])
-        lines.append(f"PDFs: {len(inv['pdfs'])}, davon {len(scans)} ohne Textebene (eingescannt, {pages} Seiten); "
-                     f"mit Textebene {fmt_int(text_pages)} Seiten, ca. {fmt_int(inv['pdf_tokens'])} Tokens")
+        lines.append(tr(f"PDFs: {len(inv['pdfs'])}, davon {len(scans)} ohne Textebene (eingescannt, {pages} Seiten); "
+                        f"mit Textebene {fmt_int(text_pages)} Seiten, ca. {fmt_int(inv['pdf_tokens'])} Tokens",
+                        f"PDFs: {len(inv['pdfs'])}, {len(scans)} of them without text layer (scanned, {pages} pages); "
+                        f"with text layer {fmt_int(text_pages)} pages, about {fmt_int(inv['pdf_tokens'])} tokens"))
     if inv["template_folders"]:
-        lines.append("Vorlagen-Ordner (Vorschlag: ausschließen): " + ", ".join(inv["template_folders"]))
+        lines.append(tr("Vorlagen-Ordner (Vorschlag: ausschließen): ", "Template folders (suggestion: exclude): ")
+                     + ", ".join(inv["template_folders"]))
     if inv["private_candidates"]:
-        lines.append("Möglicherweise private Ordner (bitte nachfragen): " + ", ".join(inv["private_candidates"]))
+        lines.append(tr("Möglicherweise private Ordner (bitte nachfragen): ", "Possibly private folders (please ask): ")
+                     + ", ".join(inv["private_candidates"]))
     if inv["big_files"]:
-        lines.append("Dateien über 100 MB (GitHub lehnt sie ab): " + ", ".join(p for p, _ in inv["big_files"][:5]))
+        lines.append(tr("Dateien über 100 MB (GitHub lehnt sie ab): ", "Files over 100 MB (GitHub rejects them): ")
+                     + ", ".join(p for p, _ in inv["big_files"][:5]))
     if inv["cloud_sync_folder"]:
-        lines.append("Hinweis: Der Ordner liegt in einem Cloud-Sync-Ordner (iCloud/OneDrive/Dropbox). "
-                     "Git und Cloud-Sync zusammen führen oft zu Konflikten.")
+        lines.append(tr("Hinweis: Der Ordner liegt in einem Cloud-Sync-Ordner (iCloud/OneDrive/Dropbox). "
+                        "Git und Cloud-Sync zusammen führen oft zu Konflikten.",
+                        "Note: The folder is inside a cloud sync folder (iCloud/OneDrive/Dropbox). "
+                        "Git and cloud sync together often cause conflicts."))
     g = inv["git"]
     if not g["repo"]:
-        lines.append("Git: noch kein Repo")
+        lines.append(tr("Git: noch kein Repo", "Git: no repo yet"))
     else:
-        vis = {"private": "privat", "public": "ÖFFENTLICH", "internal": "intern"}.get(g["visibility"] or "", "unbekannt")
-        lines.append(f"Git: Repo vorhanden, GitHub: {g['github'] or 'nein'}" + (f", Sichtbarkeit {vis}" if g["remote"] else ""))
-    lines.append(f"GitHub-CLI: {'installiert' if g['gh_installed'] else 'fehlt'}"
-                 + (", angemeldet" if g["gh_logged_in"] else (", nicht angemeldet" if g["gh_installed"] else "")))
+        vis = {"private": tr("privat", "private"), "public": tr("ÖFFENTLICH", "PUBLIC"),
+               "internal": tr("intern", "internal")}.get(g["visibility"] or "", tr("unbekannt", "unknown"))
+        lines.append(tr(f"Git: Repo vorhanden, GitHub: {g['github'] or 'nein'}", f"Git: repo present, GitHub: {g['github'] or 'no'}")
+                     + (tr(f", Sichtbarkeit {vis}", f", visibility {vis}") if g["remote"] else ""))
+    gh_state = (tr(", angemeldet", ", signed in") if g["gh_logged_in"]
+                else (tr(", nicht angemeldet", ", not signed in") if g["gh_installed"] else ""))
+    lines.append(tr("GitHub-CLI: ", "GitHub CLI: ") + (tr("installiert", "installed") if g["gh_installed"] else tr("fehlt", "missing")) + gh_state)
+
     def est(label: str, e: dict) -> str:
-        return (f"{label}: ca. {fmt_int(e['tokens'])} Tokens, {fmt_int(e['chunks'])} Abschnitte · lokal ca. "
-                f"{max(1, round(e['local_seconds'] / 60))} Min. (plus einmalig ca. 470 MB Modell-Download) · "
-                f"Voyage ca. {fmt_int(e['voyage_tokens'])} Tokens")
+        minutes = max(1, round(e["local_seconds"] / 60))
+        return tr(f"{label}: ca. {fmt_int(e['tokens'])} Tokens, {fmt_int(e['chunks'])} Abschnitte · lokal ca. "
+                  f"{minutes} Min. (plus einmalig ca. 470 MB Modell-Download) · "
+                  f"Voyage ca. {fmt_int(e['voyage_tokens'])} Tokens",
+                  f"{label}: about {fmt_int(e['tokens'])} tokens, {fmt_int(e['chunks'])} sections · locally about "
+                  f"{minutes} min (plus a one-time model download of about 470 MB) · "
+                  f"Voyage about {fmt_int(e['voyage_tokens'])} tokens")
 
     if inv["text_files"] or inv["pdf_tokens"]:
-        lines.append(est("Schätzung Vault-Modus (nur Markdown)", inv["estimate_vault"]))
-        lines.append(est("Schätzung Sammlungs-Modus (Markdown, Text, PDF mit Textebene)", inv["estimate_collection"]))
+        lines.append(est(tr("Schätzung Vault-Modus (nur Markdown)", "Estimate vault mode (Markdown only)"),
+                         inv["estimate_vault"]))
+        lines.append(est(tr("Schätzung Sammlungs-Modus (Markdown, Text, PDF mit Textebene)",
+                            "Estimate collection mode (Markdown, text, PDF with text layer)"), inv["estimate_collection"]))
     else:
-        lines.append(est("Schätzung", inv["estimate"]))
+        lines.append(est(tr("Schätzung", "Estimate"), inv["estimate"]))
     return "\n".join(lines)
 
 

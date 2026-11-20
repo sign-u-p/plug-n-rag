@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Stand: 19.11.2026, nach Sprint 1.
+Stand: 20.11.2026, Version 0.9.0.
 
 ## Checkliste: nur in einer neuen Sitzung prüfbar
 
@@ -114,7 +114,13 @@ Stop-Hook durchlaufen. Offen ist:
   daher nur tatsächliche Lese-Aufrufe auf Treffer, nicht bloßes Weiterblättern.
 - **Read-Werkzeug im Lernprotokoll**: Liest Claude Abschnitte mit dem eingebauten Read statt mit
   `plug-n-rag lesen`, sieht das Lernprotokoll das nicht. Möglich wäre ein PostToolUse-Hook.
-- **Sprachumschaltung**: Ausgaben sind nur deutsch.
+- **Weitere Sprachen**: Ausgaben gibt es auf Deutsch und Englisch (0.9). Das Modell kann rund 100
+  Sprachen; für weitere Ausgabesprachen müsste `tr()` zu einer Tabelle werden.
+- **Englisch an einer echten englischen Vault prüfen** (Schwellen `min_similarity`/`strong_similarity`
+  sind an deutschen Texten kalibriert; an der englischen Beispiel-Vault passten sie). Ebenso die
+  Suche über Sprachgrenzen hinweg in gemischten Vaults.
+- **Tesseract-Sprachpakete**: die lokale Texterkennung nutzt `deu+eng`; fehlt eines der Pakete,
+  bricht Tesseract ab. Prüfen, welche installiert sind, und nur die vorhandenen verwenden.
 
 ## Kann-Umfang (Punkt 8 des Auftrags)
 

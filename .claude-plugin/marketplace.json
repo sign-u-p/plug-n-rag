@@ -1,6 +1,6 @@
 {
   "name": "plug-n-rag",
-  "description": "Erweiterungen für Claude Code von sign-u-p, rund um plug-n-rag: Claude findet in deinen Notizen und Dokumenten, was zu deiner Frage passt.",
+  "description": "Extensions for Claude Code by sign-u-p around plug-n-rag: Claude finds what fits your question in your notes and documents. English and German. Deutsch: Erweiterungen rund um plug-n-rag, auf Englisch und Deutsch.",
   "owner": {
     "name": "sign-u-p"
   },
@@ -8,12 +8,12 @@
     {
       "name": "plug-n-rag",
       "source": "./plugins/plug-n-rag",
-      "description": "Claude findet in deinen Obsidian-Notizen und Dokumenten, was zu deiner Frage passt, auch bei anderen Worten, und liest nur die passenden Abschnitte. Antworten mit Quellenangabe, weniger Verbrauch, deine Notizen bleiben unverändert und privat."
+      "description": "Claude finds what fits your question in your Obsidian notes and documents, even in other words, and reads only the matching sections: answers with sources, fewer tokens, your notes stay unchanged and private. English and German (search model chosen for its especially good German). Deutsch: Claude findet in deinen Obsidian-Notizen und Dokumenten, was zu deiner Frage passt, auch bei anderen Worten, und liest nur die passenden Abschnitte."
     },
     {
       "name": "plug-n-rag-anzeige",
       "source": "./plugins/plug-n-rag-anzeige",
-      "description": "Zeigt im Chat ruhig und auf Klick ausführlicher, was plug-n-rag tut: gefundene Notizen, gelesene Abschnitte, ob alles aktuell ist und wie viel gespart wurde. Optionaler Zusatz zu plug-n-rag."
+      "description": "Shows calmly in the chat, and in detail on click, what plug-n-rag does: notes found, sections read, whether everything is up to date and how much was saved. Optional add-on to plug-n-rag. Deutsch: Zeigt im Chat ruhig, was plug-n-rag tut."
     }
   ]
 }

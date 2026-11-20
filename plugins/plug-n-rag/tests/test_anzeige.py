@@ -26,7 +26,7 @@ def test_snapshot_unconfigured_vault(tmp_path):
     root = copy_vault(tmp_path)
     data = snapshot(find_layout(root))
     assert data == {"version": data["version"], "configured": False, "vault_detected": True,
-                    "root": str(root.resolve()), "name": "vault"}
+                    "language": "de", "root": str(root.resolve()), "name": "vault"}
 
 
 def test_cloud_session_asks_for_a_source_line(layout, fake, capsys, monkeypatch):

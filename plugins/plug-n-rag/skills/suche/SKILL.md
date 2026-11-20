@@ -1,8 +1,13 @@
 ---
 name: suche
-description: Durchsucht die Obsidian-Vault oder eingerichtete Sammlung der Nutzer:in mit plug-n-rag (semantisch und per Stichwort) und liest nur die passenden Abschnitte. Immer verwenden, wenn eine Frage, Recherche oder ein Text sich auf Inhalte der eigenen Notizen, Dokumente oder der Vault stützen soll, statt grep oder ganze Dateien zu lesen.
+description: Durchsucht die Obsidian-Vault oder eingerichtete Sammlung der Nutzer:in mit plug-n-rag (semantisch und per Stichwort) und liest nur die passenden Abschnitte. Immer verwenden, wenn eine Frage, Recherche oder ein Text sich auf Inhalte der eigenen Notizen, Dokumente oder der Vault stützen soll, statt grep oder ganze Dateien zu lesen. English: searches the user's own Obsidian vault or collection by meaning and keyword and reads only matching sections; always use when a question, research or text should rely on the user's own notes or documents.
 allowed-tools: Bash(plug-n-rag *)
 ---
+
+> **Sprache / language:** Antworte in der Sprache, in der die Nutzer:in schreibt; auf Deutsch
+> gendergerecht mit Doppelpunkt. If the user writes in English, answer in English. Alle Befehle
+> gibt es auch englisch (`search`, `read`, `outline`, `--purpose question`, …); die festen Texte
+> von plug-n-rag folgen der Sprache der Vault (`language` in der Konfiguration).
 
 # Suchen und Lesen in der Vault
 
@@ -52,4 +57,7 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
 - Notizen nie ohne ausdrückliche Zustimmung ändern. Wenn du mit Zustimmung Notizen änderst und
   committest, `.plug-n-rag/` im selben Commit mitnehmen (vorher `plug-n-rag sync`).
   Soll es in den Hauptstand („nach main“, „damit ich es in Obsidian sehe“): `/plug-n-rag:nach-main`.
-- Ausgaben an Nutzer:innen auf Deutsch, gendergerecht mit Doppelpunkt.
+- Antworten in der Sprache der Nutzer:in; auf Deutsch gendergerecht mit Doppelpunkt. Die Suche
+  findet über Sprachgrenzen hinweg (englische Frage, deutsche Notiz und umgekehrt), am
+  zuverlässigsten aber in der Sprache der Notizen: Bei mageren Treffern die Frage zusätzlich in
+  der Sprache der Vault stellen.

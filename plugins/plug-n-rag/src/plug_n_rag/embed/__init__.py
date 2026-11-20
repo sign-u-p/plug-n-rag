@@ -81,4 +81,6 @@ def get_embedder(config: dict) -> Embedder:
         from .fake import FakeEmbedder
 
         return FakeEmbedder()
-    raise EmbeddingUnavailable(f"Unbekannter Embedding-Provider: {provider}")
+    from ..i18n import tr
+
+    raise EmbeddingUnavailable(tr(f"Unbekannter Embedding-Provider: {provider}", f"Unknown embedding provider: {provider}"))
