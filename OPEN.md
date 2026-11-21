@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Stand: 20.11.2026, Version 0.9.0.
+Stand: 21.11.2026, Version 0.9.3.
 
 ## Checkliste: nur in einer neuen Sitzung prüfbar
 
@@ -35,6 +35,9 @@ Stop-Hook durchlaufen. Offen ist:
   - [ ] Kann Claude die Umgebung mit eigenen Werkzeugen vorschlagen (Skill `cloud`, Schritt 3)?
   - Korrigiert (21.11.2026, Claude Code 2.1.330): Ein während der Sitzung installiertes Plugin
     lädt erst nach `/reload-plugins`; `plug-n-rag` auf dem PATH ist sofort da (Entscheidung 69).
+- [ ] **Suchmodus in einer echten Cloud-Sitzung** (0.9.3): Zeigt die erste Suche „nur Stichwort ·
+      Suchmodell lädt (…%)“ mit steigendem Wert, kennzeichnet Claude die Antwort als vorläufig, und
+      wartet `suche --warten` bis zum Ende des Downloads? Nennt `status` danach „bereit seit …“?
 - [ ] **Selbst-Einrichtung** (`cloud --einbinden`) in einer echten Cloud-Sitzung über claude.ai mit
       einem Vault-Repo, dessen `main` das Start-Skript enthält:
   - [ ] Läuft der Hook, und erreicht er github.com in einer Umgebung mit Netzwerk „Limited“?

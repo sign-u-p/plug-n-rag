@@ -70,7 +70,7 @@ def cmd_suche(args):
 
     query = " ".join(args.frage) if args.frage else None
     _print(search(_layout(args), query, purpose=_purpose(args.zweck), folder=args.in_, tag=args.tag,
-                  since=args.seit, more=args.weiter))
+                  since=args.seit, more=args.weiter, wait=args.warten, chronological=args.chronologisch))
 
 
 def cmd_gliederung(args):
@@ -142,6 +142,8 @@ def cmd_sync(args):
     if layout is None or not layout.configured:
         return
     progress = (lambda msg: print("  " + msg, file=sys.stderr)) if args.fortschritt else None
+    if getattr(args, "modell_vorab", False):
+        _ensure_local_model(layout)
     try:
         r = sync(layout, time_budget=args.budget, progress=progress, lock_wait=0 if args.quiet else 60)
     except LockBusy:
@@ -152,6 +154,25 @@ def cmd_sync(args):
     _write_pending_spawn(layout, r, args)
     if not args.quiet:
         _print(_report_text(r))
+
+
+def _ensure_local_model(layout: Layout) -> None:
+    """Download the local model (progress in its .download.json, read by `suche` and `status`)."""
+    from .embed import EmbeddingUnavailable
+    from .embed.local import LOCAL_MODELS, ensure_model_files, is_model_cached
+    from .readiness import _download_running
+
+    emb = layout.config.get("embedding", {}) or {}
+    name = emb.get("model", "intfloat/multilingual-e5-small")
+    spec = LOCAL_MODELS.get(name)
+    if emb.get("provider", "local") != "local" or spec is None or is_model_cached(name, emb.get("revision")):
+        return
+    if _download_running(layout):
+        return
+    try:
+        ensure_model_files(name, emb.get("revision") or spec["revision"], spec)
+    except EmbeddingUnavailable:
+        pass  # recorded in .download.json; the search reports it
 
 
 def _write_pending_spawn(layout, r, args):
@@ -363,10 +384,16 @@ def write_launcher() -> Path:
     return path
 
 
-def spawn_background_sync(layout: Layout) -> None:
-    """Continue indexing detached from the hook so the session can start right away."""
+def spawn_background_sync(layout: Layout, *, load_model: bool = False) -> None:
+    """Continue indexing detached from the hook so the session can start right away.
+
+    ``load_model`` downloads the local search model first, even if no file needs embedding
+    (fresh clone with a complete index: only the query model is missing).
+    """
     log = layout.cache_dir / "background.log"
     cmd = [sys.executable, "-m", "plug_n_rag.cli", "--ordner", str(layout.root), "sync", "--quiet"]
+    if load_model:
+        cmd.append("--modell-vorab")
     try:
         with open(log, "ab") as fh:
             kwargs = {"stdout": fh, "stderr": fh, "stdin": subprocess.DEVNULL, "cwd": str(layout.root)}
@@ -403,24 +430,34 @@ def cmd_session_start(args):
         if msg:
             notes.append(msg)
     budget = args.budget
+    model_missing = False
     emb_cfg = layout.config.get("embedding", {})
     if emb_cfg.get("provider", "local") == "local":
         from .embed.local import is_model_cached
 
         if not is_model_cached(emb_cfg.get("model", ""), emb_cfg.get("revision")):
+            model_missing = True
             budget = 0  # never download ~470 MB inside the hook: the background sync does it
             notes.append(tr("Das Suchmodell wird einmalig im Hintergrund geladen (etwa 470 MB). "
                             "Bis dahin funktioniert die Stichwortsuche.",
                             "The search model is loaded once in the background (about 470 MB). "
                             "Until then keyword search works."))
+            notes.append(tr("Bis dahin sind Suchergebnisse vorläufig: Jede Suche nennt ihren Suchmodus. "
+                            "Mit `plug-n-rag suche … --warten` wartet die Suche, bis der semantische Index "
+                            "bereit ist.",
+                            "Until then search results are provisional: every search states its search "
+                            "mode. With `plug-n-rag search … --wait` the search waits until search by "
+                            "meaning is ready."))
     try:
         r = sync(layout, time_budget=budget, lock_wait=5)
     except LockBusy:
         r = None
         notes.append(tr("Ein Abgleich läuft bereits im Hintergrund.", "A sync is already running in the background."))
+    if r is not None and model_missing and not r.model_mismatch and not (r.pending and not r.embed_error):
+        spawn_background_sync(layout, load_model=True)  # index complete, only the query model is missing
     if r is not None:
         if r.pending and not r.embed_error and not r.model_mismatch:
-            spawn_background_sync(layout)
+            spawn_background_sync(layout, load_model=model_missing)
             notes.append(tr(f"{plural(len(r.pending), 'Datei wird', 'Dateien werden')} im Hintergrund indexiert; "
                             "Stichwortsuche funktioniert schon.",
                             f"{plural(len(r.pending), 'file is', 'files are')} being indexed in the background; "
@@ -671,6 +708,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--seit", "--since", dest="seit", metavar=tr("JJJJ-MM-TT", "YYYY-MM-DD"))
     s.add_argument("--weiter", "--more", dest="weiter", action="store_true",
                    help=tr("nächste Seite der letzten Suche", "next page of the last search"))
+    s.add_argument("--warten", "--wait", dest="warten", nargs="?", type=float, const=300.0, default=None,
+                   metavar=tr("SEK", "SEC"),
+                   help=tr("warten, bis der semantische Index bereit ist (höchstens SEK, Standard 300)",
+                           "wait until search by meaning is ready (at most SEC, default 300)"))
+    s.add_argument("--chronologisch", "--chronological", dest="chronologisch", action="store_true",
+                   help=tr("nach Datum der Notiz auflisten statt nach Relevanz (mit --in, --seit, --tag; "
+                           "mit Frage nur passende Notizen)",
+                           "list by the note's date instead of relevance (with --in, --since, --tag; "
+                           "with a question only matching notes)"))
     s.set_defaults(func=cmd_suche)
 
     s = _cmd(sub, "gliederung", "outline", "Überschriften mit Positionen und Größe",
@@ -698,6 +744,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--budget", type=float, default=None,
                    help=tr("Zeitbudget in Sekunden, Rest im Hintergrund", "time budget in seconds, rest in the background"))
     s.add_argument("--fortschritt", "--progress", dest="fortschritt", action="store_true")
+    s.add_argument("--modell-vorab", "--model-first", dest="modell_vorab", action="store_true",
+                   help=argparse.SUPPRESS)  # background sync: load the local model first
     s.set_defaults(func=cmd_sync)
 
     s = sub.add_parser("hydrate", help=tr("Suchdatenbank aus Index-Dateien bauen", "build the search database from index files"))

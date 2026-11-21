@@ -32,6 +32,11 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
    - `erstellen`: Grundlage für einen neuen Text, wenige Notizen, dafür vollständiger lesen
    - Filter nur, wenn die Frage einen Bereich nahelegt: `--in <ordner>`, `--tag <tag>`, `--seit JJJJ-MM-TT`
    - Mehr Treffer derselben Suche: `plug-n-rag suche --weiter` (rechnet nicht neu)
+   - Fragen nach dem **zeitlichen Ablauf** („Was passierte danach?“, „Wie ging es weiter?“) passen
+     schlecht zur Relevanzsuche. Dafür: `plug-n-rag suche --in <ordner> --chronologisch --seit JJJJ-MM-TT`
+     (Notizen nach Datum aus Dateiname oder Frontmatter, Wochennotizen wie `2024-W07` eingeschlossen;
+     mit Frage nur die passenden). Für eine einzelne Tagesnotiz nennt `plug-n-rag verwandt <pfad>`
+     den Tag davor und danach und die Wochennotiz. Nicht auf `ls`/`cat` ausweichen.
 3. **Gliederung** bei Notizen über etwa 1.000 Tokens: `plug-n-rag gliederung <pfad>`
 4. **Lesen**, nur was gebraucht wird:
    - Abschnitt: `plug-n-rag lesen "<pfad>#<Überschrift>"`
@@ -40,6 +45,18 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
 5. **Verwandtes**: `plug-n-rag verwandt <pfad>` (Links und Backlinks zuerst, dann inhaltlich ähnlich)
 
 ## Regeln
+
+- **Suchmodus beachten.** Die erste Zeile jeder Suche nennt den Modus:
+  „Suchmodus: semantisch + Stichwort · Index vollständig“ heißt, das Ergebnis ist vollständig.
+  „nur Stichwort · Suchmodell lädt (60 %)“ oder „erst 20 von 32 Dateien semantisch indexiert“
+  heißt: **vorläufig**. Dann steht beim Ergebnis „⚠ Vorläufiges Ergebnis“. In diesem Fall
+  - die Antwort ausdrücklich als vorläufig kennzeichnen („Vorläufig, die Suche nach Bedeutung
+    lädt noch: …“), und „nichts gefunden“ nie als „steht nicht in den Notizen“ ausgeben, oder
+  - dieselbe Suche mit `--warten` wiederholen (wartet bis zu 300 s, bis der semantische Index
+    bereit ist; `--warten 60` begrenzt). Das lohnt sich, wenn die Antwort vollständig sein muss
+    (Recherche, Überblick, „alle Stellen zu …“).
+  Ergebnisse aus einer vorläufigen Suche nicht später als vollständig weiterverwenden; nach
+  `--weiter` sagt die Ausgabe, wenn der Index inzwischen bereit ist.
 
 - **Keine ganzen Dateien lesen** (kein `cat`, kein Read ohne Zeilenbereich), solange die Abschnitte
   aus der Trefferliste reichen. Die Suche nennt am Ende den passenden `plug-n-rag lesen`-Befehl.
@@ -59,8 +76,8 @@ aktuellen Ordner; für einen anderen Ordner `--ordner <pfad>` vor den Befehl set
   „zu ausführlich“ → `plug-n-rag lernen --knapper --zweck <zweck>`. Kurz bestätigen.
 - Meldet die Suche einen Modellkonflikt oder veralteten Index: Nutzer:in informieren und
   `/plug-n-rag:reindex` anbieten.
-- Kann in einer Cloud-Sitzung das Suchmodell nicht geladen werden („nur Stichwortsuche“, Hugging
-  Face nicht erreichbar): kurz erklären und `/plug-n-rag:cloud` anbieten.
+- Kann in einer Cloud-Sitzung das Suchmodell nicht geladen werden („Suchmodell nicht ladbar“,
+  Hugging Face nicht erreichbar): kurz erklären und `/plug-n-rag:cloud` anbieten.
 - Notizen nie ohne ausdrückliche Zustimmung ändern. Wenn du mit Zustimmung Notizen änderst und
   committest, `.plug-n-rag/` im selben Commit mitnehmen (vorher `plug-n-rag sync`).
   Soll es in den Hauptstand („nach main“, „damit ich es in Obsidian sehe“): `/plug-n-rag:nach-main`.

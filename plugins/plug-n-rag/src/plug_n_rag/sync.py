@@ -268,8 +268,14 @@ def _sync_locked(layout, embedder, time_budget, force, progress) -> SyncReport:
         progress_path.unlink()
     except OSError:
         pass
+    # When did the index last become complete? Kept while it stays complete, so that
+    # `status` can say since when search by meaning covers every file.
+    old_pending = read_json(layout.cache_dir / "pending.json", {}) or {}
+    complete = not report.pending and not report.embed_error and not report.model_mismatch
+    complete_at = (old_pending.get("complete_at") or time.time()) if complete else None
     atomic_write_json(layout.cache_dir / "pending.json", {
         "pending": report.pending, "embed_error": report.embed_error,
+        "total": report.total_files - len(report.awaiting), "complete_at": complete_at,
         "model_mismatch": list(report.model_mismatch) if report.model_mismatch else None,
         "too_large": report.too_large,
         "awaiting": report.awaiting,

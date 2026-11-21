@@ -326,11 +326,11 @@ Claude soll sich stufenweise herantasten: **Karte → Suche → Gliederung → A
 | Befehl | Zweck |
 | --- | --- |
 | `vault karte [--kurz]` | Überblick: Ordner, Anzahl, Beschreibung, Schwerpunkte, häufige Tags |
-| `vault suche "<frage>" [--zweck frage\|recherche\|erstellen] [--in <ordner>] [--tag <t>] [--seit <datum>] [--weiter]` | Relevante Notizen finden |
+| `vault suche "<frage>" [--zweck frage\|recherche\|erstellen] [--in <ordner>] [--tag <t>] [--seit <datum>] [--weiter] [--warten [<sek>]] [--chronologisch]` | Relevante Notizen finden; `--chronologisch` listet nach Datum der Notiz statt nach Relevanz |
 | `vault gliederung <notiz>` | Überschriften mit Zeilen und Token-Größe |
 | `vault lesen <notiz>#<überschrift>` | Einen Abschnitt lesen (alternativ das Read-Werkzeug mit Zeilenangaben) |
-| `vault verwandt <notiz>` | Links und Backlinks zuerst, dann semantisch ähnliche Notizen |
-| `vault status` | Aktualität, Modell, Fehler, gelernte Werte, geschätzte Ersparnis |
+| `vault verwandt <notiz>` | Links und Backlinks zuerst, bei datierten Notizen Tag davor/danach und Wochennotiz, dann semantisch ähnliche Notizen |
+| `vault status` | Aktualität, Modell, seit wann die semantische Suche vollständig ist, Fehler, gelernte Werte, geschätzte Ersparnis |
 
 **Ranking in `suche`**
 
@@ -341,10 +341,14 @@ Claude soll sich stufenweise herantasten: **Karte → Suche → Gliederung → A
 5. Liegen alle Treffer unter der Mindestschwelle: „Nichts Passendes gefunden“, keine Liste schwacher Treffer.
 6. Ein Filter liefert nichts: automatisch ohne Filter wiederholen und das kennzeichnen („Außerhalb von besprechungen/ gefunden“).
 7. `--weiter` liefert die nächste Seite derselben Suche, ohne neu zu rechnen (Sitzungscache).
+8. Die Suche lädt nie selbst das Suchmodell. Fehlt es, sucht sie nur mit Stichworten und stößt den
+   Download im Hintergrund an. `--warten` blockiert stattdessen, bis Modell und Index bereit sind
+   (Standard höchstens 300 s), und bricht früh ab, wenn Warten nicht hilft (Modellkonflikt).
 
 **Ausgabeformat `suche`**
 
 ```
+Suchmodus: semantisch + Stichwort · Index vollständig (32 Dateien)
 3 Notizen zu „Was hilft gegen feuchte Wände?“
 
 1. wissen/Raumklima.md (2.400 Tokens)
@@ -358,7 +362,13 @@ Claude soll sich stufenweise herantasten: **Karte → Suche → Gliederung → A
 [--weiter: 4 weitere Notizen]
 ```
 
-Pflichtangaben: Pfad, Token-Größe der Notiz, Überschrift und Zeilen jedes Abschnitts, Relevanz in Worten (nicht als Zahl), kurzer Ausschnitt nur beim besten Abschnitt.
+Die erste Zeile nennt immer den Suchmodus. Ist er unvollständig („nur Stichwort · Suchmodell lädt
+(60 %)“, „semantisch + Stichwort, aber erst 20 von 32 Dateien semantisch indexiert“, „Index passt
+nicht zum Modell“), folgt direkt unter der Kopfzeile „⚠ Vorläufiges Ergebnis“ mit dem Auftrag an
+Claude, die Antwort als vorläufig zu kennzeichnen oder mit `--warten` zu wiederholen. „Nichts
+Passendes gefunden“ heißt dann ausdrücklich nicht „steht nicht in den Notizen“.
+
+Pflichtangaben: Suchmodus, Pfad, Token-Größe der Notiz, Überschrift und Zeilen jedes Abschnitts, Relevanz in Worten (nicht als Zahl), kurzer Ausschnitt nur beim besten Abschnitt.
 
 **Karte**
 

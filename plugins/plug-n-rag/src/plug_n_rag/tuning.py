@@ -172,6 +172,13 @@ def analyse(events: list[dict]) -> dict:
             p = ev.get("purpose", DEFAULT_PURPOSE)
             if p not in stats:
                 continue
+            if ev.get("provisional"):
+                # keyword-only or half-indexed search: reading deeper then compensates for the
+                # missing hits and says nothing about the right depth
+                if last is not None:
+                    _close(stats, last)
+                last = None
+                continue
             if ev.get("page", 0) > 0 and last is not None:
                 last["paged"] = True
                 continue

@@ -330,3 +330,41 @@ Stand: 19.11.2026, Sprint 1.
     im Unterordner eines Repos wird abgelehnt, weil Cloud-Sitzungen im Hauptordner starten.
     Das Setup-Skript der Umgebung bleibt als Weg B (Modell vorab, alle Befehle ohne Nachladen) und
     meldet jetzt, wenn die Installation scheitert, statt Fehler stumm zu schlucken.
+
+## Nachtrag 21.11.2026: Suchmodus in jeder Ausgabe (0.9.3)
+
+70. **Jede Suche sagt, wie vollständig sie war.** Anlass: Rückmeldung aus einer Cloud-Sitzung
+    (Vault mit 32 Dateien). Beim Start hieß es „Modell lädt im Hintergrund, bis dahin
+    Stichwortsuche“, die Ausgabe von `suche` sagte danach aber nicht, in welchem Modus sie lief.
+    Claude behandelte frühe Ergebnisse als vollständig; dieselbe Frage lieferte später andere
+    Reihenfolge und zusätzliche Notizen. Dabei zeigte sich ein Fehler: War der Index aus dem Repo
+    vollständig, gab es nichts einzubetten, also startete auch kein Hintergrund-Abgleich, und das
+    angekündigte Modell lud niemand. Die erste Suche hätte dann selbst 470 MB geladen, mit einer
+    zweiten Kopie parallel zu einem laufenden Download in dieselbe Datei. Daraus:
+    - Erste Zeile jeder Suche: „Suchmodus: semantisch + Stichwort · Index vollständig“, „nur
+      Stichwort · Suchmodell lädt (60 %)“ (Fortschritt aus `.download.json` im Modellordner),
+      „… aber erst 20 von 32 Dateien semantisch indexiert“, „Index passt nicht zum Modell“.
+    - Ist das Ergebnis unvollständig, steht „⚠ Vorläufiges Ergebnis“ **beim Ergebnis**, nicht nur
+      beim Sitzungsstart, mit dem Auftrag, die Antwort als vorläufig zu kennzeichnen. „Nichts
+      gefunden“ gilt dann nicht als „steht nicht in den Notizen“.
+    - `suche --warten [sek]` blockiert, bis Modell und Index bereit sind, und erledigt die Arbeit
+      selbst, wenn niemand sonst sie tut. Es bricht ab, wenn Warten nicht hilft.
+    - Die Suche lädt das Modell nie selbst; sie startet höchstens den Hintergrund-Download. Der
+      Sitzungsstart startet ihn jetzt auch bei vollständigem Index (`sync --modell-vorab`). Jeder
+      Prozess lädt in eine eigene `.part`-Datei.
+    - `status` nennt, seit wann die semantische Suche vollständig ist (`complete_at` in
+      `pending.json`, bleibt erhalten, solange der Index vollständig bleibt; dazu der Zeitpunkt, an
+      dem das Modell fertig geladen war).
+    - Vorläufige Suchen zählen nicht für die Token-Steuerung: Tieferes Lesen gleicht dann fehlende
+      Treffer aus und sagt nichts über die richtige Tiefe.
+
+71. **Chronologie als eigener Weg, nicht als Relevanz.** Aus derselben Sitzung: „Was passierte
+    danach?“ ließ sich mit der Relevanzsuche nicht beantworten, Claude wich auf `ls`/`cat` aus, und
+    die Wochennotiz `2024-W07.md` tauchte in keiner Suche auf. `suche --chronologisch` listet
+    Notizen nach ihrem eigenen Datum (Dateiname `2024-02-12`, `2024-W07`, `2024-02` oder
+    Frontmatter `date`/`datum`), mit `--in`, `--tag` und `--seit` (hier: Datum der Notiz) und
+    optional einer Frage, die auf passende Notizen einschränkt. Eine Wochennotiz zählt ab ihrem
+    Montag und erscheint auch, wenn `--seit` mitten in ihrer Woche liegt. Die Änderungszeit dient
+    bewusst nicht als Datum: In einem Git-Klon (Cloud) tragen alle Dateien die Zeit des Auscheckens.
+    `verwandt` nennt bei datierten Notizen den Tag davor und danach im selben Ordner sowie die
+    Wochennotiz (bzw. bei einer Wochennotiz die Tage der Woche).

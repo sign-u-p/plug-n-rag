@@ -6,9 +6,11 @@ cache (or ``PLUG_N_RAG_MODEL_DIR``). Weight updates can therefore never happen u
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -44,21 +46,74 @@ def model_dir(name: str, revision: str) -> Path:
     return root / name.replace("/", "--") / revision
 
 
-def _download(url: str, dest: Path, quiet: bool) -> None:
+DOWNLOAD_STATE = ".download.json"
+DOWNLOAD_STALE = 120.0  # seconds without progress: the download counts as abandoned
+
+
+def _write_state(d: Path, data: dict) -> None:
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        tmp = d / f".download.{os.getpid()}.tmp"
+        tmp.write_text(json.dumps(data), encoding="utf-8")
+        os.replace(tmp, d / DOWNLOAD_STATE)
+    except OSError:
+        pass
+
+
+def download_state(name: str, revision: str | None = None) -> dict | None:
+    """What a running or failed model download reported: ``{"state": "laedt"|"fehler", ...}``.
+
+    ``None`` when nothing is known (no download yet, or the model is complete). A download
+    that has not reported progress for two minutes counts as abandoned (``"state": "abgebrochen"``).
+    """
+    spec = LOCAL_MODELS.get(name)
+    if not spec:
+        return None
+    d = model_dir(name, revision or spec["revision"])
+    try:
+        data = json.loads((d / DOWNLOAD_STATE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("state") == "laedt" and time.time() - float(data.get("t", 0)) > DOWNLOAD_STALE:
+        data["state"] = "abgebrochen"
+    return data
+
+
+def download_percent(state: dict | None) -> int | None:
+    """Overall progress over all model files, or None when unknown."""
+    if not state:
+        return None
+    total = int(state.get("total_all") or 0)
+    if total <= 0:
+        return None
+    return max(0, min(99, int(state.get("done_all", 0)) * 100 // total))
+
+
+def _download(url: str, dest: Path, quiet: bool, *, state_dir: Path | None = None,
+              offset: int = 0, total_all: int = 0) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dest.with_suffix(dest.suffix + ".part")
+    tmp = dest.with_suffix(dest.suffix + f".{os.getpid()}.part")  # one per process: no clashes
     req = urllib.request.Request(url, headers={"User-Agent": "plug-n-rag"})
     try:
         with urllib.request.urlopen(req, timeout=60) as resp, open(tmp, "wb") as fh:
             total = int(resp.headers.get("Content-Length") or 0)
             done = 0
             last = -1
+            last_state = 0.0
             while True:
                 buf = resp.read(1 << 20)
                 if not buf:
                     break
                 fh.write(buf)
                 done += len(buf)
+                now = time.time()
+                if state_dir is not None and now - last_state > 1.0:
+                    last_state = now
+                    _write_state(state_dir, {"state": "laedt", "pid": os.getpid(), "t": now,
+                                             "done_all": offset + done,
+                                             "total_all": max(total_all, offset + total)})
                 if not quiet and total:
                     pct = done * 100 // total
                     if pct // 10 != last:
@@ -71,6 +126,9 @@ def _download(url: str, dest: Path, quiet: bool) -> None:
             tmp.unlink()
         except OSError:
             pass
+        if state_dir is not None:
+            _write_state(state_dir, {"state": "fehler", "pid": os.getpid(), "t": time.time(),
+                                     "error": str(exc)})
         raise EmbeddingUnavailable(tr(
             f"Modell konnte nicht von Hugging Face geladen werden ({exc}). "
             "In Cloud-Sitzungen muss huggingface.co in der Netzwerkfreigabe stehen. "
@@ -83,10 +141,14 @@ def _download(url: str, dest: Path, quiet: bool) -> None:
 
 def ensure_model_files(name: str, revision: str, spec: dict, quiet: bool = True) -> Path:
     d = model_dir(name, revision)
+    total_all = int(spec.get("size_mb", 0)) * 1_000_000
+    offset = 0
+    downloaded = False
     for key in ("tokenizer", "onnx"):
         rel = spec[key]
         dest = d / rel
         if dest.exists() and dest.stat().st_size > 0:
+            offset += dest.stat().st_size
             continue
         # Optional: a copy shipped next to the vault (e.g. .plug-n-rag/models/...).
         local_copy = os.environ.get("PLUG_N_RAG_MODEL_COPY")
@@ -95,7 +157,14 @@ def ensure_model_files(name: str, revision: str, spec: dict, quiet: bool = True)
             shutil.copy2(Path(local_copy) / rel, dest)
             continue
         url = f"{HF_BASE}/{name}/resolve/{revision}/{rel}"
-        _download(url, dest, quiet)
+        _download(url, dest, quiet, state_dir=d, offset=offset, total_all=total_all)
+        offset += dest.stat().st_size
+        downloaded = True
+    if downloaded or (d / DOWNLOAD_STATE).exists():
+        try:
+            (d / DOWNLOAD_STATE).unlink()
+        except OSError:
+            pass
     return d
 
 

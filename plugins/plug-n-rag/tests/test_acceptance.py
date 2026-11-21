@@ -13,7 +13,7 @@ from plug_n_rag.config import find_layout
 from plug_n_rag.search import search
 from plug_n_rag.sync import sync
 
-from .conftest import FIXTURE, copy_vault, make_layout
+from .conftest import FIXTURE, copy_vault, make_layout, results
 
 pytestmark = pytest.mark.model
 
@@ -96,7 +96,7 @@ def test_fresh_cloud_session_is_ready_without_embedding(real, tmp_path):
 def test_compound_dachsanierung(real):
     layout, emb = real
     out = search(layout, "Dachsanierung", embedder=emb)
-    first = out.splitlines()[2]
+    first = results(out).splitlines()[2]
     assert first.startswith("1. besprechungen/2026-10-hausversammlung.md")
     text = (FIXTURE / "besprechungen" / "2026-10-hausversammlung.md").read_text(encoding="utf-8")
     assert "Dachsanierungsbedarf" in text and "Dachsanierung " not in text
@@ -110,7 +110,7 @@ def test_compound_dachsanierung(real):
 def test_nothing_found_for_unrelated_question(real, question):
     layout, emb = real
     out = search(layout, question, embedder=emb)
-    assert out.startswith("Nichts Passendes gefunden"), out
+    assert results(out).startswith("Nichts Passendes gefunden"), out
 
 
 @pytest.mark.parametrize("question,expected", [
@@ -122,7 +122,7 @@ def test_nothing_found_for_unrelated_question(real, question):
 def test_semantic_questions_hit_the_right_note(real, question, expected):
     layout, emb = real
     out = search(layout, question, embedder=emb)
-    assert out.splitlines()[2].startswith(f"1. {expected}"), out
+    assert results(out).splitlines()[2].startswith(f"1. {expected}"), out
 
 
 def test_setup_and_sync_never_change_notes(tmp_path, real_embedder):
@@ -140,9 +140,9 @@ def test_research_purpose_gives_breadth(real):
     q = "Das Dachgeschoss ist kalt und feucht: was hilft, und gibt es Zuschüsse für die Dämmung?"
     frage = search(layout, q, purpose="frage", embedder=emb)
     recherche = search(layout, q, purpose="recherche", embedder=emb)
-    n_frage = int(frage.split()[0])
-    n_recherche = int(recherche.split()[0])
-    assert frage.splitlines()[2].startswith("1. besprechungen/2026-10-hausversammlung.md")
+    n_frage = int(results(frage).split()[0])
+    n_recherche = int(results(recherche).split()[0])
+    assert results(frage).splitlines()[2].startswith("1. besprechungen/2026-10-hausversammlung.md")
     assert n_recherche >= 3 and n_recherche >= n_frage
-    assert search(layout, "Wie lange dauert die Steuererklärung", purpose="recherche",
-                  embedder=emb).startswith("Nichts Passendes")
+    assert results(search(layout, "Wie lange dauert die Steuererklärung", purpose="recherche",
+                  embedder=emb)).startswith("Nichts Passendes")

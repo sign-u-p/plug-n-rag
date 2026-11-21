@@ -155,7 +155,9 @@ For the browser (claude.ai/code) there is a way of its own, see [Use it in the c
    it, otherwise the search does not stay up to date.
 
 During the first setup plug-n-rag downloads a language model once (about 470 MB, a few minutes
-depending on your connection). Keyword search works before that.
+depending on your connection). Keyword search works before that. Every search states its search
+mode in its first line ("by meaning + keyword" or "keyword only · search model is loading (60%)");
+while something is missing, Claude marks the answer as provisional.
 
 ### And then: just ask
 
@@ -524,7 +526,10 @@ all.
 
 In the background Claude uses the tools `plug-n-rag search`, `outline`, `read`, `related` and `map`
 (German: `suche`, `gliederung`, `lesen`, `verwandt`, `karte`). You can also call them yourself in
-the terminal (`plug-n-rag --help`).
+the terminal (`plug-n-rag --help`). For questions about the order of events ("what happened
+next?") `plug-n-rag search --in <folder> --chronological --since YYYY-MM-DD` lists notes by their
+date (from the file name or frontmatter, week notes like `2024-W07` included); for dated notes
+`related` names the day before and after and the matching week note.
 
 <details>
 <summary>Settings (<code>.plug-n-rag/plug-n-rag.yml</code>)</summary>
@@ -589,7 +594,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | --- | --- |
 | "uv missing" at start | step 1 above, or let Claude do the installation |
 | New notes are not found | `/plug-n-rag:status` shows whether something is still pending |
-| "keyword search only" | the language model is not there (yet) or does not fit; `/plug-n-rag:status` explains why |
+| "Search mode: keyword only" or "Provisional result" | the language model is still loading, is not there or does not fit; `/plug-n-rag:status` explains why and since when search by meaning is ready. Claude can search with `--wait` until everything is ready |
 | plug-n-rag is missing in the cloud | the session runs in a different environment, or the setup script is missing (`/plug-n-rag:cloud`) |
 | Scanned PDFs are "waiting for ingestion" | `/plug-n-rag:ingest` |
 | The plugin page shows an old description, or plug-n-rag Display is missing | the app still knows an old catalogue: run `claude plugin marketplace update plug-n-rag`, or remove the marketplace on the plugin page and add `sign-u-p/plug-n-rag` again |

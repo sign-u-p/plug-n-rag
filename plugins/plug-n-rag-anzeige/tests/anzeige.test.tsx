@@ -237,3 +237,22 @@ test('several sections in one read command are summed up, separators are not a s
   expect(summarize(call, out, false, false)).toBe('Gelesen: 3 Abschnitte aus 2 Notizen')
   expect(summarize(call, '====\nDatei nicht lesbar: kaputt', false, false)).toBe('Datei nicht lesbar: kaputt')
 })
+
+test('the search mode line (plug-n-rag 0.9.3) marks keyword-only and provisional results', async () => {
+  setLang('de')
+  const call = parseCommand(CMD)!
+  const loading = 'Suchmodus: nur Stichwort · Suchmodell lädt (60 %)\n' +
+    SEARCH.replace('\n\n1.', '\n⚠ Vorläufiges Ergebnis: Treffer, die nur sinngemäß passen, fehlen.\n\n1.')
+  const s = parseSearch(loading)
+  expect(s.hits.length).toBe(3)
+  expect(s.isKeywordOnly).toBe(true)
+  expect(s.isProvisional).toBe(true)
+  expect(summarize(call, loading, false, false)).toBe('Gesucht: 3 Notizen · beste sehr passend · 2 weitere · nur Stichwort')
+  const partial = 'Suchmodus: semantisch + Stichwort, aber erst 20 von 32 Dateien semantisch indexiert\n' + SEARCH
+  expect(summarize(call, partial, false, false)).toBe('Gesucht: 3 Notizen · beste sehr passend · 2 weitere · vorläufig')
+  const full = 'Suchmodus: semantisch + Stichwort · Index vollständig (32 Dateien)\n' + SEARCH
+  expect(parseSearch(full).isProvisional).toBe(false)
+  expect(summarize(call, full, false, false)).toBe('Gesucht: 3 Notizen · beste sehr passend · 2 weitere')
+  const nothing = 'Suchmodus: nur Stichwort · Suchmodell lädt (5 %)\n' + NOTHING
+  expect(summarize(call, nothing, false, false)).toBe('Gesucht: nichts Passendes zu „Rezept für Apfelkuchen“ (vorläufig)')
+})

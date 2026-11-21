@@ -59,3 +59,12 @@ def fake():
     from plug_n_rag.embed.fake import FakeEmbedder
 
     return FakeEmbedder()
+
+
+MODE_PREFIXES = ("Suchmodus:", "Search mode:")
+
+
+def results(out: str) -> str:
+    """Search output without the search-mode line at its head (checked by its own tests)."""
+    first, _, rest = out.partition("\n")
+    return rest if first.startswith(MODE_PREFIXES) else out

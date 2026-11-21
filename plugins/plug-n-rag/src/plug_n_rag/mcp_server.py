@@ -52,13 +52,18 @@ def build_server():
 
     @server.tool()
     def suche(frage: str = "", zweck: str = "frage", ordner: str | None = None, tag: str | None = None,
-              seit: str | None = None, weiter: bool = False) -> str:
+              seit: str | None = None, weiter: bool = False, warten: float | None = None,
+              chronologisch: bool = False) -> str:
         """Find relevant notes (Notizen finden). zweck (purpose): frage|question, recherche|research,
-        erstellen|create. weiter=True returns the next page of the last search. Result: paths,
-        sections with lines, relevance in words. Works for German and English questions."""
+        erstellen|create. weiter=True returns the next page of the last search. Result: search mode
+        (by meaning + keyword, or keyword only while the model loads), paths, sections with lines,
+        relevance in words. If the result says it is provisional, say so in the answer or repeat
+        with warten=<seconds> (waits until search by meaning is ready). chronologisch=True lists
+        notes by their date (with ordner/seit/tag; frage optional) for "what happened next?"
+        questions. Works for German and English questions."""
         from .search import search as _s
 
-        return _run(lambda L: _s(L, frage or None, purpose={"question": "frage", "research": "recherche", "create": "erstellen"}.get(zweck, zweck), folder=ordner, tag=tag, since=seit, more=weiter))
+        return _run(lambda L: _s(L, frage or None, purpose={"question": "frage", "research": "recherche", "create": "erstellen"}.get(zweck, zweck), folder=ordner, tag=tag, since=seit, more=weiter, wait=warten, chronological=chronologisch))
 
     @server.tool()
     def gliederung(notiz: str) -> str:

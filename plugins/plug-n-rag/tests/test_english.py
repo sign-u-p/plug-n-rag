@@ -8,6 +8,8 @@ from plug_n_rag import i18n
 from plug_n_rag.cli import main
 from plug_n_rag.config import find_layout
 
+from .conftest import results
+
 NOTES = {
     "projects/Garden plan.md": "# Garden plan\n\n## Beds\n\nTomatoes and beans along the south fence.\n\n"
                                "## Watering\n\nDrip irrigation every morning in July and August.\n",
@@ -197,7 +199,7 @@ def test_english_paraphrases_hit_the_right_note(english_vault, english, question
     layout, emb = english_vault
     i18n.use_layout(layout)
     out = search(layout, question, embedder=emb)
-    assert out.splitlines()[2].startswith(f"1. {expected}"), out
+    assert results(out).splitlines()[2].startswith(f"1. {expected}"), out
 
 
 @pytest.mark.model
@@ -207,4 +209,4 @@ def test_english_nothing_found_for_unrelated_question(english_vault, english, qu
 
     layout, emb = english_vault
     i18n.use_layout(layout)
-    assert search(layout, question, embedder=emb).startswith("Nothing relevant found"), question
+    assert results(search(layout, question, embedder=emb)).startswith("Nothing relevant found"), question

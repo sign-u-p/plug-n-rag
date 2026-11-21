@@ -41,8 +41,14 @@ def status(layout: Layout, *, check_remote: bool = True) -> str:
                         f"eingestellt {_model_label(want)}. Nur Stichwortsuche bis /plug-n-rag:reindex.",
                         f"⚠ Index does not match the model: index {_model_label(meta['model'])}, "
                         f"configured {_model_label(want)}. Keyword search only until /plug-n-rag:reindex."))
-    else:
-        lines.append(tr("Modell: ", "Model: ") + f"{_model_label(want)} ✓")
+    from .readiness import MODEL_ERROR, MODEL_LOADING, MODEL_MISSING, readiness, status_line
+
+    ready = readiness(layout)
+    if not (meta.get("model") and meta["model"] != want):
+        here = ready.reason not in (MODEL_LOADING, MODEL_MISSING, MODEL_ERROR)
+        lines.append(tr("Modell: ", "Model: ") + _model_label(want)
+                     + (" ✓" if here else tr(" (noch nicht auf diesem Rechner)", " (not on this computer yet)")))
+    lines.append(status_line(ready))
     pend = read_json(layout.cache_dir / "pending.json", {}) or {}
     if pend.get("embed_error"):
         lines.append(tr("⚠ Embedding zuletzt nicht möglich: ", "⚠ Embedding failed last time: ") + pend["embed_error"])

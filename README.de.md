@@ -159,7 +159,9 @@ Für den Browser (claude.ai/code) gibt es einen eigenen Weg, siehe [In der Cloud
    Bitte erlauben, sonst bleibt die Suche nicht aktuell.
 
 Beim ersten Einrichten lädt plug-n-rag einmalig ein Sprachmodell herunter (etwa 470 MB, je nach
-Verbindung ein paar Minuten). Die Suche nach Stichworten funktioniert schon vorher.
+Verbindung ein paar Minuten). Die Suche nach Stichworten funktioniert schon vorher. Jede Suche
+nennt in der ersten Zeile ihren Suchmodus („semantisch + Stichwort“ oder „nur Stichwort ·
+Suchmodell lädt (60 %)“); solange etwas fehlt, kennzeichnet Claude die Antwort als vorläufig.
 
 ### Und dann: einfach fragen
 
@@ -538,7 +540,11 @@ aus, wird gar nichts übernommen.
 | `/plug-n-rag:lernen-zuruecksetzen` (`reset-learning`) | gelernte Suchgewohnheiten zurücksetzen |
 
 Im Hintergrund benutzt Claude die Werkzeuge `plug-n-rag suche`, `gliederung`, `lesen`,
-`verwandt` und `karte` (englisch `search`, `outline`, `read`, `related`, `map`). Du kannst sie auch selbst im Terminal aufrufen (`plug-n-rag --help`).
+`verwandt` und `karte` (englisch `search`, `outline`, `read`, `related`, `map`). Für Fragen
+nach dem zeitlichen Ablauf („Was passierte danach?“) listet `plug-n-rag suche --in <ordner>
+--chronologisch --seit JJJJ-MM-TT` Notizen nach ihrem Datum (aus Dateiname oder Frontmatter,
+Wochennotizen wie `2024-W07` eingeschlossen); `verwandt` nennt bei datierten Notizen den Tag
+davor und danach und die passende Wochennotiz. Du kannst sie auch selbst im Terminal aufrufen (`plug-n-rag --help`).
 
 <details>
 <summary>Einstellungen (<code>.plug-n-rag/plug-n-rag.yml</code>)</summary>
@@ -604,7 +610,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | --- | --- |
 | „uv fehlt“ beim Start | Schritt 1 oben, oder Claude die Installation erledigen lassen |
 | Neue Notizen werden nicht gefunden | `/plug-n-rag:status` zeigt, ob noch etwas aussteht |
-| „nur Stichwortsuche“ | Das Sprachmodell ist (noch) nicht da oder passt nicht; `/plug-n-rag:status` erklärt, warum |
+| „Suchmodus: nur Stichwort“ oder „Vorläufiges Ergebnis“ | Das Sprachmodell lädt noch, ist nicht da oder passt nicht; `/plug-n-rag:status` erklärt, warum und seit wann die semantische Suche bereit ist. Claude kann mit `--warten` suchen, bis alles bereit ist |
 | In der Cloud fehlt plug-n-rag | Die Sitzung läuft in einer anderen Umgebung, oder das Setup-Skript fehlt (`/plug-n-rag:cloud`) |
 | Eingescannte PDFs „warten auf Aufnahme“ | `/plug-n-rag:aufnehmen` |
 | Die Plugin-Seite zeigt eine alte Beschreibung, oder plug-n-rag Display fehlt | die App kennt noch einen alten Katalog: `claude plugin marketplace update plug-n-rag` ausführen, oder auf der Plugin-Seite den Marketplace entfernen und `sign-u-p/plug-n-rag` neu hinzufügen |

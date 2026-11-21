@@ -57,6 +57,8 @@ export type Search = {
   query: string
   isNothing: boolean
   isKeywordOnly: boolean
+  /** plug-n-rag ≥ 0.9.3: the search was incomplete (model loading, index partly built) */
+  isProvisional: boolean
   outside: string | null
   hits: Hit[]
   more: number
@@ -71,10 +73,17 @@ const RANGE = '((?:Z|S|Abs|l|p|para)\\. [\\d–]+(?: \\((?:gedruckt S|printed p)
 const SECTION_RE = new RegExp(`^\\s+› (.+), ${RANGE} \\(${RELEVANCE}\\)$`)
 
 export function parseSearch(out: string): Search {
-  const res: Search = { query: '', isNothing: false, isKeywordOnly: false, outside: null, hits: [], more: 0, notices: [] }
+  const res: Search = { query: '', isNothing: false, isKeywordOnly: false, isProvisional: false, outside: null, hits: [], more: 0, notices: [] }
   for (const raw of out.split('\n')) {
     const line = raw.replace(/\s+$/, '')
     let m: RegExpMatchArray | null
+    if ((m = line.match(/^(?:Suchmodus|Search mode): (.*)$/))) {
+      const mode = m[1] ?? ''
+      res.isKeywordOnly = /^(?:nur Stichwort|keyword only)/.test(mode)
+      res.isProvisional = !/(?:Index vollständig|index complete)/.test(mode)
+      continue
+    }
+    if (/^⚠ (?:Vorläufiges Ergebnis|Provisional result)/.test(line)) { res.isProvisional = true; continue }
     if ((m = line.match(/^(?:Hinweis|Note): (.*)$/))) { res.notices.push((m[1] ?? '')); continue }
     if ((m = line.match(/^(?:Nichts Passendes gefunden zu „(.*)“|Nothing relevant found for “(.*)”)/))) {
       res.isNothing = true
@@ -84,7 +93,7 @@ export function parseSearch(out: string): Search {
     if ((m = line.match(/^\d+ (?:Notiz(?:en)? zu „(.*)“|notes? for “(.*)”)(.*)$/))) {
       res.query = m[1] ?? m[2] ?? ''
       const tail = m[3] ?? ''
-      res.isKeywordOnly = tail.includes('nur Stichwortsuche') || tail.includes('keyword search only')
+      if (tail.includes('nur Stichwortsuche') || tail.includes('keyword search only')) res.isKeywordOnly = true
       const o = tail.match(/(Außerhalb von [^ ]+ gefunden|Ohne Filter \([^)]*\) gefunden|Found outside \S+|Found without filter \([^)]*\))/)
       res.outside = o ? (o[1] ?? null) : null
       continue
@@ -163,13 +172,13 @@ export function summarize(call: Call, out: string | undefined, isRunning: boolea
   switch (call.kind) {
     case 'suche': {
       const s = parseSearch(text)
-      if (s.isNothing) return T(`Gesucht: nichts Passendes zu „${s.query}“`, `Searched: nothing relevant for “${s.query}”`)
+      if (s.isNothing) return T(`Gesucht: nichts Passendes zu „${s.query}“`, `Searched: nothing relevant for “${s.query}”`) + (s.isProvisional ? T(' (vorläufig)', ' (provisional)') : '')
       if (!s.hits.length) return firstLine(text) || T('Gesucht', 'Searched')
       const best = s.hits[0]?.sections[0]?.relevance
       return T('Gesucht: ', 'Searched: ') + T(plural(s.hits.length, 'Notiz', 'Notizen'), plural(s.hits.length, 'note', 'notes')) +
         (best ? T(` · beste ${best}`, ` · best ${best}`) : '') +
         (s.more ? T(` · ${s.more} weitere`, ` · ${s.more} more`) : '') +
-        (s.isKeywordOnly ? T(' · nur Stichwort', ' · keyword only') : '')
+        (s.isKeywordOnly ? T(' · nur Stichwort', ' · keyword only') : s.isProvisional ? T(' · vorläufig', ' · provisional') : '')
     }
     case 'lesen': {
       const reads = parseReads(text)

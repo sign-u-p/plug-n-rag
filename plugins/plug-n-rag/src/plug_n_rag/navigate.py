@@ -209,6 +209,9 @@ def related(layout: Layout, ref: str, limit: int = 5) -> str:
             listed.update(back)
         if missing:
             lines.append(tr("Links ohne Notiz: ", "Links without a note: ") + ", ".join(missing[:8]))
+        from .chrono import neighbours
+
+        lines += neighbours(conn, note)  # previous/next day, week note: for "what happened next?"
         if note["vec"] is not None:
             me = np.frombuffer(note["vec"], dtype=np.float32)
             rows = conn.execute("SELECT path, vec FROM notes WHERE vec IS NOT NULL AND id != ?", (note["id"],)).fetchall()

@@ -23,6 +23,8 @@ from .embed import EmbeddingUnavailable, get_embedder, model_id_for
 from .formats.base import format_range, printed_suffix
 from .i18n import tr
 from .index_store import read_meta
+from .readiness import (MODEL_ERROR, MODEL_LOADING, MODEL_MISSING, Readiness, mode_line, model_state,
+                        provisional_warning, readiness, wait_until_ready)
 from .util import atomic_write_json, estimate_tokens, fmt_int, read_json
 
 RRF_K = 60
@@ -247,10 +249,12 @@ def run_query(layout: Layout, query: str, *, folder=None, tag=None, since=None,
         sims: dict[int, float] = {}
         n_vec = conn.execute("SELECT count(*) FROM vecs").fetchone()[0]
         if meta.get("model") and meta.get("model") != model_id_for(layout.config):
-            keyword_only = True
-            notices.append(tr("Index passt nicht zum Modell: nur Stichwortsuche. Neuindexierung mit /plug-n-rag:reindex.",
-                              "Index does not match the model: keyword search only. Rebuild with /plug-n-rag:reindex."))
+            keyword_only = True  # the mode line and the warning of the output say why
         elif n_vec == 0:
+            keyword_only = True
+        elif embedder is None and model_state(layout)[0] is not None:
+            # Local model not on this computer yet: never download ~470 MB inside a search.
+            # The background sync loads it; `--warten` waits for it.
             keyword_only = True
         else:
             try:
@@ -379,7 +383,12 @@ def _cache_key(query: str, folder, tag, since, purpose) -> str:
 
 
 def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=None, tag=None,
-           since=None, more: bool = False, embedder=None) -> str:
+           since=None, more: bool = False, embedder=None, wait: float | None = None,
+           chronological: bool = False) -> str:
+    if chronological:
+        from .chrono import chronological as _chrono
+
+        return _chrono(layout, query, folder=folder, tag=tag, since=since, embedder=embedder)
     params = tuning.params(layout, purpose)
     cache_path = layout.cache_dir / "last_search.json"
     fallback = None
@@ -396,6 +405,20 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
     if not query or not query.strip():
         return tr("Bitte eine Suchanfrage angeben.", "Please give a search query.")
     relaxed = params["purpose"] == "recherche"
+    state = readiness(layout)
+    waited_line = None
+    if wait is not None and state.provisional:
+        state, secs = wait_until_ready(layout, wait, embedder=embedder)
+        waited_line = (tr(f"Gewartet: {secs:.0f} s, bis der semantische Index bereit war.",
+                          f"Waited {secs:.0f} s until search by meaning was ready.") if state.complete else
+                       tr(f"Gewartet: {secs:.0f} s, der semantische Index ist noch nicht bereit.",
+                          f"Waited {secs:.0f} s, search by meaning is not ready yet."))
+    elif state.reason == MODEL_MISSING:
+        # The session start promised a background download; make sure one is running.
+        from .cli import spawn_background_sync
+
+        spawn_background_sync(layout, load_model=True)
+        state.reason = MODEL_LOADING
     notes, keyword_only, notices = run_query(layout, query, folder=folder, tag=tag, since=since,
                                              embedder=embedder, relaxed=relaxed)
     if not notes and (folder or tag or since):
@@ -406,9 +429,11 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
             fallback = tr(f"Außerhalb von {where} gefunden", f"Found outside {where}") if folder \
                 else tr(f"Ohne Filter ({where}) gefunden", f"Found without filter ({where})")
     terms = query_terms(query)
-    pending = _pending_notice(layout)
-    if pending:
-        notices.append(pending)
+    if keyword_only and state.semantic:
+        # the provider failed during this search (no network, no key): its notice says why
+        state = Readiness(False, False, MODEL_ERROR, pending=state.pending, total=state.total)
+    if waited_line:
+        notices.insert(0, waited_line)
     n_show = knee_cut([n.score for n in notes], params["max_notes"], min_notes=params["min_notes"],
                       ratio=params["knee_ratio"])
     data = {
@@ -420,6 +445,9 @@ def search(layout: Layout, query: str | None, *, purpose: str = "frage", folder=
         "page_size": max(n_show, 1),
         "first": n_show,
         "keyword_only": keyword_only,
+        "mode": mode_line(state),
+        "provisional": state.provisional,
+        "warning": provisional_warning(state, can_wait=wait is None),
         "notices": notices,
         "fallback": fallback,
         "notes": [_note_to_json(n, params) for n in notes],
@@ -464,11 +492,18 @@ def _neighbors(layout: Layout, path: str, start: int, end: int, k: int) -> tuple
 def _render(layout: Layout, data: dict, offset: int, count: int, params: dict) -> str:
     notes = data["notes"]
     lines: list[str] = []
+    if data.get("mode"):
+        lines.append(data["mode"])
     for n in data.get("notices", []):
         lines.append(tr("Hinweis: ", "Note: ") + n)
+    warning = data.get("warning") or []
     if not notes:
         lines.append(tr(f"Nichts Passendes gefunden zu „{data['title']}“.",
                         f"Nothing relevant found for “{data['title']}”."))
+        if warning:
+            lines.append(tr("Das ist kein sicheres „steht nicht in den Notizen“: die Suche war unvollständig.",
+                            "This is not a reliable “not in the notes”: the search was incomplete."))
+            lines += warning
         lines.append(tr("Bitte nicht aus Allgemeinwissen antworten, als stünde es in den Notizen.",
                         "Do not answer from general knowledge as if it came from the notes."))
         return "\n".join(lines)
@@ -480,9 +515,11 @@ def _render(layout: Layout, data: dict, offset: int, count: int, params: dict) -
         head += tr(f" (weiter ab Nr. {offset + 1})", f" (continued from no. {offset + 1})")
     if data.get("fallback"):
         head += f" – {data['fallback']}"
-    if data.get("keyword_only"):
+    if data.get("keyword_only") and not data.get("mode"):  # cache from an older version
         head += tr(" (nur Stichwortsuche)", " (keyword search only)")
-    lines += [head, ""]
+    lines.append(head)
+    lines += warning
+    lines.append("")
     for i, n in enumerate(shown, start=offset + 1):
         lines.append(f"{i}. {n['path']} ({fmt_int(n['tokens'])} {tr('Tokens', 'tokens')})")
         for j, h in enumerate(n["hits"]):
@@ -516,6 +553,11 @@ def _render_cached(layout: Layout, cached: dict, params: dict) -> str:
     cached["page"] = cached.get("page", 0) + 1
     atomic_write_json(layout.cache_dir / "last_search.json", cached, indent=None)
     out = _render(layout, cached, offset, count, params)
+    if cached.get("provisional") and readiness(layout).complete:
+        out += "\n" + tr("Hinweis: Der semantische Index ist inzwischen bereit. Diese Seite stammt noch aus der "
+                         "vorläufigen Suche: für vollständige Ergebnisse die Suche neu stellen (ohne --weiter).",
+                         "Note: search by meaning is ready now. This page still comes from the provisional "
+                         "search: for complete results run the search again (without --more).")
     _log_search(layout, cached, cached["page"], count, out, offset=offset)
     return out
 
@@ -532,13 +574,6 @@ def _log_search(layout: Layout, data: dict, page: int, count: int, out: str, off
         "tokens": estimate_tokens(out),
         "full_tokens": sum(n["tokens"] for n in shown),
         "filtered": bool(data.get("fallback")),
+        "provisional": bool(data.get("provisional")),
     })
 
-
-def _pending_notice(layout: Layout) -> str | None:
-    errors_or_pending = read_json(layout.cache_dir / "pending.json", {}) or {}
-    n = len(errors_or_pending.get("pending", []))
-    if n:
-        return tr(f"{n} Dateien sind noch nicht semantisch indexiert (Stichwortsuche deckt sie ab).",
-                  f"{n} files are not yet indexed by meaning (keyword search covers them).")
-    return None

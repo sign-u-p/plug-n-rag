@@ -132,7 +132,9 @@ def test_model_mismatch_means_keyword_only(layout, fake):
     r = sync(layout, embedder=fake)
     assert r.model_mismatch
     out = search(layout, "Dachsanierung", embedder=fake)
-    assert "nur Stichwortsuche" in out and "2026-10-hausversammlung.md" in out
+    assert "Suchmodus: nur Stichwort · Index passt nicht zum Modell" in out
+    assert "Vorläufiges Ergebnis" in out and "/plug-n-rag:reindex" in out
+    assert "2026-10-hausversammlung.md" in out
 
 
 def test_time_budget_leaves_pending(layout, fake):

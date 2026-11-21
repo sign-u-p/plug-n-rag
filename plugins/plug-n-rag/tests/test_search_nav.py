@@ -7,6 +7,8 @@ from plug_n_rag.status import status
 from plug_n_rag.sync import sync
 from plug_n_rag import tuning
 
+from .conftest import results
+
 
 def test_query_terms_drop_stopwords():
     assert query_terms("Hilfe bei Reizüberflutung im Alltag") == ["hilfe", "reizüberflutung", "alltag"]
@@ -21,13 +23,14 @@ def test_knee_cut():
 def test_compound_part_finds_compound(layout, fake):
     sync(layout, embedder=fake)
     out = search(layout, "Dachsanierung", embedder=fake)
-    assert "besprechungen/2026-10-hausversammlung.md" in out.splitlines()[2]
+    assert "besprechungen/2026-10-hausversammlung.md" in results(out).splitlines()[2]
 
 
 def test_output_format_mandatory_fields(layout, fake):
     sync(layout, embedder=fake)
     out = search(layout, "Fördermittelberatung Zuschüsse", purpose="frage", embedder=fake)
-    lines = out.splitlines()
+    assert out.splitlines()[0].startswith("Suchmodus: semantisch + Stichwort · Index vollständig")
+    lines = results(out).splitlines()
     assert re.match(r"^\d+ Notiz(en)? zu „Fördermittelberatung Zuschüsse“$", lines[0])
     assert re.match(r"^1\. quellen/Leitfaden Sanierung\.pdf \([\d.]+ Tokens\)$", lines[2])
     assert re.search(r"› .+, S\. \d(–\d)? \((sehr passend|passend|am Rande)\)", lines[3])
@@ -56,7 +59,7 @@ def test_filter_fallback_marks_outside(layout, fake):
 def test_nothing_found(layout, fake):
     sync(layout, embedder=fake)
     out = search(layout, "Quantenchromodynamik", embedder=fake)
-    assert out.startswith("Nichts Passendes gefunden")
+    assert results(out).startswith("Nichts Passendes gefunden")
 
 
 def test_outline_and_read_section(layout, fake):
