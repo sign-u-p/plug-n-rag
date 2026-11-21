@@ -430,19 +430,32 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
 Then set up my vault with /plug-n-rag:setup. If that command is not available in this session
 yet, use ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
-and follow the guide from "plug-n-rag guide setup".
+and follow the guide from "plug-n-rag guide setup". At the end, add the self-setup
+(plug-n-rag cloud --bootstrap).
 ```
 
-Claude sets up the vault and makes sure future cloud sessions have plug-n-rag automatically. For
-that the **cloud environment** (the settings of the computer Claude works on in the cloud) needs two
-things: permission for the model download and a small script that installs plug-n-rag at start.
-Claude proposes both or explains where to enter them (`/plug-n-rag:cloud`).
+Why this sentence? Plugins you add on the plugin page do not (yet) reach cloud sessions. If you
+type `/plug-n-rag:setup` there straight away, Claude does not know the command.
+
+**Needed only once: the self-setup.** Claude puts a small start script into your vault
+(`.plug-n-rag/cloud-start.sh`). From then on, whenever a cloud session starts with your vault repo,
+this script installs plug-n-rag by itself, in every cloud environment. On your computer it does
+nothing. Two things are good to know:
+
+- In such a session the `/plug-n-rag:…` commands appear only after you type **`/reload-plugins`**
+  once. Until then Claude carries on with the same guides directly, so you can also just ask.
+- For search by meaning (not just keywords) the **cloud environment** (the settings of the
+  computer Claude works on in the cloud) needs permission for the model download. Claude proposes
+  it or explains where to enter it (`/plug-n-rag:cloud`).
+
+To remove it again: `plug-n-rag cloud --unbootstrap`.
 
 <details>
-<summary>Set up the cloud environment by hand</summary>
+<summary>Set up the cloud environment by hand (permission, optional setup script)</summary>
 
-Why not simply through the repo? Cloud sessions do not install plugins that a repo requests itself
-(`.claude/settings.json`). That is why the installation belongs in the cloud environment.
+With the self-setup the setup script is optional. It is still worth it: sessions in this
+environment then start with the model loaded and all `/plug-n-rag:…` commands, without
+`/reload-plugins`.
 
 1. In the session bar, tap the cloud environment's name, then "Edit" (or "Add" an environment of
    your own, e.g. "Vault").
@@ -463,6 +476,7 @@ Why not simply through the repo? Cloud sessions do not install plugins that a re
      || claude plugin marketplace update plug-n-rag >/dev/null 2>&1 || true
    claude plugin install plug-n-rag@plug-n-rag >/dev/null 2>&1 || true
    P=$(ls -d "$HOME"/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ 2>/dev/null | sort -V | tail -1)
+   [ -n "$P" ] || echo "plug-n-rag: installation failed (is github.com/sign-u-p/plug-n-rag reachable?)" >&2
    if [ -n "$P" ]; then "${P}scripts/plug-n-rag" load-model --model intfloat/multilingual-e5-small || true; fi
    exit 0
    ```

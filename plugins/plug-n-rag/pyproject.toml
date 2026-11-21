@@ -1,6 +1,6 @@
 [project]
 name = "plug-n-rag"
-version = "0.9.1"
+version = "0.9.2"
 description = "Semantische Suche für Obsidian-Vaults und Dokumentensammlungen in Claude Code"
 readme = "README.md"
 license = "MIT"

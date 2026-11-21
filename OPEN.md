@@ -33,8 +33,13 @@ Stop-Hook durchlaufen. Offen ist:
         (als Unit-Test mit Klon ohne Cache belegt).
   - [ ] Voyage mit Netzwerk-Secret: ersetzt der Proxy den Platzhalter `proxy-injected`?
   - [ ] Kann Claude die Umgebung mit eigenen Werkzeugen vorschlagen (Skill `cloud`, Schritt 3)?
-  - Belegt: In einer Cloud-Sitzung lädt die laufende Sitzung ein per `claude plugin install`
-    installiertes Plugin (Skills, Agent und `plug-n-rag` auf dem PATH erschienen).
+  - Korrigiert (21.11.2026, Claude Code 2.1.330): Ein während der Sitzung installiertes Plugin
+    lädt erst nach `/reload-plugins`; `plug-n-rag` auf dem PATH ist sofort da (Entscheidung 69).
+- [ ] **Selbst-Einrichtung** (`cloud --einbinden`) in einer echten Cloud-Sitzung über claude.ai mit
+      einem Vault-Repo, dessen `main` das Start-Skript enthält:
+  - [ ] Läuft der Hook, und erreicht er github.com in einer Umgebung mit Netzwerk „Limited“?
+  - [ ] Ist `/reload-plugins` in der App (Browser, Handy) verfügbar?
+  - [ ] Windows lokal: bleibt der Hook (`sh …`) still, auch ohne Git Bash im PATH?
 - [ ] **Einrichtung direkt in der Cloud** mit dem Startsatz aus der README in einer frischen
       Sitzung auf einem Vault-Repo ohne plug-n-rag:
   - [ ] Installiert Claude das Plugin auf den Startsatz hin ohne Rückfragen-Schleife, und findet es
@@ -56,8 +61,9 @@ Stop-Hook durchlaufen. Offen ist:
   - [ ] Erscheint plug-n-rag danach in lokalen Claude-Code-Sitzungen (synced plugin), laufen die Hooks,
         und landet `plug-n-rag` über `CLAUDE_ENV_FILE` auf dem PATH?
   - [ ] Was passiert in Cowork (Hooks laufen dort ggf. ohne uv; sollte still bleiben)?
-  - [ ] Kommt ein über das Konto hinzugefügtes Plugin auch in Cloud-Sitzungen an? Falls ja, wird
-        das Setup-Skript für die Installation überflüssig (fürs Vorladen des Modells bleibt es sinnvoll).
+  - [x] Kommt ein über das Konto hinzugefügtes Plugin auch in Cloud-Sitzungen an? Nein (21.11.2026:
+        Ordner für Konto-Plugins im Container leer, `/plug-n-rag:setup` unbekannt). Antwort darauf:
+        Selbst-Einrichtung der Vault (Entscheidung 69).
 
 - [ ] **Windows** nach 0.5.0 erneut: Umlaute in `sync --fortschritt`, Seitenbilder für `aufnehmen`
       ohne Poppler (pypdfium2 + Pillow), Wechsel von einer alten 3.10-Umgebung auf ≥ 3.11.

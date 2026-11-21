@@ -307,3 +307,26 @@ Stand: 19.11.2026, Sprint 1.
       Moment.“).
     - Das Display fasst Lese-Befehle mit mehreren Abschnitten zusammen („Gelesen: 3 Abschnitte aus
       2 Notizen“) und nimmt nie eine Trennlinie wie `====` als Zusammenfassung.
+
+## Nachtrag 21.11.2026: Selbst-Einrichtung der Vault für Cloud-Sitzungen
+
+69. **Die Vault installiert plug-n-rag in Cloud-Sitzungen selbst** (`plug-n-rag cloud --einbinden`,
+    0.9.2). Ergänzt Entscheidung 17, statt sie aufzuheben. Anlass: In einer Cloud-Sitzung mit
+    Vault-Repo war `/plug-n-rag:setup` unbekannt. Das über die Plugin-Seite hinzugefügte Plugin kam
+    dort nicht an (der Ordner für Konto-Plugins im Container war leer), und das Setup-Skript gehört
+    zu einer einzelnen Umgebung. Beobachtet in einer Cloud-Sitzung mit Claude Code 2.1.330:
+    - Start-Hooks aus `.claude/settings.json` des Repos laufen; nur `enabledPlugins` wird übergangen.
+    - Ein Plugin, das ein solcher Hook installiert, ist in der Sitzung **nicht** geladen, auch nicht
+      ab der zweiten Eingabe: Claude Code legt die Plugin-Liste vor dem Ende der Hooks fest. Nach
+      `/reload-plugins` sind alle Skills da. Der Befehl `plug-n-rag` (PATH über `CLAUDE_ENV_FILE`)
+      und die Startmeldung kommen dagegen sofort an.
+    Daraus: `.plug-n-rag/cloud-start.sh` als Start-Hook. Es tut lokal nichts, tut nichts, wenn das
+    Plugin beim Start schon da war (dann läuft dessen eigener Hook, keine doppelte Kurz-Karte),
+    installiert sonst aus dem Marketplace und startet den Sitzungsstart von plug-n-rag selbst. Seine
+    Meldung sagt Claude, `/plug-n-rag:…` bis zum `/reload-plugins` über `plug-n-rag anleitung`
+    zu bedienen, statt den Befehl für unbekannt zu erklären. Belegt mit einer echten Sitzung, deren
+    erste Eingabe `/plug-n-rag:status` war. Bestehende Einträge in `.claude/settings.json` bleiben
+    erhalten; ungültiges JSON wird nie überschrieben; `--ausbinden` nimmt alles zurück. Eine Vault
+    im Unterordner eines Repos wird abgelehnt, weil Cloud-Sitzungen im Hauptordner starten.
+    Das Setup-Skript der Umgebung bleibt als Weg B (Modell vorab, alle Befehle ohne Nachladen) und
+    meldet jetzt, wenn die Installation scheitert, statt Fehler stumm zu schlucken.

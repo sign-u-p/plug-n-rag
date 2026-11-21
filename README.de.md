@@ -444,20 +444,33 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
 Richte danach meine Vault mit /plug-n-rag:setup ein. Ist der Befehl in dieser Sitzung noch
 nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
-und folge der Anleitung aus „plug-n-rag anleitung setup“.
+und folge der Anleitung aus „plug-n-rag anleitung setup“. Binde am Ende die Selbst-Einrichtung
+ein (plug-n-rag cloud --einbinden).
 ```
 
-Claude richtet die Vault ein und sorgt dafür, dass künftige Cloud-Sitzungen plug-n-rag automatisch
-haben. Dafür braucht die **Cloud-Umgebung** (die Einstellungen des Rechners, auf dem Claude in der
-Cloud arbeitet) zwei Dinge: eine Freigabe für den Modell-Download und ein kleines Skript, das
-plug-n-rag beim Start installiert. Claude schlägt beides vor oder erklärt, wo du es einträgst
-(`/plug-n-rag:cloud`).
+Warum dieser Satz? Plugins, die du über die Plugin-Seite hinzufügst, kommen (noch) nicht in
+Cloud-Sitzungen an. Tippst du dort gleich `/plug-n-rag:setup`, kennt Claude den Befehl nicht.
+
+**Nur einmal nötig: die Selbst-Einrichtung.** Claude legt dabei ein kleines Start-Skript in deine
+Vault (`.plug-n-rag/cloud-start.sh`). Startet künftig eine Cloud-Sitzung mit deinem Vault-Repo,
+installiert dieses Skript plug-n-rag von selbst, in jeder Cloud-Umgebung. Auf deinem Rechner tut
+es nichts. Zwei Dinge sind gut zu wissen:
+
+- Die Befehle `/plug-n-rag:…` erscheinen in so einer Sitzung erst, wenn du einmal
+  **`/reload-plugins`** eingibst. Bis dahin arbeitet Claude mit denselben Anleitungen direkt
+  weiter, du kannst also auch einfach fragen.
+- Für die Suche nach Bedeutung (nicht nur nach Stichworten) braucht die **Cloud-Umgebung** (die
+  Einstellungen des Rechners, auf dem Claude in der Cloud arbeitet) eine Freigabe für den
+  Modell-Download. Claude schlägt sie vor oder erklärt, wo du sie einträgst (`/plug-n-rag:cloud`).
+
+Wieder entfernen: `plug-n-rag cloud --ausbinden`.
 
 <details>
-<summary>Cloud-Umgebung von Hand einrichten</summary>
+<summary>Cloud-Umgebung von Hand einrichten (Freigabe, optional Setup-Skript)</summary>
 
-Warum nicht einfach über das Repo? Cloud-Sitzungen installieren keine Plugins, die ein Repo selbst
-anfordert (`.claude/settings.json`). Deshalb gehört die Installation in die Cloud-Umgebung.
+Das Setup-Skript ist mit der Selbst-Einrichtung optional. Es lohnt sich trotzdem: Sitzungen in
+dieser Umgebung starten dann mit fertig geladenem Modell und allen `/plug-n-rag:…`-Befehlen, ganz
+ohne `/reload-plugins`.
 
 1. In der Sitzungsleiste auf den Namen der Cloud-Umgebung tippen, „Bearbeiten“ (oder eine eigene
    Umgebung „Hinzufügen“, z. B. „Vault“).
@@ -478,6 +491,7 @@ anfordert (`.claude/settings.json`). Deshalb gehört die Installation in die Clo
      || claude plugin marketplace update plug-n-rag >/dev/null 2>&1 || true
    claude plugin install plug-n-rag@plug-n-rag >/dev/null 2>&1 || true
    P=$(ls -d "$HOME"/.claude/plugins/cache/plug-n-rag/plug-n-rag/*/ 2>/dev/null | sort -V | tail -1)
+   [ -n "$P" ] || echo "plug-n-rag: Installation fehlgeschlagen (ist github.com/sign-u-p/plug-n-rag erreichbar?)" >&2
    if [ -n "$P" ]; then "${P}scripts/plug-n-rag" modell-laden --modell intfloat/multilingual-e5-small || true; fi
    exit 0
    ```

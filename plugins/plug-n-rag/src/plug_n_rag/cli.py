@@ -510,7 +510,17 @@ def cmd_cloud(args):
 
     layout = _layout(args, require=False)
     cfg = layout.config if layout and layout.configured else load_config(Path("/nonexistent"))
-    if args.hosts:
+    if args.einbinden or args.ausbinden:
+        from .cloud import BootstrapError, bootstrap_report, install_bootstrap, remove_bootstrap
+
+        root = layout.root if layout is not None else Path.cwd()
+        try:
+            changed = remove_bootstrap(root) if args.ausbinden else install_bootstrap(root)
+        except BootstrapError as exc:
+            _print(str(exc))
+            sys.exit(1)
+        _print(bootstrap_report(changed, removed=args.ausbinden))
+    elif args.hosts:
         from .cloud import resolve_hosts
 
         _print("\n".join(resolve_hosts(cfg)))
@@ -775,6 +785,11 @@ def build_parser() -> argparse.ArgumentParser:
                    help=tr("prüfen, ob alles für Cloud-Sitzungen bereit ist", "check whether everything is ready for cloud sessions"))
     s.add_argument("--hosts", action="store_true",
                    help=tr("tatsächlich nötige Download-Hosts ermitteln", "find the download hosts actually needed"))
+    s.add_argument("--einbinden", "--bootstrap", dest="einbinden", action="store_true",
+                   help=tr("Selbst-Einrichtung in die Vault legen: Cloud-Sitzungen installieren plug-n-rag dann selbst",
+                           "put the self-setup into the vault: cloud sessions then install plug-n-rag by themselves"))
+    s.add_argument("--ausbinden", "--unbootstrap", dest="ausbinden", action="store_true",
+                   help=tr("Selbst-Einrichtung wieder entfernen", "remove the self-setup again"))
     s.add_argument("--offline", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_cloud)
 

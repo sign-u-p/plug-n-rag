@@ -19,12 +19,19 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
 
 ## Das Wichtigste vorweg
 
-- Cloud-Sitzungen installieren **keine** Plugins, die ein Repo in `.claude/settings.json` einträgt.
-  Ein solcher Eintrag hilft nur auf dem eigenen Rechner.
-- Was funktioniert: Die **Cloud-Umgebung** bekommt ein **Setup-Skript**, das plug-n-rag installiert
-  und das Suchmodell vorab lädt, plus eine **Netzwerkfreigabe** für Hugging Face (lokales Modell)
-  bzw. ein **Netzwerk-Secret** für Voyage. Die Umgebung wird danach als Abbild gespeichert; spätere
-  Sitzungen starten sofort suchbereit.
+- Cloud-Sitzungen installieren **keine** Plugins, die ein Repo unter `enabledPlugins` in
+  `.claude/settings.json` einträgt. Ein solcher Eintrag hilft nur auf dem eigenen Rechner. Plugins,
+  die über die Plugin-Seite zum Konto hinzugefügt wurden, kommen ebenfalls nicht in Cloud-Sitzungen.
+- Cloud-Sitzungen führen aber die **Start-Hooks des Repos** aus. Darauf baut **Weg A, die
+  Selbst-Einrichtung** (empfohlen): `plug-n-rag cloud --einbinden` legt `.plug-n-rag/cloud-start.sh`
+  an und trägt es als Start-Hook ein. Fehlt plug-n-rag in einer Cloud-Sitzung, installiert das
+  Skript es. Funktioniert in **jeder** Cloud-Umgebung, ohne Einstellungen. Der Befehl `plug-n-rag`
+  geht sofort; die `/plug-n-rag:…`-Befehle erscheinen nach einmal `/reload-plugins`.
+- **Weg B, Setup-Skript der Cloud-Umgebung** (zusätzlich oder statt A): installiert das Plugin vor
+  dem Start und lädt das Suchmodell vorab. Die Umgebung wird als Abbild gespeichert; Sitzungen
+  starten sofort suchbereit, mit allen Befehlen.
+- Für die semantische Suche braucht die Umgebung in beiden Fällen eine **Netzwerkfreigabe** für
+  Hugging Face (lokales Modell) bzw. ein **Netzwerk-Secret** für Voyage. Ohne geht die Stichwortsuche.
 - Die Index-Dateien kommen aus dem Vault-Repo. Deshalb müssen sie committet und gepusht sein.
 
 ## Zwei Ausgangslagen
@@ -35,6 +42,8 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
   sign-u-p/plug-n-rag`, `claude plugin install plug-n-rag@plug-n-rag`). Dann zuerst
   `/plug-n-rag:setup` (Abschnitt „Cloud-Weg“), danach Schritt 3 unten, damit künftige Sitzungen
   das Plugin automatisch haben.
+- **Plugin gerade erst von der Selbst-Einrichtung installiert**: Die Startmeldung sagt es. Dann gibt
+  es `/plug-n-rag:…` erst nach `/reload-plugins`; bis dahin `plug-n-rag anleitung <name>` lesen.
 
 ## Ablauf
 
@@ -48,7 +57,11 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
 2. **Anleitung erzeugen**: `plug-n-rag cloud`. Die Ausgabe enthält die Hosts für „Allowed domains“
    und das Setup-Skript, passend zum Modell dieser Vault (`plug-n-rag cloud --skript` gibt nur das
    Skript aus). Gib beides **unverändert** weiter, in Codeblöcken zum Kopieren.
-3. **Umgebung einrichten**
+3. **Selbst-Einrichtung einbinden (Weg A)**: Kurz erklären, was sie tut, fragen, dann
+   `plug-n-rag cloud --einbinden`. Committen und nach `main` übernehmen (`/plug-n-rag:nach-main`),
+   denn Cloud-Sitzungen starten vom Hauptstand. Entfernen geht mit `plug-n-rag cloud --ausbinden`.
+   Danach weiter mit Schritt 4 für das Netzwerk; das Setup-Skript dort ist optional.
+4. **Umgebung einrichten**
    - Stehen dir in dieser Sitzung Werkzeuge zum Anlegen oder Bearbeiten von Cloud-Umgebungen zur
      Verfügung, biete an, das selbst vorzuschlagen (Name z. B. „Vault“, Netzwerk „Limited“ mit
      Paketquellen, die Hosts, das Setup-Skript). Die Nutzer:in bestätigt den Vorschlag; ohne
@@ -65,10 +78,10 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
      hinterlegen lassen (nie als Umgebungsvariable, nie ins Repo, nie in den Chat). plug-n-rag
      erkennt die Cloud-Sitzung und lässt den Key vom Netzwerk-Proxy einsetzen. Gibt es ein Werkzeug,
      mit dem die Nutzer:in ein Secret sicher eingibt, nutze es.
-4. **Testen**: Eine neue Sitzung mit dem Vault-Repo in dieser Umgebung starten. Der erste Start
+5. **Testen**: Eine neue Sitzung mit dem Vault-Repo in dieser Umgebung starten. Der erste Start
    dauert einige Minuten (Modell etwa 470 MB). Dort `plug-n-rag cloud --pruefen` und eine
    Testsuche, z. B. `plug-n-rag suche "<Thema aus der Vault>" --zweck frage`.
-5. **Erklären, was anders ist als lokal**
+6. **Erklären, was anders ist als lokal**
    - Cloud-Sitzungen arbeiten auf einem eigenen Branch (`claude/…`). Änderungen an Notizen landen
      erst nach dem Zusammenführen auf GitHub im Hauptstand und damit in Obsidian.
    - Ein Update von plug-n-rag kommt in die Cloud-Umgebung, wenn sie neu gebaut wird (spätestens
@@ -78,7 +91,10 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
 
 - **„Suchmodell konnte nicht geladen werden“ / Hugging Face blockiert**: Hosts aus `plug-n-rag cloud`
   fehlen in „Allowed domains“. Bis dahin funktioniert die Stichwortsuche.
-- **plug-n-rag fehlt in der Cloud-Sitzung** (Befehl unbekannt, keine Kurz-Karte beim Start): Setup-Skript
-  fehlt oder ist fehlgeschlagen; die Sitzung lief in einer anderen Umgebung; oder das Repo
-  `sign-u-p/plug-n-rag` ist für die Umgebung nicht erreichbar.
+- **plug-n-rag fehlt in der Cloud-Sitzung** (Befehl unbekannt, keine Kurz-Karte beim Start): Die
+  Selbst-Einrichtung ist nicht eingebunden oder noch nicht auf `main`; ohne sie fehlt das
+  Setup-Skript oder die Sitzung lief in einer anderen Umgebung; oder das Repo `sign-u-p/plug-n-rag`
+  ist für die Umgebung nicht erreichbar (die Startmeldung der Selbst-Einrichtung sagt das).
+- **`/plug-n-rag:…` unbekannt, `plug-n-rag` geht aber**: Das Plugin wurde während der Sitzung
+  installiert. Die Nutzer:in tippt einmal `/reload-plugins`.
 - **Alles wird neu berechnet**: Index-Dateien waren nicht gepusht.

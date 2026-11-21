@@ -71,8 +71,15 @@ Rechner der Nutzer:in muss nichts passieren. Dann gilt:
   - Bis dahin geht die Einrichtung mit Stichwortsuche weiter; die semantische Indexierung folgt
     mit `plug-n-rag sync`, sobald das Modell erreichbar ist.
 - **Für künftige Cloud-Sitzungen sichern** (vor dem Abschluss): Das Plugin ist bisher nur in dieser
-  Sitzung installiert. Die Umgebung braucht das Setup-Skript aus `plug-n-rag cloud --skript`
-  (siehe `/plug-n-rag:cloud`). Mit Umgebungswerkzeugen vorschlagen, sonst anleiten.
+  Sitzung installiert. Biete die **Selbst-Einrichtung** an: `plug-n-rag cloud --einbinden` legt ein
+  Start-Skript in die Vault (`.plug-n-rag/cloud-start.sh`, Hook in `.claude/settings.json`), das
+  plug-n-rag in jeder Cloud-Sitzung installiert, der es fehlt, in jeder Cloud-Umgebung. Erkläre
+  kurz, was es tut (lokal nichts; in der Cloud Plugin aus `sign-u-p/plug-n-rag` installieren), und
+  frage vorher. Es muss mit dem Abschluss-Commit nach `main`. Zusätzlich oder stattdessen geht das
+  Setup-Skript der Umgebung (`/plug-n-rag:cloud`, Weg B), das auch das Modell vorab lädt.
+- **Befehle nachladen**: Plugins, die erst während der Sitzung installiert werden, zeigen ihre
+  `/plug-n-rag:…`-Befehle erst nach `/reload-plugins`. Bitte die Nutzer:in einmal darum; bis dahin
+  `plug-n-rag anleitung <name>`.
 - **Abschluss**: Commit wie in Schritt 12. Die Sitzung arbeitet auf einem eigenen Branch. Frage, ob
   alles nach `main` soll; wenn ja: `plug-n-rag nach-main -m "Vault-Index angelegt (N Notizen)"`
   (siehe `/plug-n-rag:nach-main`). Erst dann sehen Obsidian und spätere Sitzungen den Index.
@@ -271,23 +278,25 @@ Jeweils einzeln anbieten:
 
 **b) Cloud-Sitzungen** (Claude Code im Browser oder in der App mit dieser Vault):
 Nur anbieten, wenn die Vault auf GitHub liegt. Dann `/plug-n-rag:cloud` ausführen bzw. dessen
-Ablauf folgen. Wichtig: Ein Eintrag in `.claude/settings.json` des Vault-Repos lädt das Plugin
-in Cloud-Sitzungen **nicht**; nötig sind ein Setup-Skript und eine Netzwerkfreigabe in der
-Cloud-Umgebung (`plug-n-rag cloud` gibt beides passend aus).
+Ablauf folgen. Wichtig: Ein Plugin-Eintrag (`enabledPlugins`) in `.claude/settings.json` des
+Vault-Repos lädt das Plugin in Cloud-Sitzungen **nicht**. Was wirkt: die Selbst-Einrichtung
+(`plug-n-rag cloud --einbinden`, nach Rückfrage) und für die semantische Suche eine
+Netzwerkfreigabe für Hugging Face in der Cloud-Umgebung.
 
 **c) Lern-Datei** committen ja/nein: `plug-n-rag konfig --setzen tuning.commit_learning=true`
 (Standard: nur lokal).
 
 **d) CLAUDE.md**: kurzen Abschnitt anbieten (nur nach Zustimmung, nur anhängen):
 „Diese Vault ist mit plug-n-rag durchsuchbar. Für Inhalte zuerst `plug-n-rag suche` nutzen. Fehlt
-der Befehl in einer Cloud-Sitzung, braucht die Cloud-Umgebung ein Setup-Skript und eine
-Netzwerkfreigabe für Hugging Face; Anleitung: https://github.com/sign-u-p/plug-n-rag#in-der-cloud-nutzen“
+der Befehl in einer Cloud-Sitzung, installiere das Plugin (`claude plugin marketplace add
+sign-u-p/plug-n-rag`, `claude plugin install plug-n-rag@plug-n-rag`) und lies
+`plug-n-rag anleitung setup`; Anleitung: https://github.com/sign-u-p/plug-n-rag#in-der-cloud-nutzen“
 Dieser Hinweis hilft Claude in einer Cloud-Sitzung, in der das Plugin (noch) fehlt.
 
 ## Schritt 12: Abschluss
 
 - Prüfen, dass kein API-Key in einer Datei steht (`git grep -n -I -E "pa-[A-Za-z0-9_-]{20,}|VOYAGE_API_KEY="`).
-- Ein Commit: `git add .plug-n-rag .gitignore` (plus ggf.
+- Ein Commit: `git add .plug-n-rag .gitignore` (plus ggf. `.claude/settings.json` bei Selbst-Einrichtung,
   `.obsidian/plugins/obsidian-git`, `.obsidian/community-plugins.json`) und
   `git commit -m "Vault-Index angelegt (N Notizen)"`. Push nur, wenn ein Remote eingerichtet ist.
   Arbeitet die Sitzung auf einem Neben-Branch (z. B. in der Cloud), fragen, ob alles nach `main` soll,
