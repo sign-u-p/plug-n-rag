@@ -99,6 +99,18 @@ def status(layout: Layout, *, check_remote: bool = True) -> str:
             else:
                 lines.append(tr("Git: Repo mit Remote, Sichtbarkeit nicht prüfbar (GitHub-CLI fehlt oder nicht angemeldet)",
                                 "Git: repo with remote, visibility not checkable (GitHub CLI missing or not signed in)"))
+    from . import __version__
+    from . import update as up
+
+    vline = tr(f"Version: {__version__}", f"Version: {__version__}")
+    if check_remote and up.mode(cfg) != "aus":
+        info = up.check()
+        if info.newer:
+            vline += tr(f" · neu verfügbar: {info.latest} (`plug-n-rag aktualisieren`)",
+                        f" · new version available: {info.latest} (`plug-n-rag update`)")
+        elif info.latest:
+            vline += tr(" · aktuell ✓", " · up to date ✓")
+    lines.append(vline)
     lines.append(tr("Token-Steuerung (", "Token steering (") + tuning.tuning_location_note(layout) + "):")
     lines += ["  " + ln for ln in tuning.describe(layout)]
     n, delivered, full = tuning.savings(layout)

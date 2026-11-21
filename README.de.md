@@ -531,7 +531,7 @@ aus, wird gar nichts übernommen.
 | Befehl | Wofür |
 | --- | --- |
 | `/plug-n-rag:setup` | geführte Einrichtung (auch zum Fortsetzen oder Prüfen) |
-| `/plug-n-rag:status` | Ist alles aktuell? Gibt es Fehler? Wie viel wurde gespart? |
+| `/plug-n-rag:status` | Ist alles aktuell? Gibt es Fehler? Wie viel wurde gespart? Gibt es eine neuere Version? |
 | `/plug-n-rag:aufnehmen` (`ingest`) | PDFs und eingescannte Dokumente in durchsuchbaren Text umwandeln |
 | `/plug-n-rag:cloud` | Nutzung in Cloud-Sitzungen einrichten und prüfen |
 | `/plug-n-rag:nach-main` (`to-main`) | Änderungen aus dem Chat in den Hauptstand des Repos übernehmen |
@@ -562,6 +562,7 @@ Am bequemsten änderst du Einstellungen, indem du Claude darum bittest. Die wich
 | `abschriften.ort` | wohin Abschriften von PDFs kommen | wird beim ersten Mal gefragt |
 | `transcription` | ob vor dem Abschreiben gefragt wird (`ask`, `allow`, `local_only`) | `ask` |
 | `anzeige` | Quellenzeile in Cloud-Sitzungen (`kompakt`, `aus`) | `kompakt` |
+| `updates` | neuere plug-n-rag-Version beim Sitzungsstart: Claude fragt (`fragen`), aktualisiert selbst (`automatisch`) oder schweigt (`aus`) | `fragen` |
 | `tuning.commit_learning` | Gelerntes mit ins Repo legen (sonst nur lokal) | `false` |
 | `git.auto_commit`, `git.auto_push` | Änderungen beim Start automatisch sichern bzw. hochladen | aus |
 
@@ -611,6 +612,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | „uv fehlt“ beim Start | Schritt 1 oben, oder Claude die Installation erledigen lassen |
 | Neue Notizen werden nicht gefunden | `/plug-n-rag:status` zeigt, ob noch etwas aussteht |
 | „Suchmodus: nur Stichwort“ oder „Vorläufiges Ergebnis“ | Das Sprachmodell lädt noch, ist nicht da oder passt nicht; `/plug-n-rag:status` erklärt, warum und seit wann die semantische Suche bereit ist. Claude kann mit `--warten` suchen, bis alles bereit ist |
+| „Neue Version von plug-n-rag verfügbar“ | Claude fragt, ob aktualisiert werden soll; `plug-n-rag aktualisieren` erledigt es über Claude Code (gilt nach `/reload-plugins`), `--spaeter` überspringt diese Version |
 | In der Cloud fehlt plug-n-rag | Die Sitzung läuft in einer anderen Umgebung, oder das Setup-Skript fehlt (`/plug-n-rag:cloud`) |
 | Eingescannte PDFs „warten auf Aufnahme“ | `/plug-n-rag:aufnehmen` |
 | Die Plugin-Seite zeigt eine alte Beschreibung, oder plug-n-rag Display fehlt | die App kennt noch einen alten Katalog: `claude plugin marketplace update plug-n-rag` ausführen, oder auf der Plugin-Seite den Marketplace entfernen und `sign-u-p/plug-n-rag` neu hinzufügen |

@@ -369,9 +369,10 @@ def cmd_githook(args):
     _print(install_precommit(layout.root, str(write_launcher())))
 
 
-def write_launcher() -> Path:
+def write_launcher(plugin_dir: Path | None = None) -> Path:
     """A stable launcher in the user cache that points at the currently installed plugin."""
-    root = os.environ.get("PLUG_N_RAG_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[2])
+    root = str(plugin_dir) if plugin_dir else (os.environ.get("PLUG_N_RAG_PLUGIN_ROOT")
+                                                or str(Path(__file__).resolve().parents[2]))
     path = user_cache_dir() / "plug-n-rag"
     script = f'#!/bin/sh\nexec "{root}/scripts/plug-n-rag" "$@"\n'
     try:
@@ -491,6 +492,12 @@ def cmd_session_start(args):
                                            tr("plug-n-rag: Index aktualisiert", "plug-n-rag: index updated"))
             if done and git_cfg.get("auto_push"):
                 gitops.push(layout.root)
+    try:
+        from .update import session_notes
+
+        notes += session_notes(layout.config)
+    except Exception:  # noqa: BLE001 - the update check must never break the session start
+        pass
     from .migrate import needs_update
 
     if needs_update(layout):
@@ -647,6 +654,43 @@ def cmd_umziehen(args):
     if new and new.configured:
         r = sync(new)
         _print(_report_text(r))
+
+
+def cmd_aktualisieren(args):
+    from . import update as up
+
+    layout = _layout(args, require=False)
+    if args.spaeter:
+        info = up.check()
+        if layout is None or not layout.configured:
+            _print(tr("Hier ist keine Vault eingerichtet; nichts zu merken.", "No vault is set up here; nothing to remember."))
+            return
+        if not info.latest:
+            _print(tr("Neueste Version nicht ermittelbar; nichts gemerkt.", "Newest version unknown; nothing remembered."))
+            return
+        cfg = load_config(layout.config_path)
+        cfg["updates_skip"] = info.latest
+        save_config(layout.config_path, cfg)
+        _print(tr(f"Gemerkt: Version {info.latest} wird nicht mehr angeboten, erst die nächste.",
+                  f"Remembered: version {info.latest} is not offered again, only the next one."))
+        return
+    if args.pruefen:
+        info = up.check(force=True)
+        if info.latest is None:
+            _print(tr(f"Neueste Version nicht ermittelbar ({info.error}). Installiert: {info.installed}.",
+                      f"Newest version unknown ({info.error}). Installed: {info.installed}."))
+        elif info.newer:
+            _print(tr(f"Neue Version verfügbar: {info.latest} (installiert: {info.installed}). "
+                      "Aktualisieren: `plug-n-rag aktualisieren`.",
+                      f"New version available: {info.latest} (installed: {info.installed}). "
+                      "Update: `plug-n-rag update`."))
+        else:
+            _print(tr(f"plug-n-rag ist aktuell ({info.installed}).", f"plug-n-rag is up to date ({info.installed})."))
+        return
+    _, lines = up.update()
+    if not args.still:
+        for ln in lines:
+            _print(ln)
 
 
 def cmd_anzeige_daten(args):
@@ -863,6 +907,15 @@ def build_parser() -> argparse.ArgumentParser:
                    help=tr("Ziel: im Ordner (.plug-n-rag/) oder zentral", "target: inside the folder (.plug-n-rag/) or central"))
     s.add_argument("--trotzdem", "--anyway", dest="trotzdem", action="store_true", help=argparse.SUPPRESS)
     s.set_defaults(func=cmd_umziehen)
+
+    s = _cmd(sub, "aktualisieren", "update", "plug-n-rag auf die neueste Version bringen (über Claude Code)",
+             "bring plug-n-rag to the newest version (via Claude Code)")
+    s.add_argument("--pruefen", "--check", dest="pruefen", action="store_true",
+                   help=tr("nur nachsehen, ob es eine neuere Version gibt", "only check whether a newer version exists"))
+    s.add_argument("--spaeter", "--later", dest="spaeter", action="store_true",
+                   help=tr("diese Version nicht mehr anbieten (erst die nächste)", "do not offer this version again (only the next)"))
+    s.add_argument("--still", "--quiet", dest="still", action="store_true", help=argparse.SUPPRESS)
+    s.set_defaults(func=cmd_aktualisieren)
 
     s = sub.add_parser("anzeige-daten", aliases=["display-data"])  # JSON for the mod
     s.set_defaults(func=cmd_anzeige_daten)

@@ -368,3 +368,19 @@ Stand: 19.11.2026, Sprint 1.
     bewusst nicht als Datum: In einem Git-Klon (Cloud) tragen alle Dateien die Zeit des Auscheckens.
     `verwandt` nennt bei datierten Notizen den Tag davor und danach im selben Ordner sowie die
     Wochennotiz (bzw. bei einer Wochennotiz die Tage der Woche).
+
+72. **Beim Sitzungsstart nach einer neueren Version sehen** (0.9.3). Wunsch aus derselben
+    Rückmeldung. Quelle ist `plugin.json` auf `main` im Marketplace-Repo, erst über
+    raw.githubusercontent.com (3 s), sonst über `git fetch --depth 1` (Cloud-Umgebungen lassen
+    github.com oft nur für Git durch). Ein Ergebnis gilt sechs Stunden, ein Fehlschlag eine Stunde
+    lang: ohne Netz bleibt der Start schnell und still. Einstellung `updates` in der Konfiguration
+    der Vault (nicht im Benutzerordner, weil Cloud-Container ihn vergessen): `fragen` (Standard,
+    Claude fragt einmal), `automatisch` (Aktualisierung im Hintergrund), `aus`. `plug-n-rag
+    aktualisieren --spaeter` merkt die abgelehnte Version in `updates_skip`; erst eine neuere wird
+    wieder angeboten. Aktualisiert wird ausschließlich über Claude Codes eigene Befehle
+    (`claude plugin marketplace update`, `claude plugin update`, mit dem installierten Scope, und
+    plug-n-rag Display mit, falls installiert); plug-n-rag schreibt nie selbst in die Plugin-Ordner.
+    Danach zeigt der Starter `plug-n-rag` auf die neue Version, Skills und Hooks gelten nach
+    `/reload-plugins` oder ab der nächsten Sitzung. Läuft das Plugin aus einem Ordner (Entwicklung),
+    gibt es nur den Hinweis auf `git pull`. Geprüft mit einer echten Installation über einen lokalen
+    Marketplace: 0.9.3 → 0.9.4, Starter umgestellt.

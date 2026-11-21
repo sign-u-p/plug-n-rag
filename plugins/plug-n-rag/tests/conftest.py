@@ -20,6 +20,7 @@ def isolated_user_dirs(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg-config"))
     monkeypatch.delenv("PLUG_N_RAG_ROOT", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_REMOTE", raising=False)
+    monkeypatch.setenv("PLUG_N_RAG_UPDATES", "aus")  # no update check over the network in tests
     # The existing tests check German texts; English has its own tests (test_english.py).
     monkeypatch.setenv("PLUG_N_RAG_LANG", "de")
     from plug_n_rag import i18n

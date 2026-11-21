@@ -38,6 +38,9 @@ Stop-Hook durchlaufen. Offen ist:
 - [ ] **Suchmodus in einer echten Cloud-Sitzung** (0.9.3): Zeigt die erste Suche „nur Stichwort ·
       Suchmodell lädt (…%)“ mit steigendem Wert, kennzeichnet Claude die Antwort als vorläufig, und
       wartet `suche --warten` bis zum Ende des Downloads? Nennt `status` danach „bereit seit …“?
+- [ ] **Update-Hinweis** (0.9.3): Erscheint „Neue Version … verfügbar“ beim Start einer lokalen
+      Sitzung und einer Cloud-Sitzung mit Setup-Skript (Abbild mit älterer Version)? Läuft
+      `claude plugin update` aus dem Hook bzw. aus dem Bash-Werkzeug durch, auch bei Scope `project`?
 - [ ] **Selbst-Einrichtung** (`cloud --einbinden`) in einer echten Cloud-Sitzung über claude.ai mit
       einem Vault-Repo, dessen `main` das Start-Skript enthält:
   - [ ] Läuft der Hook, und erreicht er github.com in einer Umgebung mit Netzwerk „Limited“?

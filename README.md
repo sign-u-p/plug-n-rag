@@ -547,6 +547,7 @@ The easiest way to change settings is to ask Claude. The most important ones:
 | `abschriften.ort` | where transcripts of PDFs go | asked the first time |
 | `transcription` | whether to ask before transcribing (`ask`, `allow`, `local_only`) | `ask` |
 | `anzeige` | source line in cloud sessions (`kompakt`, `aus`) | `kompakt` |
+| `updates` | newer plug-n-rag version at session start: Claude asks (`ask`), updates by itself (`auto`) or stays quiet (`off`) | `ask` (stored as `fragen`) |
 | `tuning.commit_learning` | put what was learned into the repo too (otherwise local only) | `false` |
 | `git.auto_commit`, `git.auto_push` | automatically save or upload changes at start | off |
 
@@ -595,6 +596,7 @@ claude mcp add plug-n-rag -- ~/.cache/plug-n-rag/plug-n-rag mcp
 | "uv missing" at start | step 1 above, or let Claude do the installation |
 | New notes are not found | `/plug-n-rag:status` shows whether something is still pending |
 | "Search mode: keyword only" or "Provisional result" | the language model is still loading, is not there or does not fit; `/plug-n-rag:status` explains why and since when search by meaning is ready. Claude can search with `--wait` until everything is ready |
+| "New plug-n-rag version available" | Claude asks whether to update; `plug-n-rag update` does it via Claude Code (applies after `/reload-plugins`), `--later` skips this version |
 | plug-n-rag is missing in the cloud | the session runs in a different environment, or the setup script is missing (`/plug-n-rag:cloud`) |
 | Scanned PDFs are "waiting for ingestion" | `/plug-n-rag:ingest` |
 | The plugin page shows an old description, or plug-n-rag Display is missing | the app still knows an old catalogue: run `claude plugin marketplace update plug-n-rag`, or remove the marketplace on the plugin page and add `sign-u-p/plug-n-rag` again |

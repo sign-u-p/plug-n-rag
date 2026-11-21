@@ -25,5 +25,9 @@ wie Embedding oder Hash, außer sie fragt danach:
   Modellkonflikt (`/plug-n-rag:reindex` anbieten), Provider nicht erreichbar
   (Netzwerkfreigabe für huggingface.co bzw. api.voyageai.com erklären).
 - Gelernte Werte und Ersparnis kurz erwähnen. Die Ersparnis ist eine Schätzung.
+- Zeigt die Zeile „Version“ eine neuere Version, fragen, ob aktualisiert werden soll. Ja:
+  `plug-n-rag aktualisieren` (gilt nach `/reload-plugins` oder ab der nächsten Sitzung); nein:
+  `plug-n-rag aktualisieren --spaeter`. Steht „Semantische Suche: noch nicht vollständig“ da, sagen,
+  dass Suchergebnisse bis dahin vorläufig sind.
 
 Ist noch nichts eingerichtet, `/plug-n-rag:setup` anbieten.

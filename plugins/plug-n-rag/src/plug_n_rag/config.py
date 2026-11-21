@@ -55,6 +55,7 @@ DEFAULTS: dict[str, Any] = {
     "transcription": "ask",
     "abschriften": {"ort": None, "ordner": "Abschriften"},
     "anzeige": "kompakt",  # kompakt | aus: source line in sessions where nothing is drawn
+    "updates": "fragen",  # fragen | automatisch | aus: newer plug-n-rag at session start (update.py)
     "git": {"auto_commit": "off", "auto_push": False},
 }
 

@@ -330,7 +330,8 @@ Claude soll sich stufenweise herantasten: **Karte → Suche → Gliederung → A
 | `vault gliederung <notiz>` | Überschriften mit Zeilen und Token-Größe |
 | `vault lesen <notiz>#<überschrift>` | Einen Abschnitt lesen (alternativ das Read-Werkzeug mit Zeilenangaben) |
 | `vault verwandt <notiz>` | Links und Backlinks zuerst, bei datierten Notizen Tag davor/danach und Wochennotiz, dann semantisch ähnliche Notizen |
-| `vault status` | Aktualität, Modell, seit wann die semantische Suche vollständig ist, Fehler, gelernte Werte, geschätzte Ersparnis |
+| `vault aktualisieren [--pruefen] [--spaeter]` | Neuere plug-n-rag-Version über `claude plugin update` installieren (inkl. Display), nur prüfen, oder diese Version überspringen |
+| `vault status` | Version (und ob eine neuere verfügbar ist), Aktualität, Modell, seit wann die semantische Suche vollständig ist, Fehler, gelernte Werte, geschätzte Ersparnis |
 
 **Ranking in `suche`**
 
