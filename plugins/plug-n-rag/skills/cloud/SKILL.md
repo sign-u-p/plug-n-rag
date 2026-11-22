@@ -38,7 +38,8 @@ Erkläre ohne Fachjargon. Die Nutzer:in muss keine Begriffe wie „Container“ 
 
 - **Lokal eingerichtet, jetzt auch in der Cloud**: Ablauf unten ab Schritt 1.
 - **Alles direkt in der Cloud**: Die Nutzer:in hat eine Cloud-Sitzung mit ihrem Vault-Repo
-  gestartet und plug-n-rag darin installieren lassen (`claude plugin marketplace add
+  gestartet und plug-n-rag darin installieren lassen (meist mit dem Satz „Richte dieses Repo für
+  plug-n-rag ein: github.com/sign-u-p/plug-n-rag“, Ablauf in `AGENTS.md` des Plugin-Repos) (`claude plugin marketplace add
   sign-u-p/plug-n-rag`, `claude plugin install plug-n-rag@plug-n-rag`). Dann zuerst
   `/plug-n-rag:setup` (Abschnitt „Cloud-Weg“), danach Schritt 3 unten, damit künftige Sitzungen
   das Plugin automatisch haben.

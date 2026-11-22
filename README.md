@@ -2,6 +2,9 @@
 
 **English** · [Deutsch](README.de.md)
 
+> **AI agents:** asked to set up a repo for plug-n-rag? Follow [AGENTS.md](AGENTS.md)
+> (raw: `https://raw.githubusercontent.com/sign-u-p/plug-n-rag/main/AGENTS.md`).
+
 **Claude knows your notes and reads only what it really needs for your question.**
 
 plug-n-rag is an extension for [Claude Code](https://code.claude.com). It makes your Obsidian
@@ -132,9 +135,9 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
 ```
 
-**C: Let Claude do it.** Write in a session: "Please run
-`claude plugin marketplace add sign-u-p/plug-n-rag` and
-`claude plugin install plug-n-rag@plug-n-rag`." Then type `/reload-plugins`.
+**C: Let Claude do it.** Open a session in your vault's folder and write: "Set up this repo for
+plug-n-rag: github.com/sign-u-p/plug-n-rag". Claude installs the plugin and starts the setup
+right away (step 3 then happens by itself).
 
 For the browser (claude.ai/code) there is a way of its own, see [Use it in the cloud](#use-it-in-the-cloud).
 
@@ -427,17 +430,16 @@ app). It can even be set up entirely there: start a session at claude.ai/code wi
 and write:
 
 ```text
-Please install the Claude Code plugin plug-n-rag:
-claude plugin marketplace add sign-u-p/plug-n-rag
-claude plugin install plug-n-rag@plug-n-rag
-Then set up my vault with /plug-n-rag:setup. If that command is not available in this session
-yet, use ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
-and follow the guide from "plug-n-rag guide setup". At the end, add the self-setup
-(plug-n-rag cloud --bootstrap).
+Set up this repo for plug-n-rag: github.com/sign-u-p/plug-n-rag
 ```
 
-Why this sentence? Plugins you add on the plugin page do not (yet) reach cloud sessions. If you
-type `/plug-n-rag:setup` there straight away, Claude does not know the command.
+That is all. Claude finds everything else in this repository ([AGENTS.md](AGENTS.md)): it
+installs the plugin for this session, walks you through the setup and, at the end, adds the
+self-setup so that future cloud sessions have plug-n-rag by themselves. The same sentence also
+works in a session on your computer.
+
+Why not just `/plug-n-rag:setup`? Plugins you add on the plugin page do not (yet) reach cloud
+sessions, so Claude does not know the command there until it has installed the plugin.
 
 **Needed only once: the self-setup.** Claude puts a small start script into your vault
 (`.plug-n-rag/cloud-start.sh`). From then on, whenever a cloud session starts with your vault repo,
