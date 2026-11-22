@@ -13,6 +13,7 @@ plug-n-rag/                         Repo sign-u-p/plug-n-rag
 │   └── plug-n-rag-anzeige/          optionale Anzeige im Chat (Mod, TypeScript)
 ├── tools/check.sh                   prüft Katalog und alle Plugins
 ├── README.md, README.de.md         Anleitung für Nutzer:innen (Englisch, Deutsch)
+├── AGENTS.md                        Anleitung für KI-Agenten: ein Repo mit plug-n-rag einrichten
 ├── SPEC.md, DECISIONS.md, OPEN.md   Spezifikation, Entscheidungen, offene Punkte
 └── LICENSE, THIRD_PARTY_NOTICES.md
 ```

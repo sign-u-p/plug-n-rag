@@ -2,6 +2,9 @@
 
 [English](README.md) · **Deutsch**
 
+> **KI-Agenten:** Sollst du ein Repo für plug-n-rag einrichten? Folge [AGENTS.md](AGENTS.md)
+> (roh: `https://raw.githubusercontent.com/sign-u-p/plug-n-rag/main/AGENTS.md`).
+
 **Claude kennt deine Notizen und liest nur, was es für deine Frage wirklich braucht.**
 
 plug-n-rag ist eine Erweiterung für [Claude Code](https://code.claude.com). Sie macht deine
@@ -136,9 +139,9 @@ claude plugin marketplace add sign-u-p/plug-n-rag
 claude plugin install plug-n-rag@plug-n-rag
 ```
 
-**C: Claude machen lassen.** In einer Sitzung schreiben: „Bitte führe aus:
-`claude plugin marketplace add sign-u-p/plug-n-rag` und
-`claude plugin install plug-n-rag@plug-n-rag`.“ Danach `/reload-plugins` eingeben.
+**C: Claude machen lassen.** Eine Sitzung im Ordner deiner Vault öffnen und schreiben: „Richte
+dieses Repo für plug-n-rag ein: github.com/sign-u-p/plug-n-rag“. Claude installiert das Plugin und
+beginnt gleich mit der Einrichtung (Schritt 3 passiert dann von selbst).
 
 Für den Browser (claude.ai/code) gibt es einen eigenen Weg, siehe [In der Cloud nutzen](#in-der-cloud-nutzen).
 
@@ -441,17 +444,17 @@ Mit einer Vault in einem privaten GitHub-Repo funktioniert plug-n-rag auch in Cl
 eine Sitzung mit deinem Vault-Repo und schreib:
 
 ```text
-Bitte installiere das Claude-Code-Plugin plug-n-rag:
-claude plugin marketplace add sign-u-p/plug-n-rag
-claude plugin install plug-n-rag@plug-n-rag
-Richte danach meine Vault mit /plug-n-rag:setup ein. Ist der Befehl in dieser Sitzung noch
-nicht verfügbar, nutze ~/.claude/plugins/cache/plug-n-rag/plug-n-rag/<version>/scripts/plug-n-rag
-und folge der Anleitung aus „plug-n-rag anleitung setup“. Binde am Ende die Selbst-Einrichtung
-ein (plug-n-rag cloud --einbinden).
+Richte dieses Repo für plug-n-rag ein: github.com/sign-u-p/plug-n-rag
 ```
 
-Warum dieser Satz? Plugins, die du über die Plugin-Seite hinzufügst, kommen (noch) nicht in
-Cloud-Sitzungen an. Tippst du dort gleich `/plug-n-rag:setup`, kennt Claude den Befehl nicht.
+Mehr braucht es nicht. Alles Weitere findet Claude in diesem Repository ([AGENTS.md](AGENTS.md)):
+Es installiert das Plugin für diese Sitzung, führt dich durch die Einrichtung und bindet am Ende
+die Selbst-Einrichtung ein, damit künftige Cloud-Sitzungen plug-n-rag von selbst haben. Derselbe
+Satz funktioniert auch in einer Sitzung auf deinem Rechner.
+
+Warum nicht gleich `/plug-n-rag:setup`? Plugins, die du über die Plugin-Seite hinzufügst, kommen
+(noch) nicht in Cloud-Sitzungen an. Dort kennt Claude den Befehl erst, wenn es das Plugin
+installiert hat.
 
 **Nur einmal nötig: die Selbst-Einrichtung.** Claude legt dabei ein kleines Start-Skript in deine
 Vault (`.plug-n-rag/cloud-start.sh`). Startet künftig eine Cloud-Sitzung mit deinem Vault-Repo,
